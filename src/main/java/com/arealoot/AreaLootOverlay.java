@@ -229,17 +229,19 @@ class AreaLootOverlay extends Overlay
 
 			graphics.setColor(config.overlayTextColor());
 			graphics.drawString(text, textX, y + 16);
+			int metadataX = listX + listWidth - PADDING - getMetadataWidth(metrics, item);
 			if (config.showGeValue())
 			{
 				String valueText = formatGeValue(item);
 				graphics.setColor(config.geValueTextColor());
-				graphics.drawString(valueText, textX + metrics.stringWidth(text) + METADATA_GAP, y + 16);
+				graphics.drawString(valueText, metadataX, y + 16);
+				metadataX += metrics.stringWidth(valueText) + METADATA_GAP;
 			}
 			if (config.showTileDistance())
 			{
 				String distanceText = item.getDistance() + "t";
 				graphics.setColor(config.tileDistanceTextColor());
-				graphics.drawString(distanceText, listX + listWidth - PADDING - metrics.stringWidth(distanceText), y + 16);
+				graphics.drawString(distanceText, metadataX, y + 16);
 			}
 		}
 
@@ -322,13 +324,10 @@ class AreaLootOverlay extends Overlay
 			{
 				rowWidth += ICON_SIZE + 6;
 			}
-			if (config.showTileDistance())
+			rowWidth += getMetadataWidth(metrics, item);
+			if (config.showGeValue() || config.showTileDistance())
 			{
-				rowWidth += METADATA_GAP + metrics.stringWidth(item.getDistance() + "t");
-			}
-			if (config.showGeValue())
-			{
-				rowWidth += METADATA_GAP + metrics.stringWidth(formatGeValue(item));
+				rowWidth += METADATA_GAP;
 			}
 			width = Math.max(width, rowWidth);
 		}
@@ -349,6 +348,24 @@ class AreaLootOverlay extends Overlay
 	private String formatGeValue(AreaLootItem item)
 	{
 		return AreaLootValueFormatter.formatGeValue(item.getGeValue());
+	}
+
+	private int getMetadataWidth(FontMetrics metrics, AreaLootItem item)
+	{
+		int width = 0;
+		if (config.showGeValue())
+		{
+			width += metrics.stringWidth(formatGeValue(item));
+		}
+		if (config.showTileDistance())
+		{
+			if (width > 0)
+			{
+				width += METADATA_GAP;
+			}
+			width += metrics.stringWidth(item.getDistance() + "t");
+		}
+		return width;
 	}
 
 	private void renderHighlightLine(Graphics2D graphics, LocalPoint itemPoint, Color color)

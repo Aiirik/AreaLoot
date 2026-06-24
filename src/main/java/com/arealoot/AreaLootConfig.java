@@ -151,7 +151,7 @@ public interface AreaLootConfig extends Config
 	)
 	default int overlayWidth()
 	{
-		return 160;
+		return 140;
 	}
 
 	@Alpha
