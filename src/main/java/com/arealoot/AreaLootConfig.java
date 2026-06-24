@@ -41,8 +41,8 @@ public interface AreaLootConfig extends Config
 	String generalSection = GENERAL_SECTION;
 
 	@ConfigSection(
-		name = "Highlight",
-		description = "Selected item highlight options",
+		name = "Highlight Colors",
+		description = "Selected item highlight colors",
 		position = 3
 	)
 	String highlightSection = HIGHLIGHT_SECTION;
@@ -237,6 +237,30 @@ public interface AreaLootConfig extends Config
 		return true;
 	}
 
+	@ConfigItem(
+		keyName = "drawHighlightLine",
+		name = "Draw highlight line",
+		description = "Draw a line from your player to the highlighted loot item",
+		position = 1,
+		section = GENERAL_SECTION
+	)
+	default boolean drawHighlightLine()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "onlyShowHighlightedItemMenu",
+		name = "Only show highlighted item",
+		description = "When right-clicking the highlighted item's tile, hide other ground items from that menu",
+		position = 2,
+		section = GENERAL_SECTION
+	)
+	default boolean onlyShowHighlightedItemMenu()
+	{
+		return false;
+	}
+
 	@Range(
 		min = 1,
 		max = 30
@@ -245,7 +269,7 @@ public interface AreaLootConfig extends Config
 		keyName = "lootRadius",
 		name = "Loot radius",
 		description = "Maximum tile distance from your player to show in the Area Loot panel",
-		position = 1,
+		position = 3,
 		section = GENERAL_SECTION
 	)
 	default int lootRadius()
@@ -280,34 +304,10 @@ public interface AreaLootConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "drawHighlightLine",
-		name = "Draw highlight line",
-		description = "Draw a line from your player to the highlighted loot item",
-		position = 2,
-		section = HIGHLIGHT_SECTION
-	)
-	default boolean drawHighlightLine()
-	{
-		return true;
-	}
-
-	@ConfigItem(
-		keyName = "onlyShowHighlightedItemMenu",
-		name = "Only show highlighted item",
-		description = "When right-clicking the highlighted item's tile, hide other ground items from that menu",
-		position = 3,
-		section = HIGHLIGHT_SECTION
-	)
-	default boolean onlyShowHighlightedItemMenu()
-	{
-		return false;
-	}
-
-	@ConfigItem(
 		keyName = "matchLineColor",
 		name = "Line matches tile outline",
 		description = "Use the tile outline color for the locator line instead of the separate line color",
-		position = 4,
+		position = 2,
 		section = HIGHLIGHT_SECTION
 	)
 	default boolean matchLineColor()
@@ -320,7 +320,7 @@ public interface AreaLootConfig extends Config
 		keyName = "highlightLineColor",
 		name = "Line color",
 		description = "Line color for the selected loot item",
-		position = 5,
+		position = 3,
 		section = HIGHLIGHT_SECTION
 	)
 	default Color highlightLineColor()
