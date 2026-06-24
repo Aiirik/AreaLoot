@@ -110,7 +110,7 @@ class AreaLootOverlay extends Overlay
 			Rectangle clickRow = new Rectangle(origin.x + listX, origin.y + y, listWidth, ROW_HEIGHT);
 			rowBounds.add(new SimpleEntry<>(clickRow, item));
 
-			if (item.getLocation().equals(plugin.getSelectedLocation()))
+			if (plugin.isSelectedLoot(item))
 			{
 				graphics.setColor(config.overlaySelectedRowColor());
 				graphics.fillRect(localRow.x + 1, localRow.y, localRow.width - 2, localRow.height);
