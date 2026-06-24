@@ -33,6 +33,7 @@ class AreaLootOverlay extends Overlay
 	private static final int ROW_HEIGHT = 24;
 	private static final int ICON_SIZE = 18;
 	private static final int PADDING = 6;
+	private static final double LINE_EDGE_GAP = 3.0;
 
 	private final Client client;
 	private final AreaLootPlugin plugin;
@@ -188,8 +189,8 @@ class AreaLootOverlay extends Overlay
 
 		java.awt.Point playerCenter = new java.awt.Point(playerCanvasPoint.getX(), playerCanvasPoint.getY());
 		java.awt.Point itemCenter = new java.awt.Point(itemCanvasPoint.getX(), itemCanvasPoint.getY());
-		java.awt.Point lineStart = getTileEdgePoint(playerTile, playerCenter, itemCenter);
-		java.awt.Point lineEnd = getTileEdgePoint(itemTile, itemCenter, playerCenter);
+		java.awt.Point lineStart = moveToward(playerCenter, getTileEdgePoint(playerTile, playerCenter, itemCenter), LINE_EDGE_GAP);
+		java.awt.Point lineEnd = moveToward(itemCenter, getTileEdgePoint(itemTile, itemCenter, playerCenter), LINE_EDGE_GAP);
 
 		graphics.setColor(color);
 		graphics.setStroke(new BasicStroke(2));
@@ -203,13 +204,13 @@ class AreaLootOverlay extends Overlay
 			return fromCenter;
 		}
 
-		double bestDistance = Double.MAX_VALUE;
-		java.awt.Point bestPoint = fromCenter;
+		java.awt.Point bestPoint = null;
+		double bestT = Double.MAX_VALUE;
 
 		for (int i = 0; i < tile.npoints; i++)
 		{
 			int next = (i + 1) % tile.npoints;
-			java.awt.Point intersection = getLineIntersection(
+			LineIntersection intersection = getLineIntersection(
 				fromCenter.x,
 				fromCenter.y,
 				toward.x,
@@ -220,23 +221,17 @@ class AreaLootOverlay extends Overlay
 				tile.ypoints[next]
 			);
 
-			if (intersection == null)
+			if (intersection != null && intersection.t > 0 && intersection.t < bestT)
 			{
-				continue;
-			}
-
-			double distance = intersection.distance(toward);
-			if (distance < bestDistance)
-			{
-				bestDistance = distance;
-				bestPoint = intersection;
+				bestT = intersection.t;
+				bestPoint = intersection.point;
 			}
 		}
 
-		return bestPoint;
+		return bestPoint == null ? fromCenter : bestPoint;
 	}
 
-	private java.awt.Point getLineIntersection(
+	private LineIntersection getLineIntersection(
 		double x1,
 		double y1,
 		double x2,
@@ -254,14 +249,43 @@ class AreaLootOverlay extends Overlay
 
 		double t = (((x1 - x3) * (y3 - y4)) - ((y1 - y3) * (x3 - x4))) / denominator;
 		double u = (((x1 - x3) * (y1 - y2)) - ((y1 - y3) * (x1 - x2))) / denominator;
-		if (t < 0 || t > 1 || u < 0 || u > 1)
+		if (u < 0 || u > 1)
 		{
 			return null;
 		}
 
-		return new java.awt.Point(
+		java.awt.Point point = new java.awt.Point(
 			(int) Math.round(x1 + (t * (x2 - x1))),
 			(int) Math.round(y1 + (t * (y2 - y1)))
 		);
+		return new LineIntersection(point, t);
+	}
+
+	private java.awt.Point moveToward(java.awt.Point from, java.awt.Point to, double pixels)
+	{
+		double dx = to.x - from.x;
+		double dy = to.y - from.y;
+		double distance = Math.hypot(dx, dy);
+		if (distance <= pixels || distance == 0)
+		{
+			return to;
+		}
+
+		return new java.awt.Point(
+			(int) Math.round(to.x + ((dx / distance) * pixels)),
+			(int) Math.round(to.y + ((dy / distance) * pixels))
+		);
+	}
+
+	private static class LineIntersection
+	{
+		private final java.awt.Point point;
+		private final double t;
+
+		private LineIntersection(java.awt.Point point, double t)
+		{
+			this.point = point;
+			this.t = t;
+		}
 	}
 }
