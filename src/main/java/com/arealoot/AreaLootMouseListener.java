@@ -13,7 +13,7 @@ class AreaLootMouseListener extends MouseAdapter
 	@Override
 	public MouseEvent mousePressed(MouseEvent event)
 	{
-		if (!plugin.isOverlayListVisible() || !SwingUtilities.isLeftMouseButton(event))
+		if (!plugin.shouldShowOverlayList() || !SwingUtilities.isLeftMouseButton(event))
 		{
 			return event;
 		}

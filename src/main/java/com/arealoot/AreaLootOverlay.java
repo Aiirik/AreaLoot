@@ -69,7 +69,7 @@ class AreaLootOverlay extends Overlay
 
 	private Dimension renderLootList(Graphics2D graphics)
 	{
-		if (!plugin.isOverlayListVisible())
+		if (!plugin.shouldShowOverlayList())
 		{
 			plugin.setOverlayRows(new ArrayList<>());
 			return null;
@@ -90,12 +90,12 @@ class AreaLootOverlay extends Overlay
 		graphics.drawRoundRect(listX, listY, listWidth, height, 6, 6);
 
 		graphics.setColor(config.overlayHeaderColor());
-		graphics.drawString("Area Loot", listX + PADDING, listY + 15);
+		graphics.drawString(getHeaderText(), listX + PADDING, listY + 15);
 
 		if (items.isEmpty())
 		{
 			graphics.setColor(config.overlaySecondaryTextColor());
-			graphics.drawString("No nearby loot", listX + PADDING, listY + HEADER_HEIGHT + 15);
+			graphics.drawString(getEmptyText(), listX + PADDING, listY + HEADER_HEIGHT + 15);
 			plugin.setOverlayRows(rowBounds);
 			return new Dimension(listWidth, height);
 		}
@@ -148,6 +148,16 @@ class AreaLootOverlay extends Overlay
 
 		plugin.setOverlayRows(rowBounds);
 		return new Dimension(listWidth, height);
+	}
+
+	private String getHeaderText()
+	{
+		return plugin.isOverlayAutoModeActive() ? "Area Loot (auto)" : "Area Loot";
+	}
+
+	private String getEmptyText()
+	{
+		return plugin.shouldShowOverlayStatus() ? plugin.getOverlayStatusText() : "No nearby loot";
 	}
 
 	private void renderSelectedTile(Graphics2D graphics)

@@ -14,37 +14,45 @@ import net.runelite.client.config.Units;
 @ConfigGroup("area-loot")
 public interface AreaLootConfig extends Config
 {
+	String OVERLAY_SECTION = "overlay";
+	String SIDE_PANEL_SECTION = "sidePanel";
 	String GENERAL_SECTION = "general";
-	String OVERLAY_LIST_SECTION = "overlayList";
 	String HIGHLIGHT_SECTION = "highlight";
 
 	@ConfigSection(
-		name = "General",
-		description = "Area Loot behavior",
+		name = "Overlay List",
+		description = "Overlay list controls, sizing, and colors",
 		position = 0
+	)
+	String overlaySection = OVERLAY_SECTION;
+
+	@ConfigSection(
+		name = "Side Panel",
+		description = "RuneLite side panel controls",
+		position = 1
+	)
+	String sidePanelSection = SIDE_PANEL_SECTION;
+
+	@ConfigSection(
+		name = "General",
+		description = "Shared Area Loot behavior",
+		position = 2
 	)
 	String generalSection = GENERAL_SECTION;
 
 	@ConfigSection(
-		name = "Overlay List",
-		description = "Overlay list position, sizing, and colors",
-		position = 1
-	)
-	String overlayListSection = OVERLAY_LIST_SECTION;
-
-	@ConfigSection(
 		name = "Highlight",
 		description = "Selected item highlight options",
-		position = 2
+		position = 3
 	)
 	String highlightSection = HIGHLIGHT_SECTION;
 
 	@ConfigItem(
 		keyName = "toggleHotkey",
-		name = "Toggle hotkey",
-		description = "Opens the Area Loot panel",
+		name = "Overlay toggle hotkey",
+		description = "Toggles the Area Loot overlay list",
 		position = 0,
-		section = GENERAL_SECTION
+		section = OVERLAY_SECTION
 	)
 	default Keybind toggleHotkey()
 	{
@@ -52,39 +60,15 @@ public interface AreaLootConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "showOverlayList",
-		name = "Show overlay list",
-		description = "Show a clickable loot list overlay when the Area Loot hotkey is pressed",
+		keyName = "autoShowHotkey",
+		name = "Auto show/hide hotkey",
+		description = "Toggles auto show/hide mode for the overlay list",
 		position = 1,
-		section = GENERAL_SECTION
+		section = OVERLAY_SECTION
 	)
-	default boolean showOverlayList()
+	default Keybind autoShowHotkey()
 	{
-		return true;
-	}
-
-	@ConfigItem(
-		keyName = "openSidePanel",
-		name = "Open side panel",
-		description = "Open the RuneLite side panel when the Area Loot hotkey is pressed",
-		position = 2,
-		section = GENERAL_SECTION
-	)
-	default boolean openSidePanel()
-	{
-		return false;
-	}
-
-	@ConfigItem(
-		keyName = "showItemIcons",
-		name = "Show item icons",
-		description = "Show item icons next to item names in the side panel and overlay list",
-		position = 3,
-		section = GENERAL_SECTION
-	)
-	default boolean showItemIcons()
-	{
-		return true;
+		return Keybind.NOT_SET;
 	}
 
 	@Range(
@@ -93,28 +77,12 @@ public interface AreaLootConfig extends Config
 	)
 	@ConfigItem(
 		keyName = "maxOverlayItems",
-		name = "Max overlay items",
+		name = "Max items",
 		description = "Maximum number of rows shown in the Area Loot overlay",
-		position = 4,
-		section = GENERAL_SECTION
+		position = 2,
+		section = OVERLAY_SECTION
 	)
 	default int maxOverlayItems()
-	{
-		return 12;
-	}
-
-	@Range(
-		min = 1,
-		max = 30
-	)
-	@ConfigItem(
-		keyName = "lootRadius",
-		name = "Loot radius",
-		description = "Maximum tile distance from your player to show in the Area Loot panel",
-		position = 5,
-		section = GENERAL_SECTION
-	)
-	default int lootRadius()
 	{
 		return 12;
 	}
@@ -128,8 +96,8 @@ public interface AreaLootConfig extends Config
 		keyName = "overlayX",
 		name = "X position",
 		description = "Default overlay list X position before moving it in overlay edit mode",
-		position = 0,
-		section = OVERLAY_LIST_SECTION
+		position = 3,
+		section = OVERLAY_SECTION
 	)
 	default int overlayX()
 	{
@@ -145,8 +113,8 @@ public interface AreaLootConfig extends Config
 		keyName = "overlayY",
 		name = "Y position",
 		description = "Default overlay list Y position before moving it in overlay edit mode",
-		position = 1,
-		section = OVERLAY_LIST_SECTION
+		position = 4,
+		section = OVERLAY_SECTION
 	)
 	default int overlayY()
 	{
@@ -162,8 +130,8 @@ public interface AreaLootConfig extends Config
 		keyName = "overlayWidth",
 		name = "Width",
 		description = "Overlay list width",
-		position = 2,
-		section = OVERLAY_LIST_SECTION
+		position = 5,
+		section = OVERLAY_SECTION
 	)
 	default int overlayWidth()
 	{
@@ -175,8 +143,8 @@ public interface AreaLootConfig extends Config
 		keyName = "overlayBackgroundColor",
 		name = "Background",
 		description = "Overlay list background color",
-		position = 3,
-		section = OVERLAY_LIST_SECTION
+		position = 6,
+		section = OVERLAY_SECTION
 	)
 	default Color overlayBackgroundColor()
 	{
@@ -188,8 +156,8 @@ public interface AreaLootConfig extends Config
 		keyName = "overlayBorderColor",
 		name = "Border",
 		description = "Overlay list border color",
-		position = 4,
-		section = OVERLAY_LIST_SECTION
+		position = 7,
+		section = OVERLAY_SECTION
 	)
 	default Color overlayBorderColor()
 	{
@@ -200,8 +168,8 @@ public interface AreaLootConfig extends Config
 		keyName = "overlayHeaderColor",
 		name = "Header text",
 		description = "Overlay list header text color",
-		position = 5,
-		section = OVERLAY_LIST_SECTION
+		position = 8,
+		section = OVERLAY_SECTION
 	)
 	default Color overlayHeaderColor()
 	{
@@ -212,8 +180,8 @@ public interface AreaLootConfig extends Config
 		keyName = "overlayTextColor",
 		name = "Item text",
 		description = "Overlay list item text color",
-		position = 6,
-		section = OVERLAY_LIST_SECTION
+		position = 9,
+		section = OVERLAY_SECTION
 	)
 	default Color overlayTextColor()
 	{
@@ -224,8 +192,8 @@ public interface AreaLootConfig extends Config
 		keyName = "overlaySecondaryTextColor",
 		name = "Secondary text",
 		description = "Overlay list distance and empty-state text color",
-		position = 7,
-		section = OVERLAY_LIST_SECTION
+		position = 10,
+		section = OVERLAY_SECTION
 	)
 	default Color overlaySecondaryTextColor()
 	{
@@ -237,12 +205,52 @@ public interface AreaLootConfig extends Config
 		keyName = "overlaySelectedRowColor",
 		name = "Selected row",
 		description = "Overlay list selected row color",
-		position = 8,
-		section = OVERLAY_LIST_SECTION
+		position = 11,
+		section = OVERLAY_SECTION
 	)
 	default Color overlaySelectedRowColor()
 	{
 		return new Color(0, 200, 255, 65);
+	}
+
+	@ConfigItem(
+		keyName = "sidePanelHotkey",
+		name = "Side panel hotkey",
+		description = "Opens the Area Loot side panel",
+		position = 0,
+		section = SIDE_PANEL_SECTION
+	)
+	default Keybind sidePanelHotkey()
+	{
+		return Keybind.NOT_SET;
+	}
+
+	@ConfigItem(
+		keyName = "showItemIcons",
+		name = "Show item icons",
+		description = "Show item icons next to item names in the side panel and overlay list",
+		position = 0,
+		section = GENERAL_SECTION
+	)
+	default boolean showItemIcons()
+	{
+		return true;
+	}
+
+	@Range(
+		min = 1,
+		max = 30
+	)
+	@ConfigItem(
+		keyName = "lootRadius",
+		name = "Loot radius",
+		description = "Maximum tile distance from your player to show in the Area Loot panel",
+		position = 1,
+		section = GENERAL_SECTION
+	)
+	default int lootRadius()
+	{
+		return 12;
 	}
 
 	@Alpha

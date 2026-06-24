@@ -91,15 +91,34 @@ public class AreaLootPlugin extends Plugin
 	@Getter
 	private volatile WorldPoint selectedLocation;
 	private int selectedItemId = -1;
-	@Getter
-	private volatile boolean overlayListVisible;
+	private volatile boolean manualOverlayEnabled;
+	private volatile boolean autoOverlayEnabled;
+	private volatile long overlayStatusUntilMillis;
 
-	private final HotkeyListener hotkeyListener = new HotkeyListener(() -> config.toggleHotkey())
+	private final HotkeyListener overlayHotkeyListener = new HotkeyListener(() -> config.toggleHotkey())
 	{
 		@Override
 		public void hotkeyPressed()
 		{
-			toggleLootWindow();
+			toggleOverlay();
+		}
+	};
+
+	private final HotkeyListener sidePanelHotkeyListener = new HotkeyListener(() -> config.sidePanelHotkey())
+	{
+		@Override
+		public void hotkeyPressed()
+		{
+			openSidePanel();
+		}
+	};
+
+	private final HotkeyListener autoShowHotkeyListener = new HotkeyListener(() -> config.autoShowHotkey())
+	{
+		@Override
+		public void hotkeyPressed()
+		{
+			toggleAutoOverlay();
 		}
 	};
 
@@ -116,7 +135,9 @@ public class AreaLootPlugin extends Plugin
 			.build();
 
 		overlayManager.add(overlay);
-		keyManager.registerKeyListener(hotkeyListener);
+		keyManager.registerKeyListener(overlayHotkeyListener);
+		keyManager.registerKeyListener(autoShowHotkeyListener);
+		keyManager.registerKeyListener(sidePanelHotkeyListener);
 		mouseManager.registerMouseListener(mouseListener);
 		clientToolbar.addNavigation(navButton);
 	}
@@ -127,14 +148,18 @@ public class AreaLootPlugin extends Plugin
 		log.debug("Area Loot stopped");
 		clientToolbar.removeNavigation(navButton);
 		mouseManager.unregisterMouseListener(mouseListener);
-		keyManager.unregisterKeyListener(hotkeyListener);
+		keyManager.unregisterKeyListener(sidePanelHotkeyListener);
+		keyManager.unregisterKeyListener(autoShowHotkeyListener);
+		keyManager.unregisterKeyListener(overlayHotkeyListener);
 		overlayManager.remove(overlay);
 		groundItems.clear();
 		nearbyLoot = Collections.emptyList();
 		clearOverlayRows();
 		selectedLocation = null;
 		selectedItemId = -1;
-		overlayListVisible = false;
+		manualOverlayEnabled = false;
+		autoOverlayEnabled = false;
+		overlayStatusUntilMillis = 0;
 	}
 
 	@Subscribe
@@ -170,7 +195,9 @@ public class AreaLootPlugin extends Plugin
 			clearOverlayRows();
 			selectedLocation = null;
 			selectedItemId = -1;
-			overlayListVisible = false;
+			manualOverlayEnabled = false;
+			autoOverlayEnabled = false;
+			overlayStatusUntilMillis = 0;
 			rebuildPanel(Collections.emptyList());
 		}
 	}
@@ -202,6 +229,31 @@ public class AreaLootPlugin extends Plugin
 		return nearbyLoot;
 	}
 
+	boolean shouldShowOverlayList()
+	{
+		if (shouldShowOverlayStatus())
+		{
+			return true;
+		}
+
+		return manualOverlayEnabled || (autoOverlayEnabled && !nearbyLoot.isEmpty());
+	}
+
+	boolean isOverlayAutoModeActive()
+	{
+		return autoOverlayEnabled;
+	}
+
+	boolean shouldShowOverlayStatus()
+	{
+		return System.currentTimeMillis() < overlayStatusUntilMillis;
+	}
+
+	String getOverlayStatusText()
+	{
+		return autoOverlayEnabled ? "Area Loot (auto) Enabled" : "Area Loot (auto) Disabled";
+	}
+
 	void setOverlayRows(List<SimpleEntry<Rectangle, AreaLootItem>> rows)
 	{
 		synchronized (overlayRows)
@@ -227,17 +279,40 @@ public class AreaLootPlugin extends Plugin
 		return null;
 	}
 
-	private void toggleLootWindow()
+	private void toggleOverlay()
 	{
 		clientThread.invoke(() ->
 		{
 			refreshLootSnapshot();
-			overlayListVisible = config.showOverlayList() && !overlayListVisible;
-
-			if (config.openSidePanel())
+			manualOverlayEnabled = !manualOverlayEnabled;
+			if (manualOverlayEnabled)
 			{
-				SwingUtilities.invokeLater(() -> clientToolbar.openPanel(navButton));
+				autoOverlayEnabled = false;
+				overlayStatusUntilMillis = 0;
 			}
+		});
+	}
+
+	private void toggleAutoOverlay()
+	{
+		clientThread.invoke(() ->
+		{
+			refreshLootSnapshot();
+			autoOverlayEnabled = !autoOverlayEnabled;
+			if (autoOverlayEnabled)
+			{
+				manualOverlayEnabled = false;
+			}
+			overlayStatusUntilMillis = System.currentTimeMillis() + 3000L;
+		});
+	}
+
+	private void openSidePanel()
+	{
+		clientThread.invoke(() ->
+		{
+			refreshLootSnapshot();
+			SwingUtilities.invokeLater(() -> clientToolbar.openPanel(navButton));
 		});
 	}
 
