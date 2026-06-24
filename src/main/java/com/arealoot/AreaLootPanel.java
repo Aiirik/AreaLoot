@@ -37,6 +37,11 @@ class AreaLootPanel extends PluginPanel
 		header.setText(items.isEmpty() ? "No nearby loot" : "Nearby loot (" + items.size() + ")");
 		add(header);
 
+		if (plugin.hasSelectedLoot())
+		{
+			add(createClearButton());
+		}
+
 		for (AreaLootItem item : items)
 		{
 			add(createRow(item));
@@ -73,5 +78,20 @@ class AreaLootPanel extends PluginPanel
 		}
 		row.addActionListener(e -> plugin.selectLoot(item));
 		return row;
+	}
+
+	private JButton createClearButton()
+	{
+		JButton button = new JButton("Clear highlight");
+		button.setHorizontalAlignment(SwingConstants.CENTER);
+		button.setFocusable(false);
+		button.setForeground(ColorScheme.TEXT_COLOR);
+		button.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		button.setBorder(BorderFactory.createCompoundBorder(
+			BorderFactory.createLineBorder(ColorScheme.BORDER_COLOR),
+			BorderFactory.createEmptyBorder(4, 6, 4, 6)
+		));
+		button.addActionListener(e -> plugin.clearSelectedLoot());
+		return button;
 	}
 }

@@ -224,6 +224,23 @@ public class AreaLootPlugin extends Plugin
 		rebuildPanel(nearbyLoot);
 	}
 
+	void clearSelectedLoot()
+	{
+		selectedLocation = null;
+		selectedItemId = -1;
+		rebuildPanel(nearbyLoot);
+	}
+
+	boolean hasSelectedLoot()
+	{
+		return selectedLocation != null;
+	}
+
+	boolean isSelectedLoot(AreaLootItem item)
+	{
+		return selectedLocation != null && item.getId() == selectedItemId && item.getLocation().equals(selectedLocation);
+	}
+
 	List<AreaLootItem> getNearbyLootSnapshot()
 	{
 		return nearbyLoot;

@@ -92,10 +92,11 @@ class AreaLootOverlay extends Overlay
 		graphics.setColor(config.overlayHeaderColor());
 		graphics.drawString(getHeaderText(), listX + PADDING, listY + 15);
 
+		int rowStartY = listY + HEADER_HEIGHT;
 		if (items.isEmpty())
 		{
 			graphics.setColor(config.overlaySecondaryTextColor());
-			graphics.drawString(getEmptyText(), listX + PADDING, listY + HEADER_HEIGHT + 15);
+			graphics.drawString(getEmptyText(), listX + PADDING, rowStartY + 15);
 			plugin.setOverlayRows(rowBounds);
 			return new Dimension(listWidth, height);
 		}
@@ -104,7 +105,7 @@ class AreaLootOverlay extends Overlay
 		for (int i = 0; i < rowCount; i++)
 		{
 			AreaLootItem item = items.get(i);
-			int y = listY + HEADER_HEIGHT + (i * ROW_HEIGHT);
+			int y = rowStartY + (i * ROW_HEIGHT);
 			Rectangle localRow = new Rectangle(listX, y, listWidth, ROW_HEIGHT);
 			Rectangle clickRow = new Rectangle(origin.x + listX, origin.y + y, listWidth, ROW_HEIGHT);
 			rowBounds.add(new SimpleEntry<>(clickRow, item));

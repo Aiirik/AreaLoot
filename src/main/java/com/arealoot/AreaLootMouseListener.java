@@ -24,7 +24,14 @@ class AreaLootMouseListener extends MouseAdapter
 			return event;
 		}
 
-		plugin.selectLoot(item);
+		if (plugin.isSelectedLoot(item))
+		{
+			plugin.clearSelectedLoot();
+		}
+		else
+		{
+			plugin.selectLoot(item);
+		}
 		event.consume();
 		return event;
 	}
