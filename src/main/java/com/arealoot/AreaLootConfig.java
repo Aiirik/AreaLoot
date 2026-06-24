@@ -206,12 +206,36 @@ public interface AreaLootConfig extends Config
 
 	@ConfigItem(
 		keyName = "overlaySecondaryTextColor",
-		name = "Secondary text",
-		description = "Overlay list distance and empty-state text color",
+		name = "Status text",
+		description = "Overlay status and empty message text color, such as No nearby loot and auto mode messages",
 		position = 11,
 		section = OVERLAY_SECTION
 	)
 	default Color overlaySecondaryTextColor()
+	{
+		return new Color(165, 165, 165);
+	}
+
+	@ConfigItem(
+		keyName = "geValueTextColor",
+		name = "GE value text",
+		description = "GE value text color in the overlay list and side panel",
+		position = 12,
+		section = OVERLAY_SECTION
+	)
+	default Color geValueTextColor()
+	{
+		return Color.YELLOW;
+	}
+
+	@ConfigItem(
+		keyName = "tileDistanceTextColor",
+		name = "Tile distance text",
+		description = "Tile distance text color in the overlay list and side panel",
+		position = 13,
+		section = OVERLAY_SECTION
+	)
+	default Color tileDistanceTextColor()
 	{
 		return new Color(165, 165, 165);
 	}
@@ -221,7 +245,7 @@ public interface AreaLootConfig extends Config
 		keyName = "overlaySelectedRowColor",
 		name = "Selected row",
 		description = "Overlay list selected row color",
-		position = 12,
+		position = 14,
 		section = OVERLAY_SECTION
 	)
 	default Color overlaySelectedRowColor()
@@ -266,10 +290,22 @@ public interface AreaLootConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "showGeValue",
+		name = "Show GE value",
+		description = "Show each loot item's total Grand Exchange value",
+		position = 2,
+		section = GENERAL_SECTION
+	)
+	default boolean showGeValue()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "drawHighlightLine",
 		name = "Draw highlight line",
 		description = "Draw a line from your player to the highlighted loot item",
-		position = 2,
+		position = 3,
 		section = GENERAL_SECTION
 	)
 	default boolean drawHighlightLine()
@@ -281,7 +317,7 @@ public interface AreaLootConfig extends Config
 		keyName = "onlyShowHighlightedItemMenu",
 		name = "Only show highlighted item",
 		description = "When right-clicking the highlighted item's tile, hide other ground items from that menu",
-		position = 3,
+		position = 4,
 		section = GENERAL_SECTION
 	)
 	default boolean onlyShowHighlightedItemMenu()
@@ -297,7 +333,7 @@ public interface AreaLootConfig extends Config
 		keyName = "lootRadius",
 		name = "Loot radius",
 		description = "Maximum tile distance from your player to show in the Area Loot panel",
-		position = 4,
+		position = 5,
 		section = GENERAL_SECTION
 	)
 	default int lootRadius()

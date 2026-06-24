@@ -487,12 +487,14 @@ public class AreaLootPlugin extends Plugin
 			for (TileItem tileItem : entry.getValue())
 			{
 				ItemComposition composition = itemManager.getItemComposition(tileItem.getId());
+				long geValue = (long) itemManager.getItemPrice(tileItem.getId()) * tileItem.getQuantity();
 				items.add(new AreaLootItem(
 					tileItem.getId(),
 					tileItem.getQuantity(),
 					composition.getName(),
 					location,
-					distance
+					distance,
+					geValue
 				));
 			}
 		}

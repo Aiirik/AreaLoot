@@ -11,4 +11,5 @@ class AreaLootItem
 	private final String name;
 	private final WorldPoint location;
 	private final int distance;
+	private final long geValue;
 }

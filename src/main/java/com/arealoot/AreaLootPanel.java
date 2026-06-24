@@ -1,5 +1,6 @@
 package com.arealoot;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.util.List;
 import javax.swing.BorderFactory;
@@ -49,10 +50,13 @@ class AreaLootPanel extends PluginPanel
 	private JButton createRow(AreaLootItem item)
 	{
 		String quantity = item.getQuantity() > 1 ? " x" + item.getQuantity() : "";
-		String distanceText = config.showTileDistance()
-			? "<br><span style='color:#a5a5a5'>" + item.getDistance() + " tiles away</span>"
+		String geValueText = config.showGeValue()
+			? "&nbsp;&nbsp;<font color='" + toHtmlColor(config.geValueTextColor()) + "'>" + formatGeValue(item) + "</font>"
 			: "";
-		JButton row = new JButton("<html><b>" + item.getName() + "</b>" + quantity + distanceText + "</html>");
+		String distanceText = config.showTileDistance()
+			? "<br><font color='" + toHtmlColor(config.tileDistanceTextColor()) + "'>" + item.getDistance() + " tiles away</font>"
+			: "";
+		JButton row = new JButton("<html><b>" + escapeHtml(item.getName()) + "</b>" + quantity + geValueText + distanceText + "</html>");
 		row.setHorizontalAlignment(SwingConstants.LEFT);
 		row.setPreferredSize(ROW_SIZE);
 		row.setMinimumSize(ROW_SIZE);
@@ -86,5 +90,24 @@ class AreaLootPanel extends PluginPanel
 			}
 		});
 		return row;
+	}
+
+	private String formatGeValue(AreaLootItem item)
+	{
+		return AreaLootValueFormatter.formatGeValue(item.getGeValue());
+	}
+
+	private String toHtmlColor(Color color)
+	{
+		return String.format("#%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue());
+	}
+
+	private String escapeHtml(String text)
+	{
+		return text
+			.replace("&", "&amp;")
+			.replace("<", "&lt;")
+			.replace(">", "&gt;")
+			.replace("\"", "&quot;");
 	}
 }

@@ -31,6 +31,7 @@ class AreaLootOverlay extends Overlay
 	private static final int ROW_HEIGHT = 24;
 	private static final int ICON_SIZE = 18;
 	private static final int PADDING = 6;
+	private static final int METADATA_GAP = 12;
 	private static final double LINE_EDGE_GAP = 3.0;
 	private static final long FADE_DURATION_MILLIS = 220L;
 
@@ -228,10 +229,16 @@ class AreaLootOverlay extends Overlay
 
 			graphics.setColor(config.overlayTextColor());
 			graphics.drawString(text, textX, y + 16);
+			if (config.showGeValue())
+			{
+				String valueText = formatGeValue(item);
+				graphics.setColor(config.geValueTextColor());
+				graphics.drawString(valueText, textX + metrics.stringWidth(text) + METADATA_GAP, y + 16);
+			}
 			if (config.showTileDistance())
 			{
 				String distanceText = item.getDistance() + "t";
-				graphics.setColor(config.overlaySecondaryTextColor());
+				graphics.setColor(config.tileDistanceTextColor());
 				graphics.drawString(distanceText, listX + listWidth - PADDING - metrics.stringWidth(distanceText), y + 16);
 			}
 		}
@@ -317,7 +324,11 @@ class AreaLootOverlay extends Overlay
 			}
 			if (config.showTileDistance())
 			{
-				rowWidth += 12 + metrics.stringWidth(item.getDistance() + "t");
+				rowWidth += METADATA_GAP + metrics.stringWidth(item.getDistance() + "t");
+			}
+			if (config.showGeValue())
+			{
+				rowWidth += METADATA_GAP + metrics.stringWidth(formatGeValue(item));
 			}
 			width = Math.max(width, rowWidth);
 		}
@@ -333,6 +344,11 @@ class AreaLootOverlay extends Overlay
 	private int getConfiguredListWidth()
 	{
 		return Math.max(100, config.overlayWidth());
+	}
+
+	private String formatGeValue(AreaLootItem item)
+	{
+		return AreaLootValueFormatter.formatGeValue(item.getGeValue());
 	}
 
 	private void renderHighlightLine(Graphics2D graphics, LocalPoint itemPoint, Color color)
