@@ -28,6 +28,7 @@ import net.runelite.api.Tile;
 import net.runelite.api.TileItem;
 import net.runelite.api.WorldView;
 import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.events.GameTick;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.ItemDespawned;
 import net.runelite.api.events.ItemQuantityChanged;
@@ -60,6 +61,8 @@ public class AreaLootPlugin extends Plugin
 	private static final long AUTO_STATUS_DISABLED_MILLIS = 1000L;
 
 	private final Map<WorldPoint, List<TileItem>> groundItems = new HashMap<>();
+	private final Map<Integer, String> itemNameCache = new HashMap<>();
+	private final Map<Integer, Integer> itemPriceCache = new HashMap<>();
 
 	@Inject
 	private Client client;
@@ -96,9 +99,12 @@ public class AreaLootPlugin extends Plugin
 	private volatile List<AreaLootItem> nearbyLoot = Collections.emptyList();
 	private final List<SimpleEntry<Rectangle, AreaLootItem>> overlayRows = new ArrayList<>();
 	private boolean sidePanelRegistered;
+	private boolean sidePanelActive;
+	private boolean lootDirty;
 
 	@Getter
 	private volatile WorldPoint selectedLocation;
+	private WorldPoint lastPlayerLocation;
 	private int selectedItemId = -1;
 	private volatile boolean manualOverlayEnabled;
 	private volatile boolean autoOverlayEnabled;
@@ -141,6 +147,11 @@ public class AreaLootPlugin extends Plugin
 		navButton = NavigationButton.builder()
 			.tooltip("Area Loot")
 			.icon(createIcon())
+			.onClick(() -> clientThread.invoke(() ->
+			{
+				sidePanelActive = true;
+				refreshLootSnapshot();
+			}))
 			.priority(5)
 			.panel(panel)
 			.build();
@@ -162,17 +173,22 @@ public class AreaLootPlugin extends Plugin
 			clientToolbar.removeNavigation(navButton);
 			sidePanelRegistered = false;
 		}
+		sidePanelActive = false;
 		mouseManager.unregisterMouseListener(mouseListener);
 		keyManager.unregisterKeyListener(autoShowHotkeyListener);
 		keyManager.unregisterKeyListener(overlayHotkeyListener);
 		overlayManager.remove(overlay);
 		groundItems.clear();
+		itemNameCache.clear();
+		itemPriceCache.clear();
 		nearbyLoot = Collections.emptyList();
 		clearOverlayRows();
 		selectedLocation = null;
+		lastPlayerLocation = null;
 		selectedItemId = -1;
 		manualOverlayEnabled = false;
 		autoOverlayEnabled = false;
+		lootDirty = false;
 		overlayStatusUntilMillis = 0;
 		overlayStatusText = "";
 		overlayFadeOutActive = false;
@@ -183,14 +199,14 @@ public class AreaLootPlugin extends Plugin
 	{
 		WorldPoint location = event.getTile().getWorldLocation();
 		groundItems.computeIfAbsent(location, ignored -> new ArrayList<>()).add(event.getItem());
-		refreshLootSnapshot();
+		lootDirty = true;
 	}
 
 	@Subscribe
 	public void onItemDespawned(ItemDespawned event)
 	{
 		removeItem(event.getTile(), event.getItem());
-		refreshLootSnapshot();
+		lootDirty = true;
 	}
 
 	@Subscribe
@@ -198,7 +214,22 @@ public class AreaLootPlugin extends Plugin
 	{
 		removeItem(event.getTile(), event.getItem());
 		groundItems.computeIfAbsent(event.getTile().getWorldLocation(), ignored -> new ArrayList<>()).add(event.getItem());
-		refreshLootSnapshot();
+		lootDirty = true;
+	}
+
+	@Subscribe
+	public void onGameTick(GameTick event)
+	{
+		if (!shouldMaintainLootSnapshot())
+		{
+			return;
+		}
+
+		if (lootDirty || hasPlayerMoved())
+		{
+			lootDirty = false;
+			refreshLootSnapshot();
+		}
 	}
 
 	@Subscribe
@@ -207,12 +238,17 @@ public class AreaLootPlugin extends Plugin
 		if (event.getGameState() == GameState.LOADING || event.getGameState() == GameState.LOGIN_SCREEN)
 		{
 			groundItems.clear();
+			itemNameCache.clear();
+			itemPriceCache.clear();
 			nearbyLoot = Collections.emptyList();
 			clearOverlayRows();
 			selectedLocation = null;
+			lastPlayerLocation = null;
 			selectedItemId = -1;
 			manualOverlayEnabled = false;
 			autoOverlayEnabled = false;
+			sidePanelActive = false;
+			lootDirty = false;
 			overlayStatusUntilMillis = 0;
 			overlayStatusText = "";
 			overlayFadeOutActive = false;
@@ -236,6 +272,18 @@ public class AreaLootPlugin extends Plugin
 		else if ("sidePanelEnabled".equals(key))
 		{
 			updateSidePanelRegistration();
+		}
+		else if ("sortMode".equals(key) || "minimumGeValue".equals(key) || "lootRadius".equals(key))
+		{
+			lootDirty = true;
+			if (shouldMaintainLootSnapshot())
+			{
+				clientThread.invoke(() ->
+				{
+					lootDirty = false;
+					refreshLootSnapshot();
+				});
+			}
 		}
 	}
 
@@ -407,6 +455,7 @@ public class AreaLootPlugin extends Plugin
 
 		clientThread.invoke(() ->
 		{
+			sidePanelActive = true;
 			refreshLootSnapshot();
 			SwingUtilities.invokeLater(() -> clientToolbar.openPanel(navButton));
 		});
@@ -428,11 +477,13 @@ public class AreaLootPlugin extends Plugin
 			keyManager.unregisterKeyListener(sidePanelHotkeyListener);
 			clientToolbar.removeNavigation(navButton);
 			sidePanelRegistered = false;
+			sidePanelActive = false;
 		}
 	}
 
 	private void refreshLootSnapshot()
 	{
+		lastPlayerLocation = getPlayerLocation();
 		List<AreaLootItem> items = getNearbyLoot();
 		if (selectedLocation != null && items.stream().noneMatch(this::isSelectedItem))
 		{
@@ -442,6 +493,28 @@ public class AreaLootPlugin extends Plugin
 
 		nearbyLoot = Collections.unmodifiableList(items);
 		rebuildPanel(nearbyLoot);
+	}
+
+	private boolean shouldMaintainLootSnapshot()
+	{
+		return manualOverlayEnabled || autoOverlayEnabled || sidePanelActive || selectedLocation != null;
+	}
+
+	private boolean hasPlayerMoved()
+	{
+		WorldPoint playerLocation = getPlayerLocation();
+		return playerLocation != null && !playerLocation.equals(lastPlayerLocation);
+	}
+
+	private WorldPoint getPlayerLocation()
+	{
+		Player player = client.getLocalPlayer();
+		if (client.getGameState() != GameState.LOGGED_IN || player == null)
+		{
+			return null;
+		}
+
+		return player.getWorldLocation();
 	}
 
 	private boolean isSelectedItem(AreaLootItem item)
@@ -484,7 +557,7 @@ public class AreaLootPlugin extends Plugin
 
 	private void rebuildPanel(List<AreaLootItem> items)
 	{
-		if (panel != null)
+		if (panel != null && sidePanelRegistered)
 		{
 			SwingUtilities.invokeLater(() -> panel.rebuild(items));
 		}
@@ -500,6 +573,7 @@ public class AreaLootPlugin extends Plugin
 
 		WorldPoint playerLocation = player.getWorldLocation();
 		int radius = config.lootRadius();
+		long minimumGeValue = parseMinimumGeValue();
 		List<AreaLootItem> items = new ArrayList<>();
 
 		for (Map.Entry<WorldPoint, List<TileItem>> entry : groundItems.entrySet())
@@ -518,12 +592,16 @@ public class AreaLootPlugin extends Plugin
 
 			for (TileItem tileItem : entry.getValue())
 			{
-				ItemComposition composition = itemManager.getItemComposition(tileItem.getId());
-				long geValue = (long) itemManager.getItemPrice(tileItem.getId()) * tileItem.getQuantity();
+				long geValue = (long) getItemPrice(tileItem.getId()) * tileItem.getQuantity();
+				if (geValue < minimumGeValue)
+				{
+					continue;
+				}
+
 				items.add(new AreaLootItem(
 					tileItem.getId(),
 					tileItem.getQuantity(),
-					composition.getName(),
+					getItemName(tileItem.getId()),
 					location,
 					distance,
 					geValue
@@ -531,10 +609,85 @@ public class AreaLootPlugin extends Plugin
 			}
 		}
 
+		sortLoot(items);
+		return items;
+	}
+
+	private void sortLoot(List<AreaLootItem> items)
+	{
+		if (config.sortMode() == AreaLootSortMode.GE_HIGH_TO_LOW)
+		{
+			items.sort(Comparator
+				.comparingLong(AreaLootItem::getGeValue).reversed()
+				.thenComparingInt(AreaLootItem::getDistance)
+				.thenComparing(AreaLootItem::getName, String.CASE_INSENSITIVE_ORDER));
+			return;
+		}
+
 		items.sort(Comparator
 			.comparingInt(AreaLootItem::getDistance)
 			.thenComparing(AreaLootItem::getName, String.CASE_INSENSITIVE_ORDER));
-		return items;
+	}
+
+	private long parseMinimumGeValue()
+	{
+		String value = config.minimumGeValue();
+		if (value == null)
+		{
+			return 0;
+		}
+
+		String normalized = value.trim().toLowerCase().replace(",", "").replace("_", "");
+		if (normalized.isEmpty())
+		{
+			return 0;
+		}
+
+		long multiplier = 1;
+		if (normalized.endsWith("k"))
+		{
+			multiplier = 1_000;
+			normalized = normalized.substring(0, normalized.length() - 1).trim();
+		}
+		else if (normalized.endsWith("m"))
+		{
+			multiplier = 1_000_000;
+			normalized = normalized.substring(0, normalized.length() - 1).trim();
+		}
+
+		try
+		{
+			double amount = Double.parseDouble(normalized);
+			return Math.max(0, (long) (amount * multiplier));
+		}
+		catch (NumberFormatException ex)
+		{
+			log.debug("Invalid Area Loot minimum GE value: {}", value);
+			return 0;
+		}
+	}
+
+	private String getItemName(int itemId)
+	{
+		String name = itemNameCache.get(itemId);
+		if (name == null)
+		{
+			ItemComposition composition = itemManager.getItemComposition(itemId);
+			name = composition.getName();
+			itemNameCache.put(itemId, name);
+		}
+		return name;
+	}
+
+	private int getItemPrice(int itemId)
+	{
+		Integer price = itemPriceCache.get(itemId);
+		if (price == null)
+		{
+			price = itemManager.getItemPrice(itemId);
+			itemPriceCache.put(itemId, price);
+		}
+		return price;
 	}
 
 	private void removeItem(Tile tile, TileItem item)

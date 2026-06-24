@@ -314,10 +314,34 @@ public interface AreaLootConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "sortMode",
+		name = "Sort list by",
+		description = "Choose how Area Loot sorts nearby ground items",
+		position = 3,
+		section = GENERAL_SECTION
+	)
+	default AreaLootSortMode sortMode()
+	{
+		return AreaLootSortMode.NEAREST;
+	}
+
+	@ConfigItem(
+		keyName = "minimumGeValue",
+		name = "Minimum GE value",
+		description = "Only show drops worth at least this much GP. Supports values like 1000, 10k, or 1m",
+		position = 4,
+		section = GENERAL_SECTION
+	)
+	default String minimumGeValue()
+	{
+		return "0";
+	}
+
+	@ConfigItem(
 		keyName = "drawHighlightLine",
 		name = "Draw highlight line",
 		description = "Draw a line from your player to the highlighted loot item",
-		position = 3,
+		position = 5,
 		section = GENERAL_SECTION
 	)
 	default boolean drawHighlightLine()
@@ -329,7 +353,7 @@ public interface AreaLootConfig extends Config
 		keyName = "onlyShowHighlightedItemMenu",
 		name = "Only show highlighted item",
 		description = "When right-clicking the highlighted item's tile, hide other ground items from that menu",
-		position = 4,
+		position = 6,
 		section = GENERAL_SECTION
 	)
 	default boolean onlyShowHighlightedItemMenu()
@@ -345,7 +369,7 @@ public interface AreaLootConfig extends Config
 		keyName = "lootRadius",
 		name = "Loot radius",
 		description = "Maximum tile distance from your player to show in the Area Loot (1-30)",
-		position = 5,
+		position = 7,
 		section = GENERAL_SECTION
 	)
 	default int lootRadius()
