@@ -56,6 +56,9 @@ import net.runelite.client.util.HotkeyListener;
 )
 public class AreaLootPlugin extends Plugin
 {
+	private static final long AUTO_STATUS_ENABLED_MILLIS = 1200L;
+	private static final long AUTO_STATUS_DISABLED_MILLIS = 900L;
+
 	private final Map<WorldPoint, List<TileItem>> groundItems = new HashMap<>();
 
 	@Inject
@@ -99,6 +102,8 @@ public class AreaLootPlugin extends Plugin
 	private volatile boolean manualOverlayEnabled;
 	private volatile boolean autoOverlayEnabled;
 	private volatile long overlayStatusUntilMillis;
+	private volatile String overlayStatusText = "";
+	private volatile boolean overlayFadeOutActive;
 
 	private final HotkeyListener overlayHotkeyListener = new HotkeyListener(() -> config.toggleHotkey())
 	{
@@ -165,6 +170,8 @@ public class AreaLootPlugin extends Plugin
 		manualOverlayEnabled = false;
 		autoOverlayEnabled = false;
 		overlayStatusUntilMillis = 0;
+		overlayStatusText = "";
+		overlayFadeOutActive = false;
 	}
 
 	@Subscribe
@@ -203,6 +210,8 @@ public class AreaLootPlugin extends Plugin
 			manualOverlayEnabled = false;
 			autoOverlayEnabled = false;
 			overlayStatusUntilMillis = 0;
+			overlayStatusText = "";
+			overlayFadeOutActive = false;
 			rebuildPanel(Collections.emptyList());
 		}
 	}
@@ -280,7 +289,7 @@ public class AreaLootPlugin extends Plugin
 			return true;
 		}
 
-		return manualOverlayEnabled || (autoOverlayEnabled && !nearbyLoot.isEmpty());
+		return manualOverlayEnabled || (autoOverlayEnabled && !nearbyLoot.isEmpty()) || overlayFadeOutActive;
 	}
 
 	boolean isOverlayAutoModeActive()
@@ -295,7 +304,21 @@ public class AreaLootPlugin extends Plugin
 
 	String getOverlayStatusText()
 	{
-		return autoOverlayEnabled ? "Area Loot (auto) Enabled" : "Area Loot (auto) Disabled";
+		return overlayStatusText;
+	}
+
+	boolean isOverlayFadeOutActive()
+	{
+		return overlayFadeOutActive;
+	}
+
+	void finishOverlayFadeOut()
+	{
+		overlayFadeOutActive = false;
+		if (!shouldShowOverlayStatus())
+		{
+			overlayStatusText = "";
+		}
 	}
 
 	void setOverlayRows(List<SimpleEntry<Rectangle, AreaLootItem>> rows)
@@ -328,11 +351,18 @@ public class AreaLootPlugin extends Plugin
 		clientThread.invoke(() ->
 		{
 			refreshLootSnapshot();
+			boolean wasShowing = shouldShowOverlayList();
 			manualOverlayEnabled = !manualOverlayEnabled;
 			if (manualOverlayEnabled)
 			{
 				autoOverlayEnabled = false;
 				overlayStatusUntilMillis = 0;
+				overlayStatusText = "";
+				overlayFadeOutActive = false;
+			}
+			else if (wasShowing && config.animateOverlay())
+			{
+				overlayFadeOutActive = true;
 			}
 		});
 	}
@@ -343,11 +373,20 @@ public class AreaLootPlugin extends Plugin
 		{
 			refreshLootSnapshot();
 			autoOverlayEnabled = !autoOverlayEnabled;
+			long now = System.currentTimeMillis();
 			if (autoOverlayEnabled)
 			{
 				manualOverlayEnabled = false;
+				overlayStatusText = "Area Loot (auto) Enabled";
+				overlayStatusUntilMillis = now + AUTO_STATUS_ENABLED_MILLIS;
+				overlayFadeOutActive = false;
 			}
-			overlayStatusUntilMillis = System.currentTimeMillis() + 3000L;
+			else
+			{
+				overlayStatusText = "Area Loot (auto) Disabled";
+				overlayStatusUntilMillis = now + AUTO_STATUS_DISABLED_MILLIS;
+				overlayFadeOutActive = false;
+			}
 		});
 	}
 

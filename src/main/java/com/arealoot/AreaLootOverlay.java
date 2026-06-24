@@ -1,7 +1,9 @@
 package com.arealoot;
 
+import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Composite;
 import java.awt.Dimension;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
@@ -30,11 +32,19 @@ class AreaLootOverlay extends Overlay
 	private static final int ICON_SIZE = 18;
 	private static final int PADDING = 6;
 	private static final double LINE_EDGE_GAP = 3.0;
+	private static final long FADE_DURATION_MILLIS = 220L;
 
 	private final Client client;
 	private final AreaLootPlugin plugin;
 	private final AreaLootConfig config;
 	private final ItemManager itemManager;
+	private List<AreaLootItem> lastVisibleItems = new ArrayList<>();
+	private String lastHeaderText = "Area Loot";
+	private String lastEmptyText = "No nearby loot";
+	private boolean lastVisibleListRendered;
+	private boolean wasShowing;
+	private long fadeInStartedAtMillis;
+	private long fadeStartedAtMillis;
 
 	@Inject
 	AreaLootOverlay(Client client, AreaLootPlugin plugin, AreaLootConfig config, ItemManager itemManager)
@@ -69,13 +79,91 @@ class AreaLootOverlay extends Overlay
 
 	private Dimension renderLootList(Graphics2D graphics)
 	{
-		if (!plugin.shouldShowOverlayList())
+		boolean shouldShow = plugin.shouldShowOverlayList() && !plugin.isOverlayFadeOutActive();
+		if (!shouldShow && (!config.animateOverlay() || !lastVisibleListRendered))
 		{
+			wasShowing = false;
+			lastVisibleListRendered = false;
+			fadeInStartedAtMillis = 0;
+			fadeStartedAtMillis = 0;
+			plugin.finishOverlayFadeOut();
 			plugin.setOverlayRows(new ArrayList<>());
 			return null;
 		}
 
+		long now = System.currentTimeMillis();
 		List<AreaLootItem> items = plugin.getNearbyLootSnapshot();
+		String headerText;
+		String emptyText;
+		float alpha = 1.0f;
+		boolean fading = false;
+		boolean fadingOut = false;
+
+		if (shouldShow)
+		{
+			lastVisibleItems = new ArrayList<>(items);
+			lastHeaderText = getHeaderText();
+			lastEmptyText = getEmptyText();
+			headerText = lastHeaderText;
+			emptyText = lastEmptyText;
+			lastVisibleListRendered = true;
+			fadeStartedAtMillis = 0;
+			if (!wasShowing)
+			{
+				fadeInStartedAtMillis = now;
+			}
+			wasShowing = true;
+
+			if (config.animateOverlay() && fadeInStartedAtMillis > 0)
+			{
+				long elapsed = now - fadeInStartedAtMillis;
+				if (elapsed < FADE_DURATION_MILLIS)
+				{
+					alpha = (float) elapsed / FADE_DURATION_MILLIS;
+					fading = true;
+				}
+				else
+				{
+					fadeInStartedAtMillis = 0;
+				}
+			}
+		}
+		else
+		{
+			wasShowing = false;
+			fadeInStartedAtMillis = 0;
+			if (!config.animateOverlay())
+			{
+				lastVisibleItems = new ArrayList<>();
+				lastVisibleListRendered = false;
+				plugin.finishOverlayFadeOut();
+				plugin.setOverlayRows(new ArrayList<>());
+				return null;
+			}
+
+			if (fadeStartedAtMillis == 0)
+			{
+				fadeStartedAtMillis = now;
+			}
+
+			long elapsed = now - fadeStartedAtMillis;
+			if (elapsed >= FADE_DURATION_MILLIS)
+			{
+				lastVisibleItems = new ArrayList<>();
+				lastVisibleListRendered = false;
+				plugin.finishOverlayFadeOut();
+				plugin.setOverlayRows(new ArrayList<>());
+				return null;
+			}
+
+			alpha = 1.0f - ((float) elapsed / FADE_DURATION_MILLIS);
+			items = lastVisibleItems;
+			headerText = lastHeaderText;
+			emptyText = lastEmptyText;
+			fading = true;
+			fadingOut = true;
+		}
+
 		java.awt.Point origin = getBounds().getLocation();
 		int listX = 0;
 		int listY = 0;
@@ -83,6 +171,11 @@ class AreaLootOverlay extends Overlay
 		int rowCount = Math.min(items.size(), config.maxOverlayItems());
 		int height = HEADER_HEIGHT + Math.max(1, rowCount) * ROW_HEIGHT + PADDING;
 		List<SimpleEntry<Rectangle, AreaLootItem>> rowBounds = new ArrayList<>();
+		Composite originalComposite = graphics.getComposite();
+		if (fading)
+		{
+			graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+		}
 
 		graphics.setColor(config.overlayBackgroundColor());
 		graphics.fillRoundRect(listX, listY, listWidth, height, 6, 6);
@@ -90,14 +183,15 @@ class AreaLootOverlay extends Overlay
 		graphics.drawRoundRect(listX, listY, listWidth, height, 6, 6);
 
 		graphics.setColor(config.overlayHeaderColor());
-		graphics.drawString(getHeaderText(), listX + PADDING, listY + 15);
+		graphics.drawString(headerText, listX + PADDING, listY + 15);
 
 		int rowStartY = listY + HEADER_HEIGHT;
 		if (items.isEmpty())
 		{
 			graphics.setColor(config.overlaySecondaryTextColor());
-			graphics.drawString(getEmptyText(), listX + PADDING, rowStartY + 15);
-			plugin.setOverlayRows(rowBounds);
+			graphics.drawString(emptyText, listX + PADDING, rowStartY + 15);
+			plugin.setOverlayRows(fading ? new ArrayList<>() : rowBounds);
+			graphics.setComposite(originalComposite);
 			return new Dimension(listWidth, height);
 		}
 
@@ -108,7 +202,10 @@ class AreaLootOverlay extends Overlay
 			int y = rowStartY + (i * ROW_HEIGHT);
 			Rectangle localRow = new Rectangle(listX, y, listWidth, ROW_HEIGHT);
 			Rectangle clickRow = new Rectangle(origin.x + listX, origin.y + y, listWidth, ROW_HEIGHT);
-			rowBounds.add(new SimpleEntry<>(clickRow, item));
+			if (!fadingOut)
+			{
+				rowBounds.add(new SimpleEntry<>(clickRow, item));
+			}
 
 			if (plugin.isSelectedLoot(item))
 			{
@@ -148,12 +245,13 @@ class AreaLootOverlay extends Overlay
 		}
 
 		plugin.setOverlayRows(rowBounds);
+		graphics.setComposite(originalComposite);
 		return new Dimension(listWidth, height);
 	}
 
 	private String getHeaderText()
 	{
-		return plugin.isOverlayAutoModeActive() ? "Area Loot (auto)" : "Area Loot";
+		return plugin.isOverlayAutoModeActive() || plugin.shouldShowOverlayStatus() ? "Area Loot (auto)" : "Area Loot";
 	}
 
 	private String getEmptyText()
