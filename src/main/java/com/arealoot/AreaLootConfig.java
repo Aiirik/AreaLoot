@@ -292,10 +292,22 @@ public interface AreaLootConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "onlyShowHighlightedItemMenu",
+		name = "Only show highlighted item",
+		description = "When right-clicking the highlighted item's tile, hide other ground items from that menu",
+		position = 3,
+		section = HIGHLIGHT_SECTION
+	)
+	default boolean onlyShowHighlightedItemMenu()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		keyName = "matchLineColor",
 		name = "Line matches tile outline",
 		description = "Use the tile outline color for the locator line instead of the separate line color",
-		position = 3,
+		position = 4,
 		section = HIGHLIGHT_SECTION
 	)
 	default boolean matchLineColor()
@@ -308,7 +320,7 @@ public interface AreaLootConfig extends Config
 		keyName = "highlightLineColor",
 		name = "Line color",
 		description = "Line color for the selected loot item",
-		position = 4,
+		position = 5,
 		section = HIGHLIGHT_SECTION
 	)
 	default Color highlightLineColor()

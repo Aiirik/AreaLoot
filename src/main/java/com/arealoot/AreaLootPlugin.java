@@ -5,6 +5,7 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Collections;
@@ -20,14 +21,18 @@ import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.ItemComposition;
+import net.runelite.api.MenuAction;
+import net.runelite.api.MenuEntry;
 import net.runelite.api.Player;
 import net.runelite.api.Tile;
 import net.runelite.api.TileItem;
+import net.runelite.api.WorldView;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.ItemDespawned;
 import net.runelite.api.events.ItemQuantityChanged;
 import net.runelite.api.events.ItemSpawned;
+import net.runelite.api.events.MenuOpened;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
@@ -217,6 +222,28 @@ public class AreaLootPlugin extends Plugin
 		}
 	}
 
+	@Subscribe
+	public void onMenuOpened(MenuOpened event)
+	{
+		if (!config.onlyShowHighlightedItemMenu() || selectedLocation == null)
+		{
+			return;
+		}
+
+		WorldView worldView = client.getTopLevelWorldView();
+		int selectedSceneX = selectedLocation.getX() - worldView.getBaseX();
+		int selectedSceneY = selectedLocation.getY() - worldView.getBaseY();
+		MenuEntry[] menuEntries = event.getMenuEntries();
+		MenuEntry[] filteredEntries = Arrays.stream(menuEntries)
+			.filter(entry -> shouldKeepMenuEntry(entry, selectedSceneX, selectedSceneY))
+			.toArray(MenuEntry[]::new);
+
+		if (filteredEntries.length != menuEntries.length)
+		{
+			client.getMenu().setMenuEntries(filteredEntries);
+		}
+	}
+
 	void selectLoot(AreaLootItem item)
 	{
 		selectedLocation = item.getLocation();
@@ -349,6 +376,39 @@ public class AreaLootPlugin extends Plugin
 	private boolean isSelectedItem(AreaLootItem item)
 	{
 		return item.getId() == selectedItemId && item.getLocation().equals(selectedLocation);
+	}
+
+	private boolean shouldKeepMenuEntry(MenuEntry entry, int selectedSceneX, int selectedSceneY)
+	{
+		if (!isGroundItemMenuEntry(entry))
+		{
+			return true;
+		}
+
+		if (entry.getParam0() != selectedSceneX || entry.getParam1() != selectedSceneY)
+		{
+			return true;
+		}
+
+		return entry.getItemId() == selectedItemId || entry.getIdentifier() == selectedItemId;
+	}
+
+	private boolean isGroundItemMenuEntry(MenuEntry entry)
+	{
+		switch (entry.getType())
+		{
+			case ITEM_USE_ON_GROUND_ITEM:
+			case WIDGET_TARGET_ON_GROUND_ITEM:
+			case GROUND_ITEM_FIRST_OPTION:
+			case GROUND_ITEM_SECOND_OPTION:
+			case GROUND_ITEM_THIRD_OPTION:
+			case GROUND_ITEM_FOURTH_OPTION:
+			case GROUND_ITEM_FIFTH_OPTION:
+			case EXAMINE_ITEM_GROUND:
+				return true;
+			default:
+				return false;
+		}
 	}
 
 	private void rebuildPanel(List<AreaLootItem> items)
