@@ -572,10 +572,17 @@ public class AreaLootPlugin extends Plugin
 	{
 		BufferedImage icon = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D graphics = icon.createGraphics();
-		graphics.setColor(ColorScheme.BRAND_ORANGE);
-		graphics.fillOval(3, 3, 10, 10);
-		graphics.setColor(ColorScheme.TEXT_COLOR);
-		graphics.drawOval(3, 3, 10, 10);
+		graphics.setColor(new java.awt.Color(48, 38, 18));
+		graphics.fillRoundRect(2, 7, 10, 7, 3, 3);
+		graphics.setColor(new java.awt.Color(210, 190, 35));
+		graphics.fillOval(3, 8, 8, 5);
+		graphics.fillOval(4, 5, 8, 5);
+		graphics.setColor(new java.awt.Color(125, 91, 20));
+		graphics.drawOval(3, 8, 8, 5);
+		graphics.drawOval(4, 5, 8, 5);
+		graphics.setColor(new java.awt.Color(0, 200, 255));
+		graphics.drawRect(10, 2, 4, 4);
+		graphics.drawLine(12, 6, 12, 9);
 		graphics.dispose();
 		return icon;
 	}

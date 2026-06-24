@@ -262,7 +262,7 @@ public interface AreaLootConfig extends Config
 	)
 	default boolean sidePanelEnabled()
 	{
-		return true;
+		return false;
 	}
 
 	@ConfigItem(
@@ -344,7 +344,7 @@ public interface AreaLootConfig extends Config
 	@ConfigItem(
 		keyName = "lootRadius",
 		name = "Loot radius",
-		description = "Maximum tile distance from your player to show in the Area Loot panel",
+		description = "Maximum tile distance from your player to show in the Area Loot (1-30)",
 		position = 5,
 		section = GENERAL_SECTION
 	)
