@@ -37,11 +37,6 @@ class AreaLootPanel extends PluginPanel
 		header.setText(items.isEmpty() ? "No nearby loot" : "Nearby loot (" + items.size() + ")");
 		add(header);
 
-		if (plugin.hasSelectedLoot())
-		{
-			add(createClearButton());
-		}
-
 		for (AreaLootItem item : items)
 		{
 			add(createRow(item));
@@ -64,8 +59,9 @@ class AreaLootPanel extends PluginPanel
 		row.setForeground(ColorScheme.TEXT_COLOR);
 		row.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		row.setIconTextGap(6);
+		boolean selected = plugin.isSelectedLoot(item);
 		row.setBorder(BorderFactory.createCompoundBorder(
-			BorderFactory.createLineBorder(ColorScheme.BORDER_COLOR),
+			BorderFactory.createLineBorder(selected ? config.highlightOutlineColor() : ColorScheme.BORDER_COLOR, selected ? 2 : 1),
 			BorderFactory.createEmptyBorder(3, 6, 3, 6)
 		));
 		if (config.showItemIcons())
@@ -76,22 +72,17 @@ class AreaLootPanel extends PluginPanel
 				image.addTo(row);
 			}
 		}
-		row.addActionListener(e -> plugin.selectLoot(item));
+		row.addActionListener(e ->
+		{
+			if (plugin.isSelectedLoot(item))
+			{
+				plugin.clearSelectedLoot();
+			}
+			else
+			{
+				plugin.selectLoot(item);
+			}
+		});
 		return row;
-	}
-
-	private JButton createClearButton()
-	{
-		JButton button = new JButton("Clear highlight");
-		button.setHorizontalAlignment(SwingConstants.CENTER);
-		button.setFocusable(false);
-		button.setForeground(ColorScheme.TEXT_COLOR);
-		button.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		button.setBorder(BorderFactory.createCompoundBorder(
-			BorderFactory.createLineBorder(ColorScheme.BORDER_COLOR),
-			BorderFactory.createEmptyBorder(4, 6, 4, 6)
-		));
-		button.addActionListener(e -> plugin.clearSelectedLoot());
-		return button;
 	}
 }
