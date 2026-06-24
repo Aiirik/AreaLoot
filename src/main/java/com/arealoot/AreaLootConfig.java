@@ -290,15 +290,15 @@ public interface AreaLootConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "showTileDistance",
-		name = "Show tile distance",
-		description = "Show each loot item's distance in tiles",
+		keyName = "tileDistanceMode",
+		name = "Tile distance",
+		description = "Choose how each loot item's distance is shown",
 		position = 1,
 		section = GENERAL_SECTION
 	)
-	default boolean showTileDistance()
+	default AreaLootDistanceMode tileDistanceMode()
 	{
-		return true;
+		return AreaLootDistanceMode.SHORT;
 	}
 
 	@ConfigItem(

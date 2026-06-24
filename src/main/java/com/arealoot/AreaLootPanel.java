@@ -53,9 +53,10 @@ class AreaLootPanel extends PluginPanel
 		String geValueText = config.showGeValue()
 			? "&nbsp;&nbsp;<font color='" + toHtmlColor(config.geValueTextColor()) + "'>" + formatGeValue(item) + "</font>"
 			: "";
-		String distanceText = config.showTileDistance()
-			? "<br><font color='" + toHtmlColor(config.tileDistanceTextColor()) + "'>" + item.getDistance() + " tiles away</font>"
-			: "";
+		String formattedDistance = formatDistance(item);
+		String distanceText = formattedDistance.isEmpty()
+			? ""
+			: "<br><font color='" + toHtmlColor(config.tileDistanceTextColor()) + "'>" + formattedDistance + "</font>";
 		JButton row = new JButton("<html><b>" + escapeHtml(item.getName()) + "</b>" + quantity + geValueText + distanceText + "</html>");
 		row.setHorizontalAlignment(SwingConstants.LEFT);
 		row.setPreferredSize(ROW_SIZE);
@@ -95,6 +96,20 @@ class AreaLootPanel extends PluginPanel
 	private String formatGeValue(AreaLootItem item)
 	{
 		return AreaLootValueFormatter.formatGeValue(item.getGeValue());
+	}
+
+	private String formatDistance(AreaLootItem item)
+	{
+		switch (config.tileDistanceMode())
+		{
+			case LONG:
+				return item.getDistance() + (item.getDistance() <= 1 ? " Tile" : " Tiles");
+			case SHORT:
+				return item.getDistance() + "t";
+			case NONE:
+			default:
+				return "";
+		}
 	}
 
 	private String toHtmlColor(Color color)
