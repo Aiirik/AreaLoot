@@ -338,10 +338,22 @@ public interface AreaLootConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "blockedItems",
+		name = "Blocked items",
+		description = "Comma-separated item names to hide from Area Loot, such as Ashes, Bones",
+		position = 5,
+		section = GENERAL_SECTION
+	)
+	default String blockedItems()
+	{
+		return "";
+	}
+
+	@ConfigItem(
 		keyName = "drawHighlightLine",
 		name = "Draw highlight line",
 		description = "Draw a line from your player to the highlighted loot item",
-		position = 5,
+		position = 6,
 		section = GENERAL_SECTION
 	)
 	default boolean drawHighlightLine()
@@ -353,7 +365,7 @@ public interface AreaLootConfig extends Config
 		keyName = "onlyShowHighlightedItemMenu",
 		name = "Only show highlighted item",
 		description = "When right-clicking the highlighted item's tile, hide other ground items from that menu",
-		position = 6,
+		position = 7,
 		section = GENERAL_SECTION
 	)
 	default boolean onlyShowHighlightedItemMenu()
@@ -369,7 +381,7 @@ public interface AreaLootConfig extends Config
 		keyName = "lootRadius",
 		name = "Loot radius",
 		description = "Maximum tile distance from your player to show in the Area Loot (1-30)",
-		position = 7,
+		position = 8,
 		section = GENERAL_SECTION
 	)
 	default int lootRadius()

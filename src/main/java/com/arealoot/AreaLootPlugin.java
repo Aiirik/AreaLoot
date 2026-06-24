@@ -11,9 +11,11 @@ import java.util.AbstractMap.SimpleEntry;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.swing.SwingUtilities;
 import lombok.Getter;
@@ -273,7 +275,7 @@ public class AreaLootPlugin extends Plugin
 		{
 			updateSidePanelRegistration();
 		}
-		else if ("sortMode".equals(key) || "minimumGeValue".equals(key) || "lootRadius".equals(key))
+		else if ("sortMode".equals(key) || "minimumGeValue".equals(key) || "blockedItems".equals(key) || "lootRadius".equals(key))
 		{
 			lootDirty = true;
 			if (shouldMaintainLootSnapshot())
@@ -574,6 +576,7 @@ public class AreaLootPlugin extends Plugin
 		WorldPoint playerLocation = player.getWorldLocation();
 		int radius = config.lootRadius();
 		long minimumGeValue = parseMinimumGeValue();
+		Set<String> blockedItems = parseBlockedItems();
 		List<AreaLootItem> items = new ArrayList<>();
 
 		for (Map.Entry<WorldPoint, List<TileItem>> entry : groundItems.entrySet())
@@ -592,6 +595,12 @@ public class AreaLootPlugin extends Plugin
 
 			for (TileItem tileItem : entry.getValue())
 			{
+				String itemName = getItemName(tileItem.getId());
+				if (blockedItems.contains(normalizeItemName(itemName)))
+				{
+					continue;
+				}
+
 				long geValue = (long) getItemPrice(tileItem.getId()) * tileItem.getQuantity();
 				if (geValue < minimumGeValue)
 				{
@@ -601,7 +610,7 @@ public class AreaLootPlugin extends Plugin
 				items.add(new AreaLootItem(
 					tileItem.getId(),
 					tileItem.getQuantity(),
-					getItemName(tileItem.getId()),
+					itemName,
 					location,
 					distance,
 					geValue
@@ -688,6 +697,31 @@ public class AreaLootPlugin extends Plugin
 			itemPriceCache.put(itemId, price);
 		}
 		return price;
+	}
+
+	private Set<String> parseBlockedItems()
+	{
+		String value = config.blockedItems();
+		if (value == null || value.trim().isEmpty())
+		{
+			return Collections.emptySet();
+		}
+
+		Set<String> blockedItems = new HashSet<>();
+		for (String itemName : value.split(","))
+		{
+			String normalized = normalizeItemName(itemName);
+			if (!normalized.isEmpty())
+			{
+				blockedItems.add(normalized);
+			}
+		}
+		return blockedItems;
+	}
+
+	private String normalizeItemName(String itemName)
+	{
+		return itemName == null ? "" : itemName.trim().toLowerCase();
 	}
 
 	private void removeItem(Tile tile, TileItem item)
