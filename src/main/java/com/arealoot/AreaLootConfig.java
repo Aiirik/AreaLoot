@@ -68,7 +68,7 @@ public interface AreaLootConfig extends Config
 	)
 	default Keybind autoShowHotkey()
 	{
-		return Keybind.NOT_SET;
+		return new Keybind(KeyEvent.VK_V, 0);
 	}
 
 	@Range(
