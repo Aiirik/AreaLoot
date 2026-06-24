@@ -49,8 +49,10 @@ class AreaLootPanel extends PluginPanel
 	private JButton createRow(AreaLootItem item)
 	{
 		String quantity = item.getQuantity() > 1 ? " x" + item.getQuantity() : "";
-		JButton row = new JButton("<html><b>" + item.getName() + "</b>" + quantity
-			+ "<br><span style='color:#a5a5a5'>" + item.getDistance() + " tiles away</span></html>");
+		String distanceText = config.showTileDistance()
+			? "<br><span style='color:#a5a5a5'>" + item.getDistance() + " tiles away</span>"
+			: "";
+		JButton row = new JButton("<html><b>" + item.getName() + "</b>" + quantity + distanceText + "</html>");
 		row.setHorizontalAlignment(SwingConstants.LEFT);
 		row.setPreferredSize(ROW_SIZE);
 		row.setMinimumSize(ROW_SIZE);

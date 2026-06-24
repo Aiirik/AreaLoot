@@ -254,10 +254,22 @@ public interface AreaLootConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "showTileDistance",
+		name = "Show tile distance",
+		description = "Show each loot item's distance in tiles",
+		position = 1,
+		section = GENERAL_SECTION
+	)
+	default boolean showTileDistance()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "drawHighlightLine",
 		name = "Draw highlight line",
 		description = "Draw a line from your player to the highlighted loot item",
-		position = 1,
+		position = 2,
 		section = GENERAL_SECTION
 	)
 	default boolean drawHighlightLine()
@@ -269,7 +281,7 @@ public interface AreaLootConfig extends Config
 		keyName = "onlyShowHighlightedItemMenu",
 		name = "Only show highlighted item",
 		description = "When right-clicking the highlighted item's tile, hide other ground items from that menu",
-		position = 2,
+		position = 3,
 		section = GENERAL_SECTION
 	)
 	default boolean onlyShowHighlightedItemMenu()
@@ -285,7 +297,7 @@ public interface AreaLootConfig extends Config
 		keyName = "lootRadius",
 		name = "Loot radius",
 		description = "Maximum tile distance from your player to show in the Area Loot panel",
-		position = 3,
+		position = 4,
 		section = GENERAL_SECTION
 	)
 	default int lootRadius()

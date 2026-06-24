@@ -167,8 +167,9 @@ class AreaLootOverlay extends Overlay
 		java.awt.Point origin = getBounds().getLocation();
 		int listX = 0;
 		int listY = 0;
-		int listWidth = getListWidth();
 		int rowCount = Math.min(items.size(), config.maxOverlayItems());
+		FontMetrics metrics = graphics.getFontMetrics();
+		int listWidth = getListWidth(metrics, items, rowCount, headerText, emptyText);
 		int height = HEADER_HEIGHT + Math.max(1, rowCount) * ROW_HEIGHT + PADDING;
 		List<SimpleEntry<Rectangle, AreaLootItem>> rowBounds = new ArrayList<>();
 		Composite originalComposite = graphics.getComposite();
@@ -195,7 +196,6 @@ class AreaLootOverlay extends Overlay
 			return new Dimension(listWidth, height);
 		}
 
-		FontMetrics metrics = graphics.getFontMetrics();
 		for (int i = 0; i < rowCount; i++)
 		{
 			AreaLootItem item = items.get(i);
@@ -226,16 +226,14 @@ class AreaLootOverlay extends Overlay
 				textX += ICON_SIZE + 6;
 			}
 
-			int maxNameWidth = listX + listWidth - 42 - textX;
-			while (text.length() > 3 && metrics.stringWidth(text) > maxNameWidth)
-			{
-				text = text.substring(0, text.length() - 4) + "...";
-			}
-
 			graphics.setColor(config.overlayTextColor());
 			graphics.drawString(text, textX, y + 16);
-			graphics.setColor(config.overlaySecondaryTextColor());
-			graphics.drawString(item.getDistance() + "t", listX + listWidth - 34, y + 16);
+			if (config.showTileDistance())
+			{
+				String distanceText = item.getDistance() + "t";
+				graphics.setColor(config.overlaySecondaryTextColor());
+				graphics.drawString(distanceText, listX + listWidth - PADDING - metrics.stringWidth(distanceText), y + 16);
+			}
 		}
 
 		if (items.size() > rowCount)
@@ -299,15 +297,42 @@ class AreaLootOverlay extends Overlay
 		return config.matchLineColor() ? config.highlightOutlineColor() : config.highlightLineColor();
 	}
 
-	private int getListWidth()
+	private int getListWidth(FontMetrics metrics, List<AreaLootItem> items, int rowCount, String headerText, String emptyText)
 	{
-		Dimension preferredSize = getPreferredSize();
-		if (preferredSize != null && preferredSize.width > 0)
+		int width = getConfiguredListWidth();
+		width = Math.max(width, metrics.stringWidth(headerText) + (PADDING * 2));
+		if (items.isEmpty())
 		{
-			return Math.max(100, preferredSize.width);
+			return Math.max(width, metrics.stringWidth(emptyText) + (PADDING * 2));
 		}
 
-		return config.overlayWidth();
+		for (int i = 0; i < rowCount; i++)
+		{
+			AreaLootItem item = items.get(i);
+			String quantity = item.getQuantity() > 1 ? " x" + item.getQuantity() : "";
+			int rowWidth = PADDING + metrics.stringWidth(item.getName() + quantity) + PADDING;
+			if (config.showItemIcons())
+			{
+				rowWidth += ICON_SIZE + 6;
+			}
+			if (config.showTileDistance())
+			{
+				rowWidth += 12 + metrics.stringWidth(item.getDistance() + "t");
+			}
+			width = Math.max(width, rowWidth);
+		}
+
+		if (items.size() > rowCount)
+		{
+			width = Math.max(width, metrics.stringWidth("+" + (items.size() - rowCount) + " more") + (PADDING * 2));
+		}
+
+		return width;
+	}
+
+	private int getConfiguredListWidth()
+	{
+		return Math.max(100, config.overlayWidth());
 	}
 
 	private void renderHighlightLine(Graphics2D graphics, LocalPoint itemPoint, Color color)
