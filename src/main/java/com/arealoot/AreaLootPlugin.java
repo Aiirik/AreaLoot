@@ -57,7 +57,7 @@ import net.runelite.client.util.HotkeyListener;
 public class AreaLootPlugin extends Plugin
 {
 	private static final long AUTO_STATUS_ENABLED_MILLIS = 1200L;
-	private static final long AUTO_STATUS_DISABLED_MILLIS = 900L;
+	private static final long AUTO_STATUS_DISABLED_MILLIS = 1000L;
 
 	private final Map<WorldPoint, List<TileItem>> groundItems = new HashMap<>();
 
