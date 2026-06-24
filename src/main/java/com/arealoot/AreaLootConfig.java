@@ -50,6 +50,16 @@ public interface AreaLootConfig extends Config
 		return true;
 	}
 
+	@ConfigItem(
+		keyName = "drawHighlightLine",
+		name = "Draw highlight line",
+		description = "Draw a line from your player to the highlighted loot item"
+	)
+	default boolean drawHighlightLine()
+	{
+		return true;
+	}
+
 	@Range(
 		min = 1,
 		max = 25

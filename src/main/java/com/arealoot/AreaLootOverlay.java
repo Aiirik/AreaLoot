@@ -13,6 +13,8 @@ import java.util.List;
 import javax.inject.Inject;
 import net.runelite.api.Client;
 import net.runelite.api.Perspective;
+import net.runelite.api.Player;
+import net.runelite.api.Point;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.game.ItemManager;
@@ -155,10 +157,111 @@ class AreaLootOverlay extends Overlay
 
 		Color fill = config.highlightColor();
 		Color border = new Color(fill.getRed(), fill.getGreen(), fill.getBlue(), 220);
+		if (config.drawHighlightLine())
+		{
+			renderHighlightLine(graphics, localPoint, border);
+		}
+
 		graphics.setColor(fill);
 		graphics.fill(tile);
 		graphics.setColor(border);
 		graphics.setStroke(new BasicStroke(2));
 		graphics.draw(tile);
+	}
+
+	private void renderHighlightLine(Graphics2D graphics, LocalPoint itemPoint, Color color)
+	{
+		Player player = client.getLocalPlayer();
+		if (player == null)
+		{
+			return;
+		}
+
+		Polygon playerTile = Perspective.getCanvasTilePoly(client, player.getLocalLocation());
+		Polygon itemTile = Perspective.getCanvasTilePoly(client, itemPoint);
+		Point playerCanvasPoint = Perspective.localToCanvas(client, player.getLocalLocation(), client.getPlane(), 0);
+		Point itemCanvasPoint = Perspective.localToCanvas(client, itemPoint, client.getPlane(), 0);
+		if (playerCanvasPoint == null || itemCanvasPoint == null)
+		{
+			return;
+		}
+
+		java.awt.Point playerCenter = new java.awt.Point(playerCanvasPoint.getX(), playerCanvasPoint.getY());
+		java.awt.Point itemCenter = new java.awt.Point(itemCanvasPoint.getX(), itemCanvasPoint.getY());
+		java.awt.Point lineStart = getTileEdgePoint(playerTile, playerCenter, itemCenter);
+		java.awt.Point lineEnd = getTileEdgePoint(itemTile, itemCenter, playerCenter);
+
+		graphics.setColor(color);
+		graphics.setStroke(new BasicStroke(2));
+		graphics.drawLine(lineStart.x, lineStart.y, lineEnd.x, lineEnd.y);
+	}
+
+	private java.awt.Point getTileEdgePoint(Polygon tile, java.awt.Point fromCenter, java.awt.Point toward)
+	{
+		if (tile == null || tile.npoints < 3)
+		{
+			return fromCenter;
+		}
+
+		double bestDistance = Double.MAX_VALUE;
+		java.awt.Point bestPoint = fromCenter;
+
+		for (int i = 0; i < tile.npoints; i++)
+		{
+			int next = (i + 1) % tile.npoints;
+			java.awt.Point intersection = getLineIntersection(
+				fromCenter.x,
+				fromCenter.y,
+				toward.x,
+				toward.y,
+				tile.xpoints[i],
+				tile.ypoints[i],
+				tile.xpoints[next],
+				tile.ypoints[next]
+			);
+
+			if (intersection == null)
+			{
+				continue;
+			}
+
+			double distance = intersection.distance(toward);
+			if (distance < bestDistance)
+			{
+				bestDistance = distance;
+				bestPoint = intersection;
+			}
+		}
+
+		return bestPoint;
+	}
+
+	private java.awt.Point getLineIntersection(
+		double x1,
+		double y1,
+		double x2,
+		double y2,
+		double x3,
+		double y3,
+		double x4,
+		double y4)
+	{
+		double denominator = ((x1 - x2) * (y3 - y4)) - ((y1 - y2) * (x3 - x4));
+		if (Math.abs(denominator) < 0.0001)
+		{
+			return null;
+		}
+
+		double t = (((x1 - x3) * (y3 - y4)) - ((y1 - y3) * (x3 - x4))) / denominator;
+		double u = (((x1 - x3) * (y1 - y2)) - ((y1 - y3) * (x1 - x2))) / denominator;
+		if (t < 0 || t > 1 || u < 0 || u > 1)
+		{
+			return null;
+		}
+
+		return new java.awt.Point(
+			(int) Math.round(x1 + (t * (x2 - x1))),
+			(int) Math.round(y1 + (t * (y2 - y1)))
+		);
 	}
 }
