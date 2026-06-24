@@ -293,8 +293,8 @@ public interface AreaLootConfig extends Config
 
 	@ConfigItem(
 		keyName = "matchLineColor",
-		name = "Match line color",
-		description = "Use the tile outline color for the locator line",
+		name = "Line matches tile outline",
+		description = "Use the tile outline color for the locator line instead of the separate line color",
 		position = 3,
 		section = HIGHLIGHT_SECTION
 	)
