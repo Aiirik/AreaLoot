@@ -31,6 +31,7 @@ import net.runelite.api.events.ItemSpawned;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.input.KeyManager;
 import net.runelite.client.input.MouseManager;
@@ -171,6 +172,21 @@ public class AreaLootPlugin extends Plugin
 			selectedItemId = -1;
 			overlayListVisible = false;
 			rebuildPanel(Collections.emptyList());
+		}
+	}
+
+	@Subscribe
+	public void onConfigChanged(ConfigChanged event)
+	{
+		if (!"area-loot".equals(event.getGroup()))
+		{
+			return;
+		}
+
+		String key = event.getKey();
+		if ("overlayX".equals(key) || "overlayY".equals(key) || "overlayWidth".equals(key))
+		{
+			overlay.applyConfiguredListBounds();
 		}
 	}
 

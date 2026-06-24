@@ -18,7 +18,6 @@ import net.runelite.api.Point;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.game.ItemManager;
-import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
@@ -26,9 +25,6 @@ import net.runelite.client.util.AsyncBufferedImage;
 
 class AreaLootOverlay extends Overlay
 {
-	private static final int LIST_X = 8;
-	private static final int LIST_Y = 80;
-	private static final int LIST_WIDTH = 230;
 	private static final int HEADER_HEIGHT = 22;
 	private static final int ROW_HEIGHT = 24;
 	private static final int ICON_SIZE = 18;
@@ -49,91 +45,109 @@ class AreaLootOverlay extends Overlay
 		this.itemManager = itemManager;
 		setPosition(OverlayPosition.DYNAMIC);
 		setLayer(OverlayLayer.ABOVE_SCENE);
+		setResizable(true);
+		setMinimumSize(100);
+		applyConfiguredListBounds();
 	}
 
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
-		renderLootList(graphics);
+		Dimension listDimension = renderLootList(graphics);
+		java.awt.Point origin = getBounds().getLocation();
+		graphics.translate(-origin.x, -origin.y);
 		renderSelectedTile(graphics);
-		return null;
+		graphics.translate(origin.x, origin.y);
+		return listDimension;
 	}
 
-	private void renderLootList(Graphics2D graphics)
+	void applyConfiguredListBounds()
+	{
+		setPreferredLocation(new java.awt.Point(config.overlayX(), config.overlayY()));
+		setPreferredSize(new Dimension(config.overlayWidth(), 0));
+	}
+
+	private Dimension renderLootList(Graphics2D graphics)
 	{
 		if (!plugin.isOverlayListVisible())
 		{
 			plugin.setOverlayRows(new ArrayList<>());
-			return;
+			return null;
 		}
 
 		List<AreaLootItem> items = plugin.getNearbyLootSnapshot();
+		java.awt.Point origin = getBounds().getLocation();
+		int listX = 0;
+		int listY = 0;
+		int listWidth = getListWidth();
 		int rowCount = Math.min(items.size(), config.maxOverlayItems());
 		int height = HEADER_HEIGHT + Math.max(1, rowCount) * ROW_HEIGHT + PADDING;
 		List<SimpleEntry<Rectangle, AreaLootItem>> rowBounds = new ArrayList<>();
 
-		graphics.setColor(new Color(30, 30, 30, 190));
-		graphics.fillRoundRect(LIST_X, LIST_Y, LIST_WIDTH, height, 6, 6);
-		graphics.setColor(ColorScheme.BORDER_COLOR);
-		graphics.drawRoundRect(LIST_X, LIST_Y, LIST_WIDTH, height, 6, 6);
+		graphics.setColor(config.overlayBackgroundColor());
+		graphics.fillRoundRect(listX, listY, listWidth, height, 6, 6);
+		graphics.setColor(config.overlayBorderColor());
+		graphics.drawRoundRect(listX, listY, listWidth, height, 6, 6);
 
-		graphics.setColor(ColorScheme.BRAND_ORANGE);
-		graphics.drawString("Area Loot", LIST_X + PADDING, LIST_Y + 15);
+		graphics.setColor(config.overlayHeaderColor());
+		graphics.drawString("Area Loot", listX + PADDING, listY + 15);
 
 		if (items.isEmpty())
 		{
-			graphics.setColor(ColorScheme.LIGHT_GRAY_COLOR);
-			graphics.drawString("No nearby loot", LIST_X + PADDING, LIST_Y + HEADER_HEIGHT + 15);
+			graphics.setColor(config.overlaySecondaryTextColor());
+			graphics.drawString("No nearby loot", listX + PADDING, listY + HEADER_HEIGHT + 15);
 			plugin.setOverlayRows(rowBounds);
-			return;
+			return new Dimension(listWidth, height);
 		}
 
 		FontMetrics metrics = graphics.getFontMetrics();
 		for (int i = 0; i < rowCount; i++)
 		{
 			AreaLootItem item = items.get(i);
-			int y = LIST_Y + HEADER_HEIGHT + (i * ROW_HEIGHT);
-			Rectangle row = new Rectangle(LIST_X, y, LIST_WIDTH, ROW_HEIGHT);
-			rowBounds.add(new SimpleEntry<>(row, item));
+			int y = listY + HEADER_HEIGHT + (i * ROW_HEIGHT);
+			Rectangle localRow = new Rectangle(listX, y, listWidth, ROW_HEIGHT);
+			Rectangle clickRow = new Rectangle(origin.x + listX, origin.y + y, listWidth, ROW_HEIGHT);
+			rowBounds.add(new SimpleEntry<>(clickRow, item));
 
 			if (item.getLocation().equals(plugin.getSelectedLocation()))
 			{
-				graphics.setColor(new Color(0, 200, 255, 65));
-				graphics.fillRect(row.x + 1, row.y, row.width - 2, row.height);
+				graphics.setColor(config.overlaySelectedRowColor());
+				graphics.fillRect(localRow.x + 1, localRow.y, localRow.width - 2, localRow.height);
 			}
 
 			String quantity = item.getQuantity() > 1 ? " x" + item.getQuantity() : "";
 			String text = item.getName() + quantity;
-			int textX = LIST_X + PADDING;
+			int textX = listX + PADDING;
 			if (config.showItemIcons())
 			{
 				AsyncBufferedImage image = itemManager.getImage(item.getId(), item.getQuantity(), false);
 				if (image != null)
 				{
-					graphics.drawImage(image, LIST_X + PADDING, y + 3, ICON_SIZE, ICON_SIZE, null);
+					graphics.drawImage(image, listX + PADDING, y + 3, ICON_SIZE, ICON_SIZE, null);
 				}
 				textX += ICON_SIZE + 6;
 			}
 
-			int maxNameWidth = LIST_X + LIST_WIDTH - 42 - textX;
+			int maxNameWidth = listX + listWidth - 42 - textX;
 			while (text.length() > 3 && metrics.stringWidth(text) > maxNameWidth)
 			{
 				text = text.substring(0, text.length() - 4) + "...";
 			}
 
-			graphics.setColor(ColorScheme.TEXT_COLOR);
+			graphics.setColor(config.overlayTextColor());
 			graphics.drawString(text, textX, y + 16);
-			graphics.setColor(ColorScheme.LIGHT_GRAY_COLOR);
-			graphics.drawString(item.getDistance() + "t", LIST_X + LIST_WIDTH - 34, y + 16);
+			graphics.setColor(config.overlaySecondaryTextColor());
+			graphics.drawString(item.getDistance() + "t", listX + listWidth - 34, y + 16);
 		}
 
 		if (items.size() > rowCount)
 		{
-			graphics.setColor(ColorScheme.LIGHT_GRAY_COLOR);
-			graphics.drawString("+" + (items.size() - rowCount) + " more", LIST_X + PADDING, LIST_Y + height - 7);
+			graphics.setColor(config.overlaySecondaryTextColor());
+			graphics.drawString("+" + (items.size() - rowCount) + " more", listX + PADDING, listY + height - 7);
 		}
 
 		plugin.setOverlayRows(rowBounds);
+		return new Dimension(listWidth, height);
 	}
 
 	private void renderSelectedTile(Graphics2D graphics)
@@ -157,17 +171,34 @@ class AreaLootOverlay extends Overlay
 		}
 
 		Color fill = config.highlightColor();
-		Color border = new Color(fill.getRed(), fill.getGreen(), fill.getBlue(), 220);
+		Color outlineColor = config.highlightOutlineColor();
+		Color lineColor = getHighlightLineColor();
 		if (config.drawHighlightLine())
 		{
-			renderHighlightLine(graphics, localPoint, border);
+			renderHighlightLine(graphics, localPoint, lineColor);
 		}
 
 		graphics.setColor(fill);
 		graphics.fill(tile);
-		graphics.setColor(border);
+		graphics.setColor(outlineColor);
 		graphics.setStroke(new BasicStroke(2));
 		graphics.draw(tile);
+	}
+
+	private Color getHighlightLineColor()
+	{
+		return config.matchLineColor() ? config.highlightOutlineColor() : config.highlightLineColor();
+	}
+
+	private int getListWidth()
+	{
+		Dimension preferredSize = getPreferredSize();
+		if (preferredSize != null && preferredSize.width > 0)
+		{
+			return Math.max(100, preferredSize.width);
+		}
+
+		return config.overlayWidth();
 	}
 
 	private void renderHighlightLine(Graphics2D graphics, LocalPoint itemPoint, Color color)
