@@ -596,7 +596,7 @@ public class AreaLootPlugin extends Plugin
 			for (TileItem tileItem : entry.getValue())
 			{
 				String itemName = getItemName(tileItem.getId());
-				if (blockedItems.contains(normalizeItemName(itemName)))
+				if (isBlockedItem(itemName, blockedItems))
 				{
 					continue;
 				}
@@ -722,6 +722,49 @@ public class AreaLootPlugin extends Plugin
 	private String normalizeItemName(String itemName)
 	{
 		return itemName == null ? "" : itemName.trim().toLowerCase();
+	}
+
+	private boolean isBlockedItem(String itemName, Set<String> blockedItems)
+	{
+		String normalizedName = normalizeItemName(itemName);
+		for (String blockedItem : blockedItems)
+		{
+			if (matchesBlockedItem(normalizedName, blockedItem))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private boolean matchesBlockedItem(String itemName, String blockedItem)
+	{
+		if (!blockedItem.contains("*"))
+		{
+			return itemName.equals(blockedItem);
+		}
+
+		String[] parts = blockedItem.split("\\*", -1);
+		int index = 0;
+		for (String part : parts)
+		{
+			if (part.isEmpty())
+			{
+				continue;
+			}
+
+			index = itemName.indexOf(part, index);
+			if (index < 0)
+			{
+				return false;
+			}
+			index += part.length();
+		}
+
+		String firstPart = parts.length == 0 ? "" : parts[0];
+		String lastPart = parts.length == 0 ? "" : parts[parts.length - 1];
+		return (firstPart.isEmpty() || itemName.startsWith(firstPart))
+			&& (lastPart.isEmpty() || itemName.endsWith(lastPart));
 	}
 
 	private void removeItem(Tile tile, TileItem item)

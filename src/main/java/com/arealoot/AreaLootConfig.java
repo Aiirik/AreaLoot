@@ -340,7 +340,7 @@ public interface AreaLootConfig extends Config
 	@ConfigItem(
 		keyName = "blockedItems",
 		name = "Blocked items",
-		description = "Comma-separated item names to hide from Area Loot, such as Ashes, Bones",
+		description = "Comma-separated item names or wildcard patterns to hide, such as Ashes, Bones, Burnt *",
 		position = 5,
 		section = GENERAL_SECTION
 	)
