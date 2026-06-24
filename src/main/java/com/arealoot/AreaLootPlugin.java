@@ -106,7 +106,7 @@ public class AreaLootPlugin extends Plugin
 	protected void startUp()
 	{
 		log.debug("Area Loot started");
-		panel = new AreaLootPanel(this);
+		panel = new AreaLootPanel(this, config, itemManager);
 		navButton = NavigationButton.builder()
 			.tooltip("Area Loot")
 			.icon(createIcon())

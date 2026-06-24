@@ -6,19 +6,25 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
+import net.runelite.client.game.ItemManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
+import net.runelite.client.util.AsyncBufferedImage;
 
 class AreaLootPanel extends PluginPanel
 {
-	private static final Dimension ROW_SIZE = new Dimension(PluginPanel.PANEL_WIDTH, 34);
+	private static final Dimension ROW_SIZE = new Dimension(PluginPanel.PANEL_WIDTH, 38);
 
 	private final AreaLootPlugin plugin;
+	private final AreaLootConfig config;
+	private final ItemManager itemManager;
 	private final JLabel header = new JLabel("Nearby loot");
 
-	AreaLootPanel(AreaLootPlugin plugin)
+	AreaLootPanel(AreaLootPlugin plugin, AreaLootConfig config, ItemManager itemManager)
 	{
 		this.plugin = plugin;
+		this.config = config;
+		this.itemManager = itemManager;
 
 		header.setForeground(ColorScheme.TEXT_COLOR);
 		header.setHorizontalAlignment(SwingConstants.CENTER);
@@ -52,10 +58,19 @@ class AreaLootPanel extends PluginPanel
 		row.setFocusable(false);
 		row.setForeground(ColorScheme.TEXT_COLOR);
 		row.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		row.setIconTextGap(6);
 		row.setBorder(BorderFactory.createCompoundBorder(
 			BorderFactory.createLineBorder(ColorScheme.BORDER_COLOR),
 			BorderFactory.createEmptyBorder(3, 6, 3, 6)
 		));
+		if (config.showItemIcons())
+		{
+			AsyncBufferedImage image = itemManager.getImage(item.getId(), item.getQuantity(), false);
+			if (image != null)
+			{
+				image.addTo(row);
+			}
+		}
 		row.addActionListener(e -> plugin.selectLoot(item));
 		return row;
 	}

@@ -40,6 +40,16 @@ public interface AreaLootConfig extends Config
 		return true;
 	}
 
+	@ConfigItem(
+		keyName = "showItemIcons",
+		name = "Show item icons",
+		description = "Show item icons next to item names in the side panel and overlay list"
+	)
+	default boolean showItemIcons()
+	{
+		return true;
+	}
+
 	@Range(
 		min = 1,
 		max = 25

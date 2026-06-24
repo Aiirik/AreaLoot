@@ -15,10 +15,12 @@ import net.runelite.api.Client;
 import net.runelite.api.Perspective;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
+import net.runelite.client.game.ItemManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
+import net.runelite.client.util.AsyncBufferedImage;
 
 class AreaLootOverlay extends Overlay
 {
@@ -26,19 +28,22 @@ class AreaLootOverlay extends Overlay
 	private static final int LIST_Y = 80;
 	private static final int LIST_WIDTH = 230;
 	private static final int HEADER_HEIGHT = 22;
-	private static final int ROW_HEIGHT = 22;
+	private static final int ROW_HEIGHT = 24;
+	private static final int ICON_SIZE = 18;
 	private static final int PADDING = 6;
 
 	private final Client client;
 	private final AreaLootPlugin plugin;
 	private final AreaLootConfig config;
+	private final ItemManager itemManager;
 
 	@Inject
-	AreaLootOverlay(Client client, AreaLootPlugin plugin, AreaLootConfig config)
+	AreaLootOverlay(Client client, AreaLootPlugin plugin, AreaLootConfig config, ItemManager itemManager)
 	{
 		this.client = client;
 		this.plugin = plugin;
 		this.config = config;
+		this.itemManager = itemManager;
 		setPosition(OverlayPosition.DYNAMIC);
 		setLayer(OverlayLayer.ABOVE_SCENE);
 	}
@@ -96,16 +101,27 @@ class AreaLootOverlay extends Overlay
 
 			String quantity = item.getQuantity() > 1 ? " x" + item.getQuantity() : "";
 			String text = item.getName() + quantity;
-			int maxNameWidth = LIST_WIDTH - 70;
+			int textX = LIST_X + PADDING;
+			if (config.showItemIcons())
+			{
+				AsyncBufferedImage image = itemManager.getImage(item.getId(), item.getQuantity(), false);
+				if (image != null)
+				{
+					graphics.drawImage(image, LIST_X + PADDING, y + 3, ICON_SIZE, ICON_SIZE, null);
+				}
+				textX += ICON_SIZE + 6;
+			}
+
+			int maxNameWidth = LIST_X + LIST_WIDTH - 42 - textX;
 			while (text.length() > 3 && metrics.stringWidth(text) > maxNameWidth)
 			{
 				text = text.substring(0, text.length() - 4) + "...";
 			}
 
 			graphics.setColor(ColorScheme.TEXT_COLOR);
-			graphics.drawString(text, LIST_X + PADDING, y + 15);
+			graphics.drawString(text, textX, y + 16);
 			graphics.setColor(ColorScheme.LIGHT_GRAY_COLOR);
-			graphics.drawString(item.getDistance() + "t", LIST_X + LIST_WIDTH - 34, y + 15);
+			graphics.drawString(item.getDistance() + "t", LIST_X + LIST_WIDTH - 34, y + 16);
 		}
 
 		if (items.size() > rowCount)
