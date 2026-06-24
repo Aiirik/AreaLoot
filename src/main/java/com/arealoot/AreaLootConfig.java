@@ -225,7 +225,7 @@ public interface AreaLootConfig extends Config
 	)
 	default Color geValueTextColor()
 	{
-		return Color.YELLOW;
+		return new Color(210, 190, 35);
 	}
 
 	@ConfigItem(
@@ -254,10 +254,22 @@ public interface AreaLootConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "sidePanelEnabled",
+		name = "Enable side panel",
+		description = "Show Area Loot in the RuneLite side panel",
+		position = 0,
+		section = SIDE_PANEL_SECTION
+	)
+	default boolean sidePanelEnabled()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "sidePanelHotkey",
 		name = "Side panel hotkey",
 		description = "Opens the Area Loot side panel",
-		position = 0,
+		position = 1,
 		section = SIDE_PANEL_SECTION
 	)
 	default Keybind sidePanelHotkey()

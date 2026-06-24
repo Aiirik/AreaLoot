@@ -95,6 +95,7 @@ public class AreaLootPlugin extends Plugin
 	private NavigationButton navButton;
 	private volatile List<AreaLootItem> nearbyLoot = Collections.emptyList();
 	private final List<SimpleEntry<Rectangle, AreaLootItem>> overlayRows = new ArrayList<>();
+	private boolean sidePanelRegistered;
 
 	@Getter
 	private volatile WorldPoint selectedLocation;
@@ -147,18 +148,21 @@ public class AreaLootPlugin extends Plugin
 		overlayManager.add(overlay);
 		keyManager.registerKeyListener(overlayHotkeyListener);
 		keyManager.registerKeyListener(autoShowHotkeyListener);
-		keyManager.registerKeyListener(sidePanelHotkeyListener);
 		mouseManager.registerMouseListener(mouseListener);
-		clientToolbar.addNavigation(navButton);
+		updateSidePanelRegistration();
 	}
 
 	@Override
 	protected void shutDown()
 	{
 		log.debug("Area Loot stopped");
-		clientToolbar.removeNavigation(navButton);
+		if (sidePanelRegistered)
+		{
+			keyManager.unregisterKeyListener(sidePanelHotkeyListener);
+			clientToolbar.removeNavigation(navButton);
+			sidePanelRegistered = false;
+		}
 		mouseManager.unregisterMouseListener(mouseListener);
-		keyManager.unregisterKeyListener(sidePanelHotkeyListener);
 		keyManager.unregisterKeyListener(autoShowHotkeyListener);
 		keyManager.unregisterKeyListener(overlayHotkeyListener);
 		overlayManager.remove(overlay);
@@ -228,6 +232,10 @@ public class AreaLootPlugin extends Plugin
 		if ("overlayX".equals(key) || "overlayY".equals(key) || "overlayWidth".equals(key))
 		{
 			overlay.applyConfiguredListBounds();
+		}
+		else if ("sidePanelEnabled".equals(key))
+		{
+			updateSidePanelRegistration();
 		}
 	}
 
@@ -392,11 +400,35 @@ public class AreaLootPlugin extends Plugin
 
 	private void openSidePanel()
 	{
+		if (!config.sidePanelEnabled())
+		{
+			return;
+		}
+
 		clientThread.invoke(() ->
 		{
 			refreshLootSnapshot();
 			SwingUtilities.invokeLater(() -> clientToolbar.openPanel(navButton));
 		});
+	}
+
+	private void updateSidePanelRegistration()
+	{
+		if (config.sidePanelEnabled())
+		{
+			if (!sidePanelRegistered)
+			{
+				keyManager.registerKeyListener(sidePanelHotkeyListener);
+				clientToolbar.addNavigation(navButton);
+				sidePanelRegistered = true;
+			}
+		}
+		else if (sidePanelRegistered)
+		{
+			keyManager.unregisterKeyListener(sidePanelHotkeyListener);
+			clientToolbar.removeNavigation(navButton);
+			sidePanelRegistered = false;
+		}
 	}
 
 	private void refreshLootSnapshot()
