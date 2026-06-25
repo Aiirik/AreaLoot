@@ -61,6 +61,9 @@ public class AreaLootPlugin extends Plugin
 {
 	private static final long AUTO_STATUS_ENABLED_MILLIS = 1200L;
 	private static final long AUTO_STATUS_DISABLED_MILLIS = 1000L;
+	private static final String CONFIG_GROUP = "area-loot";
+	private static final String REMEMBERED_MANUAL_OVERLAY_KEY = "rememberedManualOverlayEnabled";
+	private static final String REMEMBERED_AUTO_OVERLAY_KEY = "rememberedAutoOverlayEnabled";
 
 	private final Map<WorldPoint, List<TileItem>> groundItems = new HashMap<>();
 	private final Map<Integer, String> itemNameCache = new HashMap<>();
@@ -74,6 +77,9 @@ public class AreaLootPlugin extends Plugin
 
 	@Inject
 	private AreaLootConfig config;
+
+	@Inject
+	private ConfigManager configManager;
 
 	@Inject
 	private AreaLootOverlay overlay;
@@ -145,6 +151,7 @@ public class AreaLootPlugin extends Plugin
 	protected void startUp()
 	{
 		log.debug("Area Loot started");
+		restoreOverlayMode();
 		panel = new AreaLootPanel(this, config, itemManager);
 		navButton = NavigationButton.builder()
 			.tooltip("Area Loot")
@@ -256,12 +263,16 @@ public class AreaLootPlugin extends Plugin
 			overlayFadeOutActive = false;
 			rebuildPanel(Collections.emptyList());
 		}
+		else if (event.getGameState() == GameState.LOGGED_IN)
+		{
+			restoreOverlayMode();
+		}
 	}
 
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event)
 	{
-		if (!"area-loot".equals(event.getGroup()))
+		if (!CONFIG_GROUP.equals(event.getGroup()))
 		{
 			return;
 		}
@@ -274,6 +285,17 @@ public class AreaLootPlugin extends Plugin
 		else if ("sidePanelEnabled".equals(key))
 		{
 			updateSidePanelRegistration();
+		}
+		else if ("rememberOverlayMode".equals(key))
+		{
+			if (config.rememberOverlayMode())
+			{
+				saveOverlayMode();
+			}
+			else
+			{
+				clearSavedOverlayMode();
+			}
 		}
 		else if ("sortMode".equals(key) || "minimumGeValue".equals(key) || "blockedItems".equals(key) || "lootRadius".equals(key))
 		{
@@ -422,6 +444,7 @@ public class AreaLootPlugin extends Plugin
 			{
 				overlayFadeOutActive = true;
 			}
+			saveOverlayMode();
 		});
 	}
 
@@ -445,7 +468,52 @@ public class AreaLootPlugin extends Plugin
 				overlayStatusUntilMillis = now + AUTO_STATUS_DISABLED_MILLIS;
 				overlayFadeOutActive = false;
 			}
+			saveOverlayMode();
 		});
+	}
+
+	private void restoreOverlayMode()
+	{
+		if (!config.rememberOverlayMode())
+		{
+			return;
+		}
+
+		Boolean rememberedManualOverlay = configManager.getConfiguration(
+			CONFIG_GROUP,
+			REMEMBERED_MANUAL_OVERLAY_KEY,
+			Boolean.class);
+		Boolean rememberedAutoOverlay = configManager.getConfiguration(
+			CONFIG_GROUP,
+			REMEMBERED_AUTO_OVERLAY_KEY,
+			Boolean.class);
+
+		manualOverlayEnabled = Boolean.TRUE.equals(rememberedManualOverlay);
+		autoOverlayEnabled = !manualOverlayEnabled && Boolean.TRUE.equals(rememberedAutoOverlay);
+		overlayFadeOutActive = false;
+		overlayStatusUntilMillis = 0;
+		overlayStatusText = "";
+		if (client.getGameState() == GameState.LOGGED_IN)
+		{
+			refreshLootSnapshot();
+		}
+	}
+
+	private void saveOverlayMode()
+	{
+		if (!config.rememberOverlayMode())
+		{
+			return;
+		}
+
+		configManager.setConfiguration(CONFIG_GROUP, REMEMBERED_MANUAL_OVERLAY_KEY, Boolean.toString(manualOverlayEnabled));
+		configManager.setConfiguration(CONFIG_GROUP, REMEMBERED_AUTO_OVERLAY_KEY, Boolean.toString(autoOverlayEnabled));
+	}
+
+	private void clearSavedOverlayMode()
+	{
+		configManager.unsetConfiguration(CONFIG_GROUP, REMEMBERED_MANUAL_OVERLAY_KEY);
+		configManager.unsetConfiguration(CONFIG_GROUP, REMEMBERED_AUTO_OVERLAY_KEY);
 	}
 
 	private void openSidePanel()

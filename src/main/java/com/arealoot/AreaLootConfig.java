@@ -71,6 +71,18 @@ public interface AreaLootConfig extends Config
 		return new Keybind(KeyEvent.VK_V, 0);
 	}
 
+	@ConfigItem(
+		keyName = "rememberOverlayMode",
+		name = "Remember overlay mode",
+		description = "Restore the overlay mode after logging back in",
+		position = 2,
+		section = OVERLAY_SECTION
+	)
+	default boolean rememberOverlayMode()
+	{
+		return false;
+	}
+
 	@Range(
 		min = 1,
 		max = 25
