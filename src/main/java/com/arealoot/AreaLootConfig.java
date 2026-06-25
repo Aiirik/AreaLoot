@@ -91,7 +91,7 @@ public interface AreaLootConfig extends Config
 		keyName = "animateOverlay",
 		name = "Animate overlay",
 		description = "Fade the overlay list in and out when it appears or hides",
-		position = 2,
+		position = 3,
 		section = OVERLAY_SECTION
 	)
 	default boolean animateOverlay()
@@ -107,7 +107,7 @@ public interface AreaLootConfig extends Config
 		keyName = "maxOverlayItems",
 		name = "Max items",
 		description = "Maximum number of rows shown in the Area Loot overlay",
-		position = 3,
+		position = 4,
 		section = OVERLAY_SECTION
 	)
 	default int maxOverlayItems()
@@ -124,7 +124,7 @@ public interface AreaLootConfig extends Config
 		keyName = "overlayX",
 		name = "X position",
 		description = "Default overlay list X position before moving it in overlay edit mode",
-		position = 4,
+		position = 5,
 		section = OVERLAY_SECTION
 	)
 	default int overlayX()
@@ -141,7 +141,7 @@ public interface AreaLootConfig extends Config
 		keyName = "overlayY",
 		name = "Y position",
 		description = "Default overlay list Y position before moving it in overlay edit mode",
-		position = 5,
+		position = 6,
 		section = OVERLAY_SECTION
 	)
 	default int overlayY()
@@ -158,7 +158,7 @@ public interface AreaLootConfig extends Config
 		keyName = "overlayWidth",
 		name = "Width",
 		description = "Overlay list width",
-		position = 6,
+		position = 7,
 		section = OVERLAY_SECTION
 	)
 	default int overlayWidth()
@@ -171,7 +171,7 @@ public interface AreaLootConfig extends Config
 		keyName = "overlayBackgroundColor",
 		name = "Background",
 		description = "Overlay list background color",
-		position = 7,
+		position = 8,
 		section = OVERLAY_SECTION
 	)
 	default Color overlayBackgroundColor()
@@ -184,7 +184,7 @@ public interface AreaLootConfig extends Config
 		keyName = "overlayBorderColor",
 		name = "Border",
 		description = "Overlay list border color",
-		position = 8,
+		position = 9,
 		section = OVERLAY_SECTION
 	)
 	default Color overlayBorderColor()
@@ -196,7 +196,7 @@ public interface AreaLootConfig extends Config
 		keyName = "overlayHeaderColor",
 		name = "Header text",
 		description = "Overlay list header text color",
-		position = 9,
+		position = 10,
 		section = OVERLAY_SECTION
 	)
 	default Color overlayHeaderColor()
@@ -208,7 +208,7 @@ public interface AreaLootConfig extends Config
 		keyName = "overlayTextColor",
 		name = "Item text",
 		description = "Overlay list item text color",
-		position = 10,
+		position = 11,
 		section = OVERLAY_SECTION
 	)
 	default Color overlayTextColor()
@@ -220,7 +220,7 @@ public interface AreaLootConfig extends Config
 		keyName = "overlaySecondaryTextColor",
 		name = "Status text",
 		description = "Overlay status and empty message text color, such as No nearby loot and auto mode messages",
-		position = 11,
+		position = 12,
 		section = OVERLAY_SECTION
 	)
 	default Color overlaySecondaryTextColor()
@@ -232,7 +232,7 @@ public interface AreaLootConfig extends Config
 		keyName = "geValueTextColor",
 		name = "GE value text",
 		description = "GE value text color in the overlay list and side panel",
-		position = 12,
+		position = 13,
 		section = OVERLAY_SECTION
 	)
 	default Color geValueTextColor()
@@ -244,7 +244,7 @@ public interface AreaLootConfig extends Config
 		keyName = "tileDistanceTextColor",
 		name = "Tile distance text",
 		description = "Tile distance text color in the overlay list and side panel",
-		position = 13,
+		position = 14,
 		section = OVERLAY_SECTION
 	)
 	default Color tileDistanceTextColor()
@@ -257,7 +257,7 @@ public interface AreaLootConfig extends Config
 		keyName = "overlaySelectedRowColor",
 		name = "Selected row",
 		description = "Overlay list selected row color",
-		position = 14,
+		position = 15,
 		section = OVERLAY_SECTION
 	)
 	default Color overlaySelectedRowColor()
@@ -362,10 +362,29 @@ public interface AreaLootConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "blockedItems",
+		name = "",
+		description = ""
+	)
+	void setBlockedItems(String blockedItems);
+
+	@ConfigItem(
+		keyName = "shiftRightClickBlockItems",
+		name = "Shift+right-click block/unblock",
+		description = "Add a Shift+right-click menu option on ground items to add or remove them from the blocked item list",
+		position = 6,
+		section = GENERAL_SECTION
+	)
+	default boolean shiftRightClickBlockItems()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "drawHighlightLine",
 		name = "Draw highlight line",
 		description = "Draw a line from your player to the highlighted loot item",
-		position = 6,
+		position = 7,
 		section = GENERAL_SECTION
 	)
 	default boolean drawHighlightLine()
@@ -377,7 +396,7 @@ public interface AreaLootConfig extends Config
 		keyName = "onlyShowHighlightedItemMenu",
 		name = "Only show highlighted item",
 		description = "When right-clicking the highlighted item's tile, hide other ground items from that menu",
-		position = 7,
+		position = 8,
 		section = GENERAL_SECTION
 	)
 	default boolean onlyShowHighlightedItemMenu()
@@ -393,7 +412,7 @@ public interface AreaLootConfig extends Config
 		keyName = "lootRadius",
 		name = "Loot radius",
 		description = "Maximum tile distance from your player to show in the Area Loot (1-30)",
-		position = 8,
+		position = 9,
 		section = GENERAL_SECTION
 	)
 	default int lootRadius()

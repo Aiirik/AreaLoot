@@ -1,9 +1,12 @@
 package com.arealoot;
 
 import com.google.inject.Provides;
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.Window;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
 import java.util.ArrayList;
@@ -17,12 +20,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.inject.Inject;
+import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
+import javax.swing.text.JTextComponent;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.ItemComposition;
+import net.runelite.api.KeyCode;
 import net.runelite.api.MenuAction;
 import net.runelite.api.MenuEntry;
 import net.runelite.api.Player;
@@ -35,6 +41,7 @@ import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.ItemDespawned;
 import net.runelite.api.events.ItemQuantityChanged;
 import net.runelite.api.events.ItemSpawned;
+import net.runelite.api.events.MenuEntryAdded;
 import net.runelite.api.events.MenuOpened;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
@@ -62,6 +69,7 @@ public class AreaLootPlugin extends Plugin
 	private static final long AUTO_STATUS_ENABLED_MILLIS = 1200L;
 	private static final long AUTO_STATUS_DISABLED_MILLIS = 1000L;
 	private static final String CONFIG_GROUP = "area-loot";
+	private static final String BLOCKED_ITEMS_KEY = "blockedItems";
 	private static final String REMEMBERED_MANUAL_OVERLAY_KEY = "rememberedManualOverlayEnabled";
 	private static final String REMEMBERED_AUTO_OVERLAY_KEY = "rememberedAutoOverlayEnabled";
 
@@ -297,7 +305,7 @@ public class AreaLootPlugin extends Plugin
 				clearSavedOverlayMode();
 			}
 		}
-		else if ("sortMode".equals(key) || "minimumGeValue".equals(key) || "blockedItems".equals(key) || "lootRadius".equals(key))
+		else if ("sortMode".equals(key) || "minimumGeValue".equals(key) || BLOCKED_ITEMS_KEY.equals(key) || "lootRadius".equals(key))
 		{
 			lootDirty = true;
 			if (shouldMaintainLootSnapshot())
@@ -309,6 +317,44 @@ public class AreaLootPlugin extends Plugin
 				});
 			}
 		}
+	}
+
+	@Subscribe
+	public void onMenuEntryAdded(MenuEntryAdded event)
+	{
+		if (!config.shiftRightClickBlockItems() || !client.isKeyPressed(KeyCode.KC_SHIFT))
+		{
+			return;
+		}
+
+		MenuAction type = MenuAction.of(event.getType());
+		if (type != MenuAction.EXAMINE_ITEM_GROUND)
+		{
+			return;
+		}
+
+		String itemName = getItemName(event.getIdentifier());
+		boolean blockedByName = isBlockedByExactName(itemName);
+
+		client.createMenuEntry(-1)
+			.setParam0(event.getActionParam0())
+			.setParam1(event.getActionParam1())
+			.setIdentifier(event.getIdentifier())
+			.setItemId(event.getItemId())
+			.setTarget(event.getTarget())
+			.setOption(blockedByName ? "Unblock in Area Loot" : "Block in Area Loot")
+			.setType(MenuAction.RUNELITE)
+			.onClick(entry ->
+			{
+				if (blockedByName)
+				{
+					removeBlockedItem(itemName);
+				}
+				else
+				{
+					addBlockedItem(itemName);
+				}
+			});
 	}
 
 	@Subscribe
@@ -776,12 +822,170 @@ public class AreaLootPlugin extends Plugin
 		}
 
 		Set<String> blockedItems = new HashSet<>();
-		for (String itemName : value.split(","))
+		for (String itemName : parseBlockedItemList(value))
 		{
 			String normalized = normalizeItemName(itemName);
 			if (!normalized.isEmpty())
 			{
 				blockedItems.add(normalized);
+			}
+		}
+		return blockedItems;
+	}
+
+	private void addBlockedItem(String itemName)
+	{
+		String normalizedItemName = normalizeItemName(itemName);
+		if (normalizedItemName.isEmpty())
+		{
+			return;
+		}
+
+		List<String> blockedItems = getConfiguredBlockedItemList();
+
+		for (String blockedItem : blockedItems)
+		{
+			if (normalizeItemName(blockedItem).equals(normalizedItemName))
+			{
+				return;
+			}
+		}
+
+		blockedItems.add(itemName);
+		String updatedBlockedItems = String.join(", ", blockedItems);
+		configManager.setConfiguration(CONFIG_GROUP, BLOCKED_ITEMS_KEY, updatedBlockedItems);
+
+		String storedBlockedItems = configManager.getConfiguration(CONFIG_GROUP, BLOCKED_ITEMS_KEY);
+		if (!updatedBlockedItems.equals(storedBlockedItems))
+		{
+			log.debug("Area Loot failed to update blocked items. Expected '{}', stored '{}'", updatedBlockedItems, storedBlockedItems);
+			return;
+		}
+
+		lootDirty = true;
+		SwingUtilities.invokeLater(() -> updateOpenBlockedItemsConfigText(updatedBlockedItems));
+		if (shouldMaintainLootSnapshot())
+		{
+			refreshLootSnapshot();
+		}
+	}
+
+	private void removeBlockedItem(String itemName)
+	{
+		String normalizedItemName = normalizeItemName(itemName);
+		if (normalizedItemName.isEmpty())
+		{
+			return;
+		}
+
+		List<String> blockedItems = getConfiguredBlockedItemList();
+		boolean removed = blockedItems.removeIf(blockedItem -> normalizeItemName(blockedItem).equals(normalizedItemName));
+		if (!removed)
+		{
+			return;
+		}
+
+		String updatedBlockedItems = String.join(", ", blockedItems);
+		configManager.setConfiguration(CONFIG_GROUP, BLOCKED_ITEMS_KEY, updatedBlockedItems);
+
+		String storedBlockedItems = configManager.getConfiguration(CONFIG_GROUP, BLOCKED_ITEMS_KEY);
+		if (!updatedBlockedItems.equals(storedBlockedItems))
+		{
+			log.debug("Area Loot failed to update blocked items. Expected '{}', stored '{}'", updatedBlockedItems, storedBlockedItems);
+			return;
+		}
+
+		lootDirty = true;
+		SwingUtilities.invokeLater(() -> updateOpenBlockedItemsConfigText(updatedBlockedItems));
+		if (shouldMaintainLootSnapshot())
+		{
+			refreshLootSnapshot();
+		}
+	}
+
+	private boolean isBlockedByExactName(String itemName)
+	{
+		String normalizedItemName = normalizeItemName(itemName);
+		for (String blockedItem : getConfiguredBlockedItemList())
+		{
+			if (normalizeItemName(blockedItem).equals(normalizedItemName))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private List<String> getConfiguredBlockedItemList()
+	{
+		String value = configManager.getConfiguration(CONFIG_GROUP, BLOCKED_ITEMS_KEY);
+		if (value == null)
+		{
+			value = config.blockedItems();
+		}
+		return new ArrayList<>(parseBlockedItemList(value));
+	}
+
+	private void updateOpenBlockedItemsConfigText(String blockedItems)
+	{
+		for (Window window : Window.getWindows())
+		{
+			updateBlockedItemsConfigText(window, blockedItems);
+		}
+	}
+
+	private boolean updateBlockedItemsConfigText(Component component, String blockedItems)
+	{
+		if (!(component instanceof Container))
+		{
+			return false;
+		}
+
+		Container container = (Container) component;
+		boolean hasBlockedItemsLabel = false;
+		JTextComponent textComponent = null;
+		for (Component child : container.getComponents())
+		{
+			if (child instanceof JLabel && "Blocked items".equals(((JLabel) child).getText()))
+			{
+				hasBlockedItemsLabel = true;
+			}
+			else if (child instanceof JTextComponent)
+			{
+				textComponent = (JTextComponent) child;
+			}
+		}
+
+		if (hasBlockedItemsLabel && textComponent != null)
+		{
+			textComponent.setText(blockedItems);
+			return true;
+		}
+
+		for (Component child : container.getComponents())
+		{
+			if (updateBlockedItemsConfigText(child, blockedItems))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private List<String> parseBlockedItemList(String value)
+	{
+		if (value == null || value.trim().isEmpty())
+		{
+			return Collections.emptyList();
+		}
+
+		List<String> blockedItems = new ArrayList<>();
+		for (String blockedItem : value.split(","))
+		{
+			String trimmed = blockedItem.trim();
+			if (!trimmed.isEmpty())
+			{
+				blockedItems.add(trimmed);
 			}
 		}
 		return blockedItems;
