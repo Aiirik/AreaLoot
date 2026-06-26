@@ -30,9 +30,10 @@ class AreaLootOverlay extends Overlay
 	private static final int HEADER_HEIGHT = 22;
 	private static final int ROW_HEIGHT = 24;
 	private static final int ICON_SIZE = 18;
-	private static final int GRID_ICON_SIZE = 28;
-	private static final int GRID_CELL_MIN_WIDTH = 46;
-	private static final int GRID_CELL_GAP = 4;
+	private static final int GRID_CELL_GAP = 2;
+	private static final int GRID_OUTER_PADDING = 3;
+	private static final int GRID_CELL_HORIZONTAL_PADDING = 3;
+	private static final int GRID_CELL_VERTICAL_PADDING = 2;
 	private static final int GRID_TEXT_LINE_HEIGHT = 12;
 	private static final int PADDING = 6;
 	private static final int METADATA_GAP = 12;
@@ -293,16 +294,17 @@ class AreaLootOverlay extends Overlay
 			visibleRows = Math.max(1, (int) Math.ceil(itemCount / (double) columns));
 		}
 		FontMetrics metrics = graphics.getFontMetrics();
+		int gridIconSize = config.gridIconSize().getPixels();
 		int metadataLines = getGridMetadataLineCount();
-		int cellWidth = getGridCellWidth(metrics, items, itemCount);
-		int cellHeight = PADDING + GRID_ICON_SIZE + (metadataLines * GRID_TEXT_LINE_HEIGHT) + PADDING;
+		int cellWidth = getGridCellWidth(metrics, items, itemCount, gridIconSize);
+		int cellHeight = (GRID_CELL_VERTICAL_PADDING * 2) + gridIconSize + (metadataLines * GRID_TEXT_LINE_HEIGHT);
 		int gridWidth = (columns * cellWidth) + ((columns - 1) * GRID_CELL_GAP);
-		int overlayWidth = Math.max(gridWidth + (PADDING * 2), metrics.stringWidth(headerText) + (PADDING * 2));
+		int overlayWidth = Math.max(gridWidth + (GRID_OUTER_PADDING * 2), metrics.stringWidth(headerText) + (GRID_OUTER_PADDING * 2));
 		if (items.isEmpty())
 		{
-			overlayWidth = Math.max(overlayWidth, metrics.stringWidth(emptyText) + (PADDING * 2));
+			overlayWidth = Math.max(overlayWidth, metrics.stringWidth(emptyText) + (GRID_OUTER_PADDING * 2));
 		}
-		int height = HEADER_HEIGHT + (visibleRows * cellHeight) + PADDING;
+		int height = HEADER_HEIGHT + (visibleRows * cellHeight) + GRID_OUTER_PADDING;
 		if (items.size() > itemCount)
 		{
 			height += GRID_TEXT_LINE_HEIGHT;
@@ -321,9 +323,9 @@ class AreaLootOverlay extends Overlay
 		graphics.drawRoundRect(gridX, gridY, overlayWidth, height, 6, 6);
 
 		graphics.setColor(config.overlayHeaderColor());
-		graphics.drawString(headerText, gridX + PADDING, gridY + 15);
+		graphics.drawString(headerText, gridX + GRID_OUTER_PADDING, gridY + 15);
 
-		int gridStartX = gridX + PADDING;
+		int gridStartX = gridX + GRID_OUTER_PADDING;
 		int gridStartY = gridY + HEADER_HEIGHT;
 		if (items.isEmpty())
 		{
@@ -357,11 +359,11 @@ class AreaLootOverlay extends Overlay
 			AsyncBufferedImage image = itemManager.getImage(item.getId(), item.getQuantity(), false);
 			if (image != null)
 			{
-				int iconX = x + ((cellWidth - GRID_ICON_SIZE) / 2);
-				graphics.drawImage(image, iconX, y + PADDING, GRID_ICON_SIZE, GRID_ICON_SIZE, null);
+				int iconX = x + ((cellWidth - gridIconSize) / 2);
+				graphics.drawImage(image, iconX, y + GRID_CELL_VERTICAL_PADDING, gridIconSize, gridIconSize, null);
 			}
 
-			int textY = y + PADDING + GRID_ICON_SIZE + 10;
+			int textY = y + GRID_CELL_VERTICAL_PADDING + gridIconSize + 10;
 			if (config.showGeValue())
 			{
 				String valueText = formatGeValue(item);
@@ -381,7 +383,7 @@ class AreaLootOverlay extends Overlay
 		if (items.size() > itemCount)
 		{
 			graphics.setColor(config.overlaySecondaryTextColor());
-			graphics.drawString("+" + (items.size() - itemCount) + " more", gridX + PADDING, gridY + height - 7);
+			graphics.drawString("+" + (items.size() - itemCount) + " more", gridX + GRID_OUTER_PADDING, gridY + height - 7);
 		}
 
 		plugin.setOverlayRows(cellBounds);
@@ -403,21 +405,21 @@ class AreaLootOverlay extends Overlay
 		return lines;
 	}
 
-	private int getGridCellWidth(FontMetrics metrics, List<AreaLootItem> items, int itemCount)
+	private int getGridCellWidth(FontMetrics metrics, List<AreaLootItem> items, int itemCount, int gridIconSize)
 	{
-		int width = GRID_CELL_MIN_WIDTH;
+		int width = gridIconSize + (GRID_CELL_HORIZONTAL_PADDING * 2);
 		for (int i = 0; i < itemCount; i++)
 		{
 			AreaLootItem item = items.get(i);
 			if (config.showGeValue())
 			{
-				width = Math.max(width, metrics.stringWidth(formatGeValue(item)) + (PADDING * 2));
+				width = Math.max(width, metrics.stringWidth(formatGeValue(item)) + (GRID_CELL_HORIZONTAL_PADDING * 2));
 			}
 
 			String distanceText = formatDistance(item);
 			if (!distanceText.isEmpty())
 			{
-				width = Math.max(width, metrics.stringWidth(distanceText) + (PADDING * 2));
+				width = Math.max(width, metrics.stringWidth(distanceText) + (GRID_CELL_HORIZONTAL_PADDING * 2));
 			}
 		}
 		return width;

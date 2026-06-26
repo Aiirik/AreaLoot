@@ -181,10 +181,22 @@ public interface AreaLootConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "gridIconSize",
+		name = "Grid icon size",
+		description = "Choose the item icon size used by grid overlay style",
+		position = 9,
+		section = OVERLAY_SECTION
+	)
+	default AreaLootGridIconSize gridIconSize()
+	{
+		return AreaLootGridIconSize.DEFAULT;
+	}
+
+	@ConfigItem(
 		keyName = "gridAutoAdjust",
 		name = "Grid auto adjust",
 		description = "Shrink the grid overlay to fit the number of visible items",
-		position = 9,
+		position = 10,
 		section = OVERLAY_SECTION
 	)
 	default boolean gridAutoAdjust()
