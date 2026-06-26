@@ -20,8 +20,8 @@ public interface AreaLootConfig extends Config
 	String HIGHLIGHT_SECTION = "highlight";
 
 	@ConfigSection(
-		name = "Overlay List",
-		description = "Overlay list controls, sizing, and colors",
+		name = "Overlay",
+		description = "Overlay controls, sizing, style, and colors",
 		position = 0
 	)
 	String overlaySection = OVERLAY_SECTION;
@@ -83,10 +83,6 @@ public interface AreaLootConfig extends Config
 		return false;
 	}
 
-	@Range(
-		min = 1,
-		max = 25
-	)
 	@ConfigItem(
 		keyName = "animateOverlay",
 		name = "Animate overlay",
@@ -99,20 +95,64 @@ public interface AreaLootConfig extends Config
 		return true;
 	}
 
+	@ConfigItem(
+		keyName = "overlayStyle",
+		name = "Overlay style",
+		description = "Choose whether the overlay shows a list or icon grid",
+		position = 4,
+		section = OVERLAY_SECTION
+	)
+	default AreaLootOverlayStyle overlayStyle()
+	{
+		return AreaLootOverlayStyle.LIST;
+	}
+
 	@Range(
 		min = 1,
 		max = 25
 	)
 	@ConfigItem(
 		keyName = "maxOverlayItems",
-		name = "Max items",
+		name = "List max items",
 		description = "Maximum number of rows shown in the Area Loot overlay",
-		position = 4,
+		position = 5,
 		section = OVERLAY_SECTION
 	)
 	default int maxOverlayItems()
 	{
 		return 12;
+	}
+
+	@Range(
+		min = 1,
+		max = 10
+	)
+	@ConfigItem(
+		keyName = "gridColumns",
+		name = "Grid columns",
+		description = "Number of item columns shown in grid overlay style",
+		position = 6,
+		section = OVERLAY_SECTION
+	)
+	default int gridColumns()
+	{
+		return 5;
+	}
+
+	@Range(
+		min = 1,
+		max = 10
+	)
+	@ConfigItem(
+		keyName = "gridRows",
+		name = "Grid rows",
+		description = "Number of item rows shown in grid overlay style",
+		position = 7,
+		section = OVERLAY_SECTION
+	)
+	default int gridRows()
+	{
+		return 5;
 	}
 
 	@Range(
@@ -123,8 +163,8 @@ public interface AreaLootConfig extends Config
 	@ConfigItem(
 		keyName = "overlayX",
 		name = "X position",
-		description = "Default overlay list X position before moving it in overlay edit mode",
-		position = 5,
+		description = "Default overlay X position before moving it in overlay edit mode",
+		position = 8,
 		section = OVERLAY_SECTION
 	)
 	default int overlayX()
@@ -140,8 +180,8 @@ public interface AreaLootConfig extends Config
 	@ConfigItem(
 		keyName = "overlayY",
 		name = "Y position",
-		description = "Default overlay list Y position before moving it in overlay edit mode",
-		position = 6,
+		description = "Default overlay Y position before moving it in overlay edit mode",
+		position = 9,
 		section = OVERLAY_SECTION
 	)
 	default int overlayY()
@@ -156,9 +196,9 @@ public interface AreaLootConfig extends Config
 	@Units(Units.PIXELS)
 	@ConfigItem(
 		keyName = "overlayWidth",
-		name = "Width",
+		name = "List width",
 		description = "Overlay list width",
-		position = 7,
+		position = 10,
 		section = OVERLAY_SECTION
 	)
 	default int overlayWidth()
@@ -170,8 +210,8 @@ public interface AreaLootConfig extends Config
 	@ConfigItem(
 		keyName = "overlayBackgroundColor",
 		name = "Background",
-		description = "Overlay list background color",
-		position = 8,
+		description = "Overlay background color",
+		position = 11,
 		section = OVERLAY_SECTION
 	)
 	default Color overlayBackgroundColor()
@@ -183,8 +223,8 @@ public interface AreaLootConfig extends Config
 	@ConfigItem(
 		keyName = "overlayBorderColor",
 		name = "Border",
-		description = "Overlay list border color",
-		position = 9,
+		description = "Overlay border color",
+		position = 12,
 		section = OVERLAY_SECTION
 	)
 	default Color overlayBorderColor()
@@ -195,8 +235,8 @@ public interface AreaLootConfig extends Config
 	@ConfigItem(
 		keyName = "overlayHeaderColor",
 		name = "Header text",
-		description = "Overlay list header text color",
-		position = 10,
+		description = "Overlay header text color",
+		position = 13,
 		section = OVERLAY_SECTION
 	)
 	default Color overlayHeaderColor()
@@ -207,8 +247,8 @@ public interface AreaLootConfig extends Config
 	@ConfigItem(
 		keyName = "overlayTextColor",
 		name = "Item text",
-		description = "Overlay list item text color",
-		position = 11,
+		description = "Overlay item text color",
+		position = 14,
 		section = OVERLAY_SECTION
 	)
 	default Color overlayTextColor()
@@ -220,7 +260,7 @@ public interface AreaLootConfig extends Config
 		keyName = "overlaySecondaryTextColor",
 		name = "Status text",
 		description = "Overlay status and empty message text color, such as No nearby loot and auto mode messages",
-		position = 12,
+		position = 15,
 		section = OVERLAY_SECTION
 	)
 	default Color overlaySecondaryTextColor()
@@ -232,7 +272,7 @@ public interface AreaLootConfig extends Config
 		keyName = "geValueTextColor",
 		name = "GE value text",
 		description = "GE value text color in the overlay list and side panel",
-		position = 13,
+		position = 16,
 		section = OVERLAY_SECTION
 	)
 	default Color geValueTextColor()
@@ -244,7 +284,7 @@ public interface AreaLootConfig extends Config
 		keyName = "tileDistanceTextColor",
 		name = "Tile distance text",
 		description = "Tile distance text color in the overlay list and side panel",
-		position = 14,
+		position = 17,
 		section = OVERLAY_SECTION
 	)
 	default Color tileDistanceTextColor()
@@ -257,7 +297,7 @@ public interface AreaLootConfig extends Config
 		keyName = "overlaySelectedRowColor",
 		name = "Selected row",
 		description = "Overlay list selected row color",
-		position = 15,
+		position = 18,
 		section = OVERLAY_SECTION
 	)
 	default Color overlaySelectedRowColor()
@@ -303,8 +343,8 @@ public interface AreaLootConfig extends Config
 
 	@ConfigItem(
 		keyName = "tileDistanceMode",
-		name = "Tile distance",
-		description = "Choose how each loot item's distance is shown",
+		name = "Show tile distance",
+		description = "Choose whether and how each loot item's distance is shown",
 		position = 1,
 		section = GENERAL_SECTION
 	)

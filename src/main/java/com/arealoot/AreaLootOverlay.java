@@ -30,6 +30,10 @@ class AreaLootOverlay extends Overlay
 	private static final int HEADER_HEIGHT = 22;
 	private static final int ROW_HEIGHT = 24;
 	private static final int ICON_SIZE = 18;
+	private static final int GRID_ICON_SIZE = 28;
+	private static final int GRID_CELL_MIN_WIDTH = 46;
+	private static final int GRID_CELL_GAP = 4;
+	private static final int GRID_TEXT_LINE_HEIGHT = 12;
 	private static final int PADDING = 6;
 	private static final int METADATA_GAP = 12;
 	private static final double LINE_EDGE_GAP = 3.0;
@@ -165,6 +169,11 @@ class AreaLootOverlay extends Overlay
 			fadingOut = true;
 		}
 
+		if (config.overlayStyle() == AreaLootOverlayStyle.GRID)
+		{
+			return renderLootGrid(graphics, items, headerText, emptyText, fading, fadingOut, alpha);
+		}
+
 		java.awt.Point origin = getBounds().getLocation();
 		int listX = 0;
 		int listY = 0;
@@ -258,6 +267,154 @@ class AreaLootOverlay extends Overlay
 		plugin.setOverlayRows(rowBounds);
 		graphics.setComposite(originalComposite);
 		return new Dimension(listWidth, height);
+	}
+
+	private Dimension renderLootGrid(
+		Graphics2D graphics,
+		List<AreaLootItem> items,
+		String headerText,
+		String emptyText,
+		boolean fading,
+		boolean fadingOut,
+		float alpha)
+	{
+		java.awt.Point origin = getBounds().getLocation();
+		int gridX = 0;
+		int gridY = 0;
+		int columns = Math.max(1, config.gridColumns());
+		int configuredRows = Math.max(1, config.gridRows());
+		int maxItems = columns * configuredRows;
+		int itemCount = Math.min(items.size(), maxItems);
+		FontMetrics metrics = graphics.getFontMetrics();
+		int metadataLines = getGridMetadataLineCount();
+		int cellWidth = getGridCellWidth(metrics, items, itemCount);
+		int cellHeight = PADDING + GRID_ICON_SIZE + (metadataLines * GRID_TEXT_LINE_HEIGHT) + PADDING;
+		int visibleRows = Math.max(1, (int) Math.ceil(itemCount / (double) columns));
+		int gridWidth = (columns * cellWidth) + ((columns - 1) * GRID_CELL_GAP);
+		int overlayWidth = Math.max(gridWidth + (PADDING * 2), metrics.stringWidth(headerText) + (PADDING * 2));
+		if (items.isEmpty())
+		{
+			overlayWidth = Math.max(overlayWidth, metrics.stringWidth(emptyText) + (PADDING * 2));
+		}
+		int height = HEADER_HEIGHT + (visibleRows * cellHeight) + PADDING;
+		if (items.size() > itemCount)
+		{
+			height += GRID_TEXT_LINE_HEIGHT;
+		}
+
+		List<SimpleEntry<Rectangle, AreaLootItem>> cellBounds = new ArrayList<>();
+		Composite originalComposite = graphics.getComposite();
+		if (fading)
+		{
+			graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+		}
+
+		graphics.setColor(config.overlayBackgroundColor());
+		graphics.fillRoundRect(gridX, gridY, overlayWidth, height, 6, 6);
+		graphics.setColor(config.overlayBorderColor());
+		graphics.drawRoundRect(gridX, gridY, overlayWidth, height, 6, 6);
+
+		graphics.setColor(config.overlayHeaderColor());
+		graphics.drawString(headerText, gridX + PADDING, gridY + 15);
+
+		int gridStartX = gridX + PADDING;
+		int gridStartY = gridY + HEADER_HEIGHT;
+		if (items.isEmpty())
+		{
+			graphics.setColor(config.overlaySecondaryTextColor());
+			graphics.drawString(emptyText, gridStartX, gridStartY + 15);
+			plugin.setOverlayRows(fading ? new ArrayList<>() : cellBounds);
+			graphics.setComposite(originalComposite);
+			return new Dimension(overlayWidth, height);
+		}
+
+		for (int i = 0; i < itemCount; i++)
+		{
+			AreaLootItem item = items.get(i);
+			int column = i % columns;
+			int row = i / columns;
+			int x = gridStartX + (column * (cellWidth + GRID_CELL_GAP));
+			int y = gridStartY + (row * cellHeight);
+			Rectangle localCell = new Rectangle(x, y, cellWidth, cellHeight);
+			Rectangle clickCell = new Rectangle(origin.x + x, origin.y + y, cellWidth, cellHeight);
+			if (!fadingOut)
+			{
+				cellBounds.add(new SimpleEntry<>(clickCell, item));
+			}
+
+			if (plugin.isSelectedLoot(item))
+			{
+				graphics.setColor(config.overlaySelectedRowColor());
+				graphics.fillRoundRect(localCell.x + 1, localCell.y + 1, localCell.width - 2, localCell.height - 2, 4, 4);
+			}
+
+			AsyncBufferedImage image = itemManager.getImage(item.getId(), item.getQuantity(), false);
+			if (image != null)
+			{
+				int iconX = x + ((cellWidth - GRID_ICON_SIZE) / 2);
+				graphics.drawImage(image, iconX, y + PADDING, GRID_ICON_SIZE, GRID_ICON_SIZE, null);
+			}
+
+			int textY = y + PADDING + GRID_ICON_SIZE + 10;
+			if (config.showGeValue())
+			{
+				String valueText = formatGeValue(item);
+				graphics.setColor(config.geValueTextColor());
+				graphics.drawString(valueText, x + ((cellWidth - metrics.stringWidth(valueText)) / 2), textY);
+				textY += GRID_TEXT_LINE_HEIGHT;
+			}
+
+			String distanceText = formatDistance(item);
+			if (!distanceText.isEmpty())
+			{
+				graphics.setColor(config.tileDistanceTextColor());
+				graphics.drawString(distanceText, x + ((cellWidth - metrics.stringWidth(distanceText)) / 2), textY);
+			}
+		}
+
+		if (items.size() > itemCount)
+		{
+			graphics.setColor(config.overlaySecondaryTextColor());
+			graphics.drawString("+" + (items.size() - itemCount) + " more", gridX + PADDING, gridY + height - 7);
+		}
+
+		plugin.setOverlayRows(cellBounds);
+		graphics.setComposite(originalComposite);
+		return new Dimension(overlayWidth, height);
+	}
+
+	private int getGridMetadataLineCount()
+	{
+		int lines = 0;
+		if (config.showGeValue())
+		{
+			lines++;
+		}
+		if (config.tileDistanceMode() != AreaLootDistanceMode.NONE)
+		{
+			lines++;
+		}
+		return lines;
+	}
+
+	private int getGridCellWidth(FontMetrics metrics, List<AreaLootItem> items, int itemCount)
+	{
+		int width = GRID_CELL_MIN_WIDTH;
+		for (int i = 0; i < itemCount; i++)
+		{
+			AreaLootItem item = items.get(i);
+			if (config.showGeValue())
+			{
+				width = Math.max(width, metrics.stringWidth(formatGeValue(item)) + (PADDING * 2));
+			}
+
+			String distanceText = formatDistance(item);
+			if (!distanceText.isEmpty())
+			{
+				width = Math.max(width, metrics.stringWidth(distanceText) + (PADDING * 2));
+			}
+		}
+		return width;
 	}
 
 	private String getHeaderText()
