@@ -17,7 +17,7 @@ Area Loot is a RuneLite plugin for quickly finding ground items near your player
 - Hide low-value drops with a minimum GE value filter.
 - Block specific items by name, including wildcard patterns like `Burnt *`.
 - Optional Shift right-click menu option to add or remove ground items from the blocked item list.
-- Configurable grid size for the icon-grid overlay.
+- Configurable grid size with optional auto-adjust for the icon-grid overlay.
 - Configurable tile distance display: none, short form, or long form.
 - Click an item to highlight its ground tile; click it again to clear the highlight.
 - Optional line from your player to the highlighted item.

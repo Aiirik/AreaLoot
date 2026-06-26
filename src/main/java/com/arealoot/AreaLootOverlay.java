@@ -281,15 +281,21 @@ class AreaLootOverlay extends Overlay
 		java.awt.Point origin = getBounds().getLocation();
 		int gridX = 0;
 		int gridY = 0;
-		int columns = Math.max(1, config.gridColumns());
+		int configuredColumns = Math.max(1, config.gridColumns());
 		int configuredRows = Math.max(1, config.gridRows());
-		int maxItems = columns * configuredRows;
+		int maxItems = configuredColumns * configuredRows;
 		int itemCount = Math.min(items.size(), maxItems);
+		int columns = configuredColumns;
+		int visibleRows = configuredRows;
+		if (config.gridAutoAdjust())
+		{
+			columns = Math.max(1, Math.min(configuredColumns, Math.max(1, itemCount)));
+			visibleRows = Math.max(1, (int) Math.ceil(itemCount / (double) columns));
+		}
 		FontMetrics metrics = graphics.getFontMetrics();
 		int metadataLines = getGridMetadataLineCount();
 		int cellWidth = getGridCellWidth(metrics, items, itemCount);
 		int cellHeight = PADDING + GRID_ICON_SIZE + (metadataLines * GRID_TEXT_LINE_HEIGHT) + PADDING;
-		int visibleRows = Math.max(1, (int) Math.ceil(itemCount / (double) columns));
 		int gridWidth = (columns * cellWidth) + ((columns - 1) * GRID_CELL_GAP);
 		int overlayWidth = Math.max(gridWidth + (PADDING * 2), metrics.stringWidth(headerText) + (PADDING * 2));
 		if (items.isEmpty())

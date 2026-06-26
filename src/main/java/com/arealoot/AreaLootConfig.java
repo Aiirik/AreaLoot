@@ -15,35 +15,43 @@ import net.runelite.client.config.Units;
 public interface AreaLootConfig extends Config
 {
 	String OVERLAY_SECTION = "overlay";
+	String OVERLAY_ADJUSTMENTS_SECTION = "overlayAdjustments";
 	String SIDE_PANEL_SECTION = "sidePanel";
 	String GENERAL_SECTION = "general";
 	String HIGHLIGHT_SECTION = "highlight";
 
 	@ConfigSection(
 		name = "Overlay",
-		description = "Overlay controls, sizing, style, and colors",
+		description = "Overlay hotkeys, style, and behavior",
 		position = 0
 	)
 	String overlaySection = OVERLAY_SECTION;
 
 	@ConfigSection(
+		name = "Overlay Adjustments",
+		description = "Overlay position, sizing, and colors",
+		position = 1
+	)
+	String overlayAdjustmentsSection = OVERLAY_ADJUSTMENTS_SECTION;
+
+	@ConfigSection(
 		name = "Side Panel",
 		description = "RuneLite side panel controls",
-		position = 1
+		position = 2
 	)
 	String sidePanelSection = SIDE_PANEL_SECTION;
 
 	@ConfigSection(
 		name = "General",
 		description = "Shared Area Loot behavior",
-		position = 2
+		position = 3
 	)
 	String generalSection = GENERAL_SECTION;
 
 	@ConfigSection(
 		name = "Highlight Colors",
 		description = "Selected item highlight colors",
-		position = 3
+		position = 4
 	)
 	String highlightSection = HIGHLIGHT_SECTION;
 
@@ -124,6 +132,23 @@ public interface AreaLootConfig extends Config
 	}
 
 	@Range(
+		min = 100,
+		max = 500
+	)
+	@Units(Units.PIXELS)
+	@ConfigItem(
+		keyName = "overlayWidth",
+		name = "List width",
+		description = "Overlay list width",
+		position = 6,
+		section = OVERLAY_SECTION
+	)
+	default int overlayWidth()
+	{
+		return 140;
+	}
+
+	@Range(
 		min = 1,
 		max = 10
 	)
@@ -131,7 +156,7 @@ public interface AreaLootConfig extends Config
 		keyName = "gridColumns",
 		name = "Grid columns",
 		description = "Number of item columns shown in grid overlay style",
-		position = 6,
+		position = 7,
 		section = OVERLAY_SECTION
 	)
 	default int gridColumns()
@@ -147,12 +172,24 @@ public interface AreaLootConfig extends Config
 		keyName = "gridRows",
 		name = "Grid rows",
 		description = "Number of item rows shown in grid overlay style",
-		position = 7,
+		position = 8,
 		section = OVERLAY_SECTION
 	)
 	default int gridRows()
 	{
 		return 5;
+	}
+
+	@ConfigItem(
+		keyName = "gridAutoAdjust",
+		name = "Grid auto adjust",
+		description = "Shrink the grid overlay to fit the number of visible items",
+		position = 9,
+		section = OVERLAY_SECTION
+	)
+	default boolean gridAutoAdjust()
+	{
+		return true;
 	}
 
 	@Range(
@@ -164,8 +201,8 @@ public interface AreaLootConfig extends Config
 		keyName = "overlayX",
 		name = "X position",
 		description = "Default overlay X position before moving it in overlay edit mode",
-		position = 8,
-		section = OVERLAY_SECTION
+		position = 0,
+		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default int overlayX()
 	{
@@ -181,29 +218,12 @@ public interface AreaLootConfig extends Config
 		keyName = "overlayY",
 		name = "Y position",
 		description = "Default overlay Y position before moving it in overlay edit mode",
-		position = 9,
-		section = OVERLAY_SECTION
+		position = 1,
+		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default int overlayY()
 	{
 		return 80;
-	}
-
-	@Range(
-		min = 100,
-		max = 500
-	)
-	@Units(Units.PIXELS)
-	@ConfigItem(
-		keyName = "overlayWidth",
-		name = "List width",
-		description = "Overlay list width",
-		position = 10,
-		section = OVERLAY_SECTION
-	)
-	default int overlayWidth()
-	{
-		return 140;
 	}
 
 	@Alpha
@@ -211,8 +231,8 @@ public interface AreaLootConfig extends Config
 		keyName = "overlayBackgroundColor",
 		name = "Background",
 		description = "Overlay background color",
-		position = 11,
-		section = OVERLAY_SECTION
+		position = 2,
+		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color overlayBackgroundColor()
 	{
@@ -224,8 +244,8 @@ public interface AreaLootConfig extends Config
 		keyName = "overlayBorderColor",
 		name = "Border",
 		description = "Overlay border color",
-		position = 12,
-		section = OVERLAY_SECTION
+		position = 3,
+		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color overlayBorderColor()
 	{
@@ -236,8 +256,8 @@ public interface AreaLootConfig extends Config
 		keyName = "overlayHeaderColor",
 		name = "Header text",
 		description = "Overlay header text color",
-		position = 13,
-		section = OVERLAY_SECTION
+		position = 4,
+		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color overlayHeaderColor()
 	{
@@ -248,8 +268,8 @@ public interface AreaLootConfig extends Config
 		keyName = "overlayTextColor",
 		name = "Item text",
 		description = "Overlay item text color",
-		position = 14,
-		section = OVERLAY_SECTION
+		position = 5,
+		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color overlayTextColor()
 	{
@@ -260,8 +280,8 @@ public interface AreaLootConfig extends Config
 		keyName = "overlaySecondaryTextColor",
 		name = "Status text",
 		description = "Overlay status and empty message text color, such as No nearby loot and auto mode messages",
-		position = 15,
-		section = OVERLAY_SECTION
+		position = 6,
+		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color overlaySecondaryTextColor()
 	{
@@ -272,8 +292,8 @@ public interface AreaLootConfig extends Config
 		keyName = "geValueTextColor",
 		name = "GE value text",
 		description = "GE value text color in the overlay list and side panel",
-		position = 16,
-		section = OVERLAY_SECTION
+		position = 7,
+		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color geValueTextColor()
 	{
@@ -284,8 +304,8 @@ public interface AreaLootConfig extends Config
 		keyName = "tileDistanceTextColor",
 		name = "Tile distance text",
 		description = "Tile distance text color in the overlay list and side panel",
-		position = 17,
-		section = OVERLAY_SECTION
+		position = 8,
+		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color tileDistanceTextColor()
 	{
@@ -297,8 +317,8 @@ public interface AreaLootConfig extends Config
 		keyName = "overlaySelectedRowColor",
 		name = "Selected row",
 		description = "Overlay list selected row color",
-		position = 18,
-		section = OVERLAY_SECTION
+		position = 9,
+		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color overlaySelectedRowColor()
 	{
