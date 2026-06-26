@@ -44,6 +44,7 @@ import net.runelite.api.events.ItemSpawned;
 import net.runelite.api.events.MenuEntryAdded;
 import net.runelite.api.events.MenuOpened;
 import net.runelite.client.callback.ClientThread;
+import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
@@ -88,6 +89,9 @@ public class AreaLootPlugin extends Plugin
 
 	@Inject
 	private ConfigManager configManager;
+
+	@Inject
+	private ChatMessageManager chatMessageManager;
 
 	@Inject
 	private AreaLootOverlay overlay;
@@ -274,6 +278,7 @@ public class AreaLootPlugin extends Plugin
 		else if (event.getGameState() == GameState.LOGGED_IN)
 		{
 			restoreOverlayMode();
+			AreaLootUpdateNotice.announceIfNeeded(configManager, chatMessageManager);
 		}
 	}
 
