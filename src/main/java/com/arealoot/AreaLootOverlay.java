@@ -9,6 +9,7 @@ import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Polygon;
 import java.awt.Rectangle;
+import java.awt.Stroke;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.List;
@@ -221,8 +222,7 @@ class AreaLootOverlay extends Overlay
 
 			if (plugin.isSelectedLoot(item))
 			{
-				graphics.setColor(config.overlaySelectedRowColor());
-				graphics.fillRect(localRow.x + 1, localRow.y, localRow.width - 2, localRow.height);
+				renderSelectedOverlayEntry(graphics, localRow, false);
 			}
 
 			String quantity = item.getQuantity() > 1 ? " x" + item.getQuantity() : "";
@@ -352,8 +352,7 @@ class AreaLootOverlay extends Overlay
 
 			if (plugin.isSelectedLoot(item))
 			{
-				graphics.setColor(config.overlaySelectedRowColor());
-				graphics.fillRoundRect(localCell.x + 1, localCell.y + 1, localCell.width - 2, localCell.height - 2, 4, 4);
+				renderSelectedOverlayEntry(graphics, localCell, true);
 			}
 
 			AsyncBufferedImage image = itemManager.getImage(item.getId(), item.getQuantity(), false);
@@ -423,6 +422,35 @@ class AreaLootOverlay extends Overlay
 			}
 		}
 		return width;
+	}
+
+	private void renderSelectedOverlayEntry(Graphics2D graphics, Rectangle bounds, boolean rounded)
+	{
+		graphics.setColor(config.overlaySelectedRowColor());
+		if (config.overlaySelectionStyle() == AreaLootOverlaySelectionStyle.OUTLINE)
+		{
+			Stroke originalStroke = graphics.getStroke();
+			graphics.setStroke(new BasicStroke(2));
+			if (rounded)
+			{
+				graphics.drawRoundRect(bounds.x + 1, bounds.y + 1, bounds.width - 3, bounds.height - 3, 4, 4);
+			}
+			else
+			{
+				graphics.drawRect(bounds.x + 1, bounds.y + 1, bounds.width - 3, bounds.height - 3);
+			}
+			graphics.setStroke(originalStroke);
+			return;
+		}
+
+		if (rounded)
+		{
+			graphics.fillRoundRect(bounds.x + 1, bounds.y + 1, bounds.width - 2, bounds.height - 2, 4, 4);
+		}
+		else
+		{
+			graphics.fillRect(bounds.x + 1, bounds.y, bounds.width - 2, bounds.height);
+		}
 	}
 
 	private String getHeaderText()

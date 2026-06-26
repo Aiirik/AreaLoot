@@ -20,6 +20,7 @@ Area Loot is a RuneLite plugin for quickly finding ground items near your player
 - Configurable grid size, icon size, and optional auto-adjust for the icon-grid overlay.
 - Configurable tile distance display: none, short form, or long form.
 - Click an item to highlight its ground tile; click it again to clear the highlight.
+- Configurable selected-item overlay style: fill or outline.
 - Optional line from your player to the highlighted item.
 - Configurable overlay style, size, position, colors, fade animation, and side-panel visibility.
 - Optional right-click menu filtering so only the highlighted item is shown on crowded loot piles.

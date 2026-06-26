@@ -93,7 +93,7 @@ public interface AreaLootConfig extends Config
 
 	@ConfigItem(
 		keyName = "animateOverlay",
-		name = "Animate overlay",
+		name = "Fade in/out overlay",
 		description = "Fade the overlay list in and out when it appears or hides",
 		position = 3,
 		section = OVERLAY_SECTION
@@ -202,6 +202,18 @@ public interface AreaLootConfig extends Config
 	default boolean gridAutoAdjust()
 	{
 		return true;
+	}
+
+	@ConfigItem(
+		keyName = "overlaySelectionStyle",
+		name = "Selected item style",
+		description = "Choose how the selected item is shown in the overlay",
+		position = 11,
+		section = OVERLAY_SECTION
+	)
+	default AreaLootOverlaySelectionStyle overlaySelectionStyle()
+	{
+		return AreaLootOverlaySelectionStyle.FILL;
 	}
 
 	@Range(
