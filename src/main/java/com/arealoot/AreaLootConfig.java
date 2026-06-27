@@ -15,6 +15,8 @@ import net.runelite.client.config.Units;
 public interface AreaLootConfig extends Config
 {
 	String OVERLAY_SECTION = "overlay";
+	String OVERLAY_LIST_SECTION = "overlayList";
+	String OVERLAY_GRID_SECTION = "overlayGrid";
 	String OVERLAY_ADJUSTMENTS_SECTION = "overlayAdjustments";
 	String SIDE_PANEL_SECTION = "sidePanel";
 	String GENERAL_SECTION = "general";
@@ -28,30 +30,44 @@ public interface AreaLootConfig extends Config
 	String overlaySection = OVERLAY_SECTION;
 
 	@ConfigSection(
-		name = "Overlay Adjustments",
-		description = "Overlay position, sizing, and colors",
-		position = 1
-	)
-	String overlayAdjustmentsSection = OVERLAY_ADJUSTMENTS_SECTION;
-
-	@ConfigSection(
-		name = "Side Panel",
-		description = "RuneLite side panel controls",
-		position = 2
-	)
-	String sidePanelSection = SIDE_PANEL_SECTION;
-
-	@ConfigSection(
 		name = "General",
 		description = "Shared Area Loot behavior",
-		position = 3
+		position = 1
 	)
 	String generalSection = GENERAL_SECTION;
 
 	@ConfigSection(
-		name = "Highlight Colors",
-		description = "Selected item highlight colors",
+		name = "Overlay List Settings",
+		description = "List overlay controls",
+		position = 2
+	)
+	String overlayListSection = OVERLAY_LIST_SECTION;
+
+	@ConfigSection(
+		name = "Overlay Grid Settings",
+		description = "Grid overlay controls",
+		position = 3
+	)
+	String overlayGridSection = OVERLAY_GRID_SECTION;
+
+	@ConfigSection(
+		name = "Side Panel",
+		description = "RuneLite side panel controls",
 		position = 4
+	)
+	String sidePanelSection = SIDE_PANEL_SECTION;
+
+	@ConfigSection(
+		name = "Overlay Adjustments",
+		description = "Overlay position and colors",
+		position = 5
+	)
+	String overlayAdjustmentsSection = OVERLAY_ADJUSTMENTS_SECTION;
+
+	@ConfigSection(
+		name = "Highlight Settings",
+		description = "Selected item tile and line highlight controls",
+		position = 6
 	)
 	String highlightSection = HIGHLIGHT_SECTION;
 
@@ -88,7 +104,7 @@ public interface AreaLootConfig extends Config
 	)
 	default boolean rememberOverlayMode()
 	{
-		return false;
+		return true;
 	}
 
 	@ConfigItem(
@@ -123,29 +139,48 @@ public interface AreaLootConfig extends Config
 		keyName = "maxOverlayItems",
 		name = "List max items",
 		description = "Maximum number of rows shown in the Area Loot overlay",
-		position = 5,
-		section = OVERLAY_SECTION
+		position = 0,
+		section = OVERLAY_LIST_SECTION
 	)
 	default int maxOverlayItems()
 	{
 		return 12;
 	}
 
-	@Range(
-		min = 100,
-		max = 500
-	)
-	@Units(Units.PIXELS)
 	@ConfigItem(
-		keyName = "overlayWidth",
-		name = "List width",
-		description = "Overlay list width",
-		position = 6,
-		section = OVERLAY_SECTION
+		keyName = "listIconSize",
+		name = "List icon size",
+		description = "Choose the item icon size used by list overlay style",
+		position = 1,
+		section = OVERLAY_LIST_SECTION
 	)
-	default int overlayWidth()
+	default AreaLootListIconSize listIconSize()
 	{
-		return 140;
+		return AreaLootListIconSize.DEFAULT;
+	}
+
+	@ConfigItem(
+		keyName = "showItemNamesInListMode",
+		name = "Show item names in list mode",
+		description = "Show item names in the overlay list",
+		position = 2,
+		section = OVERLAY_LIST_SECTION
+	)
+	default boolean showItemNamesInListMode()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "showItemIcons",
+		name = "Show item icons in list mode",
+		description = "Show item icons next to item names in the overlay list and side panel",
+		position = 3,
+		section = OVERLAY_LIST_SECTION
+	)
+	default boolean showItemIcons()
+	{
+		return true;
 	}
 
 	@Range(
@@ -156,8 +191,8 @@ public interface AreaLootConfig extends Config
 		keyName = "gridColumns",
 		name = "Grid columns",
 		description = "Number of item columns shown in grid overlay style",
-		position = 7,
-		section = OVERLAY_SECTION
+		position = 0,
+		section = OVERLAY_GRID_SECTION
 	)
 	default int gridColumns()
 	{
@@ -172,8 +207,8 @@ public interface AreaLootConfig extends Config
 		keyName = "gridRows",
 		name = "Grid rows",
 		description = "Number of item rows shown in grid overlay style",
-		position = 8,
-		section = OVERLAY_SECTION
+		position = 1,
+		section = OVERLAY_GRID_SECTION
 	)
 	default int gridRows()
 	{
@@ -184,8 +219,8 @@ public interface AreaLootConfig extends Config
 		keyName = "gridIconSize",
 		name = "Grid icon size",
 		description = "Choose the item icon size used by grid overlay style",
-		position = 9,
-		section = OVERLAY_SECTION
+		position = 2,
+		section = OVERLAY_GRID_SECTION
 	)
 	default AreaLootGridIconSize gridIconSize()
 	{
@@ -195,9 +230,9 @@ public interface AreaLootConfig extends Config
 	@ConfigItem(
 		keyName = "gridAutoAdjust",
 		name = "Grid auto adjust",
-		description = "Shrink the grid overlay to fit the number of visible items",
-		position = 10,
-		section = OVERLAY_SECTION
+		description = "Shrink the grid below the configured size when fewer items are visible; width stabilizes once it reaches the configured column count",
+		position = 3,
+		section = OVERLAY_GRID_SECTION
 	)
 	default boolean gridAutoAdjust()
 	{
@@ -339,8 +374,8 @@ public interface AreaLootConfig extends Config
 	@Alpha
 	@ConfigItem(
 		keyName = "overlaySelectedRowColor",
-		name = "Selected row",
-		description = "Overlay list selected row color",
+		name = "Selected overlay item",
+		description = "Selected item color in the list or grid overlay",
 		position = 9,
 		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
@@ -374,13 +409,13 @@ public interface AreaLootConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "showItemIcons",
-		name = "Show item icons",
-		description = "Show item icons next to item names in the side panel and overlay list",
+		keyName = "showOverlayTitle",
+		name = "Show overlay title",
+		description = "Show Area Loot or Area Loot (auto) at the top of the overlay",
 		position = 0,
 		section = GENERAL_SECTION
 	)
-	default boolean showItemIcons()
+	default boolean showOverlayTitle()
 	{
 		return true;
 	}
@@ -411,7 +446,7 @@ public interface AreaLootConfig extends Config
 
 	@ConfigItem(
 		keyName = "sortMode",
-		name = "Sort list by",
+		name = "Sort loot by",
 		description = "Choose how Area Loot sorts nearby ground items",
 		position = 3,
 		section = GENERAL_SECTION
@@ -436,7 +471,7 @@ public interface AreaLootConfig extends Config
 	@ConfigItem(
 		keyName = "blockedItems",
 		name = "Blocked items",
-		description = "Comma-separated item names or wildcard patterns to hide, such as Ashes, Bones, Burnt *",
+		description = "Comma-separated item names or wildcard patterns to hide, such as Ashes, Bones, Burnt *. Shift+right-click a blocked item to unblock it",
 		position = 5,
 		section = GENERAL_SECTION
 	)
@@ -468,8 +503,8 @@ public interface AreaLootConfig extends Config
 		keyName = "drawHighlightLine",
 		name = "Draw highlight line",
 		description = "Draw a line from your player to the highlighted loot item",
-		position = 7,
-		section = GENERAL_SECTION
+		position = 2,
+		section = HIGHLIGHT_SECTION
 	)
 	default boolean drawHighlightLine()
 	{
@@ -480,7 +515,7 @@ public interface AreaLootConfig extends Config
 		keyName = "onlyShowHighlightedItemMenu",
 		name = "Only show highlighted item",
 		description = "When right-clicking the highlighted item's tile, hide other ground items from that menu",
-		position = 8,
+		position = 7,
 		section = GENERAL_SECTION
 	)
 	default boolean onlyShowHighlightedItemMenu()
@@ -496,7 +531,7 @@ public interface AreaLootConfig extends Config
 		keyName = "lootRadius",
 		name = "Loot radius",
 		description = "Maximum tile distance from your player to show in the Area Loot (1-30)",
-		position = 9,
+		position = 8,
 		section = GENERAL_SECTION
 	)
 	default int lootRadius()
@@ -534,7 +569,7 @@ public interface AreaLootConfig extends Config
 		keyName = "matchLineColor",
 		name = "Line matches tile outline",
 		description = "Use the tile outline color for the locator line instead of the separate line color",
-		position = 2,
+		position = 3,
 		section = HIGHLIGHT_SECTION
 	)
 	default boolean matchLineColor()
@@ -547,7 +582,7 @@ public interface AreaLootConfig extends Config
 		keyName = "highlightLineColor",
 		name = "Line color",
 		description = "Line color for the selected loot item",
-		position = 3,
+		position = 4,
 		section = HIGHLIGHT_SECTION
 	)
 	default Color highlightLineColor()

@@ -291,7 +291,7 @@ public class AreaLootPlugin extends Plugin
 		}
 
 		String key = event.getKey();
-		if ("overlayX".equals(key) || "overlayY".equals(key) || "overlayWidth".equals(key))
+		if ("overlayX".equals(key) || "overlayY".equals(key))
 		{
 			overlay.applyConfiguredListBounds();
 		}
