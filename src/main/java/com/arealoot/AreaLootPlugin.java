@@ -73,6 +73,7 @@ public class AreaLootPlugin extends Plugin
 	private static final long AUTO_STATUS_DISABLED_MILLIS = 1000L;
 	private static final String CONFIG_GROUP = "area-loot";
 	private static final String BLOCKED_ITEMS_KEY = "blockedItems";
+	private static final String WHITELISTED_ITEMS_KEY = "whitelistedItems";
 	private static final String REMEMBERED_MANUAL_OVERLAY_KEY = "rememberedManualOverlayEnabled";
 	private static final String REMEMBERED_AUTO_OVERLAY_KEY = "rememberedAutoOverlayEnabled";
 
@@ -312,7 +313,8 @@ public class AreaLootPlugin extends Plugin
 				clearSavedOverlayMode();
 			}
 		}
-		else if ("sortMode".equals(key) || "minimumGeValue".equals(key) || BLOCKED_ITEMS_KEY.equals(key) || "lootRadius".equals(key))
+		else if ("sortMode".equals(key) || "minimumGeValue".equals(key) || BLOCKED_ITEMS_KEY.equals(key)
+			|| WHITELISTED_ITEMS_KEY.equals(key) || "lootRadius".equals(key))
 		{
 			lootDirty = true;
 			if (shouldMaintainLootSnapshot())
@@ -342,6 +344,7 @@ public class AreaLootPlugin extends Plugin
 
 		String itemName = getItemName(event.getIdentifier());
 		boolean blockedByName = isBlockedByExactName(itemName);
+		boolean whitelistedByName = isWhitelistedByExactName(itemName);
 
 		client.createMenuEntry(-1)
 			.setParam0(event.getActionParam0())
@@ -360,6 +363,26 @@ public class AreaLootPlugin extends Plugin
 				else
 				{
 					addBlockedItem(itemName);
+				}
+			});
+
+		client.createMenuEntry(-1)
+			.setParam0(event.getActionParam0())
+			.setParam1(event.getActionParam1())
+			.setIdentifier(event.getIdentifier())
+			.setItemId(event.getItemId())
+			.setTarget(event.getTarget())
+			.setOption(whitelistedByName ? "Unwhitelist in Area Loot" : "Whitelist in Area Loot")
+			.setType(MenuAction.RUNELITE)
+			.onClick(entry ->
+			{
+				if (whitelistedByName)
+				{
+					removeWhitelistedItem(itemName);
+				}
+				else
+				{
+					addWhitelistedItem(itemName);
 				}
 			});
 	}
@@ -824,6 +847,7 @@ public class AreaLootPlugin extends Plugin
 		int radius = config.lootRadius();
 		long minimumGeValue = parseMinimumGeValue();
 		Set<String> blockedItems = parseBlockedItems();
+		Set<String> whitelistedItems = parseWhitelistedItems();
 		List<AreaLootItem> items = new ArrayList<>();
 
 		for (Map.Entry<WorldPoint, List<TileItem>> entry : groundItems.entrySet())
@@ -843,13 +867,14 @@ public class AreaLootPlugin extends Plugin
 			for (TileItem tileItem : entry.getValue())
 			{
 				String itemName = getItemName(tileItem.getId());
-				if (isBlockedItem(itemName, blockedItems))
+				if (isConfiguredItem(itemName, blockedItems))
 				{
 					continue;
 				}
 
+				boolean whitelisted = isConfiguredItem(itemName, whitelistedItems);
 				long geValue = (long) getItemPrice(tileItem.getId()) * tileItem.getQuantity();
-				if (geValue < minimumGeValue)
+				if (!whitelisted && geValue < minimumGeValue)
 				{
 					continue;
 				}
@@ -948,25 +973,50 @@ public class AreaLootPlugin extends Plugin
 
 	private Set<String> parseBlockedItems()
 	{
-		String value = config.blockedItems();
-		if (value == null || value.trim().isEmpty())
-		{
-			return Collections.emptySet();
-		}
+		return parseConfiguredItems(config.blockedItems());
+	}
 
-		Set<String> blockedItems = new HashSet<>();
-		for (String itemName : parseBlockedItemList(value))
-		{
-			String normalized = normalizeItemName(itemName);
-			if (!normalized.isEmpty())
-			{
-				blockedItems.add(normalized);
-			}
-		}
-		return blockedItems;
+	private Set<String> parseWhitelistedItems()
+	{
+		return parseConfiguredItems(config.whitelistedItems());
 	}
 
 	private void addBlockedItem(String itemName)
+	{
+		addConfiguredItem(itemName, BLOCKED_ITEMS_KEY, config.blockedItems(), "Blocked items");
+	}
+
+	private void removeBlockedItem(String itemName)
+	{
+		removeConfiguredItem(itemName, BLOCKED_ITEMS_KEY, config.blockedItems(), "Blocked items");
+	}
+
+	private void addWhitelistedItem(String itemName)
+	{
+		addConfiguredItem(itemName, WHITELISTED_ITEMS_KEY, config.whitelistedItems(), "Whitelisted items");
+	}
+
+	private void removeWhitelistedItem(String itemName)
+	{
+		removeConfiguredItem(itemName, WHITELISTED_ITEMS_KEY, config.whitelistedItems(), "Whitelisted items");
+	}
+
+	private boolean isBlockedByExactName(String itemName)
+	{
+		return isConfiguredByExactName(itemName, getConfiguredItemList(BLOCKED_ITEMS_KEY, config.blockedItems()));
+	}
+
+	private boolean isWhitelistedByExactName(String itemName)
+	{
+		return isConfiguredByExactName(itemName, getConfiguredItemList(WHITELISTED_ITEMS_KEY, config.whitelistedItems()));
+	}
+
+	private List<String> getConfiguredBlockedItemList()
+	{
+		return getConfiguredItemList(BLOCKED_ITEMS_KEY, config.blockedItems());
+	}
+
+	private void addConfiguredItem(String itemName, String key, String defaultValue, String configLabel)
 	{
 		String normalizedItemName = normalizeItemName(itemName);
 		if (normalizedItemName.isEmpty())
@@ -974,36 +1024,20 @@ public class AreaLootPlugin extends Plugin
 			return;
 		}
 
-		List<String> blockedItems = getConfiguredBlockedItemList();
-
-		for (String blockedItem : blockedItems)
+		List<String> configuredItems = getConfiguredItemList(key, defaultValue);
+		for (String configuredItem : configuredItems)
 		{
-			if (normalizeItemName(blockedItem).equals(normalizedItemName))
+			if (normalizeItemName(configuredItem).equals(normalizedItemName))
 			{
 				return;
 			}
 		}
 
-		blockedItems.add(itemName);
-		String updatedBlockedItems = String.join(", ", blockedItems);
-		configManager.setConfiguration(CONFIG_GROUP, BLOCKED_ITEMS_KEY, updatedBlockedItems);
-
-		String storedBlockedItems = configManager.getConfiguration(CONFIG_GROUP, BLOCKED_ITEMS_KEY);
-		if (!updatedBlockedItems.equals(storedBlockedItems))
-		{
-			log.debug("Area Loot failed to update blocked items. Expected '{}', stored '{}'", updatedBlockedItems, storedBlockedItems);
-			return;
-		}
-
-		lootDirty = true;
-		SwingUtilities.invokeLater(() -> updateOpenBlockedItemsConfigText(updatedBlockedItems));
-		if (shouldMaintainLootSnapshot())
-		{
-			refreshLootSnapshot();
-		}
+		configuredItems.add(itemName);
+		updateConfiguredItems(key, configLabel, String.join(", ", configuredItems));
 	}
 
-	private void removeBlockedItem(String itemName)
+	private void removeConfiguredItem(String itemName, String key, String defaultValue, String configLabel)
 	{
 		String normalizedItemName = normalizeItemName(itemName);
 		if (normalizedItemName.isEmpty())
@@ -1011,37 +1045,41 @@ public class AreaLootPlugin extends Plugin
 			return;
 		}
 
-		List<String> blockedItems = getConfiguredBlockedItemList();
-		boolean removed = blockedItems.removeIf(blockedItem -> normalizeItemName(blockedItem).equals(normalizedItemName));
+		List<String> configuredItems = getConfiguredItemList(key, defaultValue);
+		boolean removed = configuredItems.removeIf(configuredItem -> normalizeItemName(configuredItem).equals(normalizedItemName));
 		if (!removed)
 		{
 			return;
 		}
 
-		String updatedBlockedItems = String.join(", ", blockedItems);
-		configManager.setConfiguration(CONFIG_GROUP, BLOCKED_ITEMS_KEY, updatedBlockedItems);
+		updateConfiguredItems(key, configLabel, String.join(", ", configuredItems));
+	}
 
-		String storedBlockedItems = configManager.getConfiguration(CONFIG_GROUP, BLOCKED_ITEMS_KEY);
-		if (!updatedBlockedItems.equals(storedBlockedItems))
+	private void updateConfiguredItems(String key, String configLabel, String updatedItems)
+	{
+		configManager.setConfiguration(CONFIG_GROUP, key, updatedItems);
+
+		String storedItems = configManager.getConfiguration(CONFIG_GROUP, key);
+		if (!updatedItems.equals(storedItems))
 		{
-			log.debug("Area Loot failed to update blocked items. Expected '{}', stored '{}'", updatedBlockedItems, storedBlockedItems);
+			log.debug("Area Loot failed to update {}. Expected '{}', stored '{}'", configLabel, updatedItems, storedItems);
 			return;
 		}
 
 		lootDirty = true;
-		SwingUtilities.invokeLater(() -> updateOpenBlockedItemsConfigText(updatedBlockedItems));
+		SwingUtilities.invokeLater(() -> updateOpenConfigText(configLabel, updatedItems));
 		if (shouldMaintainLootSnapshot())
 		{
 			refreshLootSnapshot();
 		}
 	}
 
-	private boolean isBlockedByExactName(String itemName)
+	private boolean isConfiguredByExactName(String itemName, List<String> configuredItems)
 	{
 		String normalizedItemName = normalizeItemName(itemName);
-		for (String blockedItem : getConfiguredBlockedItemList())
+		for (String configuredItem : configuredItems)
 		{
-			if (normalizeItemName(blockedItem).equals(normalizedItemName))
+			if (normalizeItemName(configuredItem).equals(normalizedItemName))
 			{
 				return true;
 			}
@@ -1049,25 +1087,25 @@ public class AreaLootPlugin extends Plugin
 		return false;
 	}
 
-	private List<String> getConfiguredBlockedItemList()
+	private List<String> getConfiguredItemList(String key, String defaultValue)
 	{
-		String value = configManager.getConfiguration(CONFIG_GROUP, BLOCKED_ITEMS_KEY);
+		String value = configManager.getConfiguration(CONFIG_GROUP, key);
 		if (value == null)
 		{
-			value = config.blockedItems();
+			value = defaultValue;
 		}
-		return new ArrayList<>(parseBlockedItemList(value));
+		return new ArrayList<>(parseConfiguredItemList(value));
 	}
 
-	private void updateOpenBlockedItemsConfigText(String blockedItems)
+	private void updateOpenConfigText(String configLabel, String value)
 	{
 		for (Window window : Window.getWindows())
 		{
-			updateBlockedItemsConfigText(window, blockedItems);
+			updateConfigText(window, configLabel, value);
 		}
 	}
 
-	private boolean updateBlockedItemsConfigText(Component component, String blockedItems)
+	private boolean updateConfigText(Component component, String configLabel, String value)
 	{
 		if (!(component instanceof Container))
 		{
@@ -1079,7 +1117,7 @@ public class AreaLootPlugin extends Plugin
 		JTextComponent textComponent = null;
 		for (Component child : container.getComponents())
 		{
-			if (child instanceof JLabel && "Blocked items".equals(((JLabel) child).getText()))
+			if (child instanceof JLabel && configLabel.equals(((JLabel) child).getText()))
 			{
 				hasBlockedItemsLabel = true;
 			}
@@ -1091,13 +1129,13 @@ public class AreaLootPlugin extends Plugin
 
 		if (hasBlockedItemsLabel && textComponent != null)
 		{
-			textComponent.setText(blockedItems);
+			textComponent.setText(value);
 			return true;
 		}
 
 		for (Component child : container.getComponents())
 		{
-			if (updateBlockedItemsConfigText(child, blockedItems))
+			if (updateConfigText(child, configLabel, value))
 			{
 				return true;
 			}
@@ -1105,23 +1143,42 @@ public class AreaLootPlugin extends Plugin
 		return false;
 	}
 
-	private List<String> parseBlockedItemList(String value)
+	private Set<String> parseConfiguredItems(String value)
+	{
+		if (value == null || value.trim().isEmpty())
+		{
+			return Collections.emptySet();
+		}
+
+		Set<String> configuredItems = new HashSet<>();
+		for (String itemName : parseConfiguredItemList(value))
+		{
+			String normalized = normalizeItemName(itemName);
+			if (!normalized.isEmpty())
+			{
+				configuredItems.add(normalized);
+			}
+		}
+		return configuredItems;
+	}
+
+	private List<String> parseConfiguredItemList(String value)
 	{
 		if (value == null || value.trim().isEmpty())
 		{
 			return Collections.emptyList();
 		}
 
-		List<String> blockedItems = new ArrayList<>();
-		for (String blockedItem : value.split(","))
+		List<String> configuredItems = new ArrayList<>();
+		for (String configuredItem : value.split(","))
 		{
-			String trimmed = blockedItem.trim();
+			String trimmed = configuredItem.trim();
 			if (!trimmed.isEmpty())
 			{
-				blockedItems.add(trimmed);
+				configuredItems.add(trimmed);
 			}
 		}
-		return blockedItems;
+		return configuredItems;
 	}
 
 	private String normalizeItemName(String itemName)
@@ -1129,12 +1186,12 @@ public class AreaLootPlugin extends Plugin
 		return itemName == null ? "" : itemName.trim().toLowerCase();
 	}
 
-	private boolean isBlockedItem(String itemName, Set<String> blockedItems)
+	private boolean isConfiguredItem(String itemName, Set<String> configuredItems)
 	{
 		String normalizedName = normalizeItemName(itemName);
-		for (String blockedItem : blockedItems)
+		for (String configuredItem : configuredItems)
 		{
-			if (matchesBlockedItem(normalizedName, blockedItem))
+			if (matchesConfiguredItem(normalizedName, configuredItem))
 			{
 				return true;
 			}
@@ -1142,14 +1199,14 @@ public class AreaLootPlugin extends Plugin
 		return false;
 	}
 
-	private boolean matchesBlockedItem(String itemName, String blockedItem)
+	private boolean matchesConfiguredItem(String itemName, String configuredItem)
 	{
-		if (!blockedItem.contains("*"))
+		if (!configuredItem.contains("*"))
 		{
-			return itemName.equals(blockedItem);
+			return itemName.equals(configuredItem);
 		}
 
-		String[] parts = blockedItem.split("\\*", -1);
+		String[] parts = configuredItem.split("\\*", -1);
 		int index = 0;
 		for (String part : parts)
 		{

@@ -688,10 +688,29 @@ public interface AreaLootConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "whitelistedItems",
+		name = "Whitelisted items",
+		description = "Comma-separated item names or wildcard patterns to always show, such as Rune *, Clue scroll, Burnt *",
+		position = 7,
+		section = GENERAL_SECTION
+	)
+	default String whitelistedItems()
+	{
+		return "";
+	}
+
+	@ConfigItem(
+		keyName = "whitelistedItems",
+		name = "",
+		description = ""
+	)
+	void setWhitelistedItems(String whitelistedItems);
+
+	@ConfigItem(
 		keyName = "blockedItems",
 		name = "Blocked items",
 		description = "Comma-separated item names or wildcard patterns to hide, such as Ashes, Bones, Burnt *. Shift+right-click a blocked item to unblock it",
-		position = 7,
+		position = 8,
 		section = GENERAL_SECTION
 	)
 	default String blockedItems()
@@ -708,9 +727,9 @@ public interface AreaLootConfig extends Config
 
 	@ConfigItem(
 		keyName = "shiftRightClickBlockItems",
-		name = "Shift+right-click block/unblock",
-		description = "Add a Shift+right-click menu option on ground items to add or remove them from the blocked item list",
-		position = 8,
+		name = "Shift+right-click block/whitelist",
+		description = "Add Shift+right-click menu options on ground items to block/unblock or whitelist/unwhitelist them",
+		position = 9,
 		section = GENERAL_SECTION
 	)
 	default boolean shiftRightClickBlockItems()
@@ -722,7 +741,7 @@ public interface AreaLootConfig extends Config
 		keyName = "pinSelectedItem",
 		name = "Pin selected item menu option",
 		description = "Move the selected loot item's Take option to the top of the right-click menu",
-		position = 9,
+		position = 10,
 		section = GENERAL_SECTION
 	)
 	default boolean pinSelectedItem()
@@ -746,7 +765,7 @@ public interface AreaLootConfig extends Config
 		keyName = "onlyShowHighlightedItemMenu",
 		name = "Only show highlighted item",
 		description = "When right-clicking the highlighted item's tile, hide other ground items from that menu",
-		position = 10,
+		position = 11,
 		section = GENERAL_SECTION
 	)
 	default boolean onlyShowHighlightedItemMenu()
@@ -762,7 +781,7 @@ public interface AreaLootConfig extends Config
 		keyName = "lootRadius",
 		name = "Loot radius",
 		description = "Maximum tile distance from your player to show in the Area Loot (1-30)",
-		position = 11,
+		position = 12,
 		section = GENERAL_SECTION
 	)
 	default int lootRadius()
