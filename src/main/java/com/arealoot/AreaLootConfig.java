@@ -173,6 +173,26 @@ public interface AreaLootConfig extends Config
 		}
 	}
 
+	enum TotalGeValueMode
+	{
+		NONE("None"),
+		SHORT("Short"),
+		LONG("Long");
+
+		private final String name;
+
+		TotalGeValueMode(String name)
+		{
+			this.name = name;
+		}
+
+		@Override
+		public String toString()
+		{
+			return name;
+		}
+	}
+
 	@ConfigSection(
 		name = "Overlay",
 		description = "Overlay hotkeys, style, and behavior",
@@ -522,12 +542,36 @@ public interface AreaLootConfig extends Config
 		return new Color(165, 165, 165);
 	}
 
+	@ConfigItem(
+		keyName = "lootCountTextColor",
+		name = "Loot count text",
+		description = "Loot count footer text color",
+		position = 9,
+		section = OVERLAY_ADJUSTMENTS_SECTION
+	)
+	default Color lootCountTextColor()
+	{
+		return new Color(165, 165, 165);
+	}
+
+	@ConfigItem(
+		keyName = "totalGeValueTextColor",
+		name = "Total GE text",
+		description = "Total GE value footer text color",
+		position = 10,
+		section = OVERLAY_ADJUSTMENTS_SECTION
+	)
+	default Color totalGeValueTextColor()
+	{
+		return new Color(210, 190, 35);
+	}
+
 	@Alpha
 	@ConfigItem(
 		keyName = "overlaySelectedRowColor",
 		name = "Selected overlay item",
 		description = "Selected item color in the list or grid overlay",
-		position = 9,
+		position = 11,
 		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color overlaySelectedRowColor()
@@ -575,7 +619,7 @@ public interface AreaLootConfig extends Config
 		keyName = "tileDistanceMode",
 		name = "Show tile distance",
 		description = "Choose whether and how each loot item's distance is shown",
-		position = 1,
+		position = 3,
 		section = GENERAL_SECTION
 	)
 	default DistanceMode tileDistanceMode()
@@ -584,10 +628,34 @@ public interface AreaLootConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "showLootCount",
+		name = "Show loot count",
+		description = "Show the number of visible loot items below the overlay",
+		position = 1,
+		section = GENERAL_SECTION
+	)
+	default boolean showLootCount()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "totalGeValueMode",
+		name = "Total GE value",
+		description = "Choose how the total GE value of visible loot items is shown below the overlay",
+		position = 2,
+		section = GENERAL_SECTION
+	)
+	default TotalGeValueMode totalGeValueMode()
+	{
+		return TotalGeValueMode.NONE;
+	}
+
+	@ConfigItem(
 		keyName = "showGeValue",
 		name = "Show GE value",
 		description = "Show each loot item's total Grand Exchange value",
-		position = 2,
+		position = 4,
 		section = GENERAL_SECTION
 	)
 	default boolean showGeValue()
@@ -599,7 +667,7 @@ public interface AreaLootConfig extends Config
 		keyName = "sortMode",
 		name = "Sort loot by",
 		description = "Choose how Area Loot sorts nearby ground items",
-		position = 3,
+		position = 5,
 		section = GENERAL_SECTION
 	)
 	default SortMode sortMode()
@@ -611,7 +679,7 @@ public interface AreaLootConfig extends Config
 		keyName = "minimumGeValue",
 		name = "Minimum GE value",
 		description = "Only show drops worth at least this much GP. Supports values like 1000, 10k, or 1m",
-		position = 4,
+		position = 6,
 		section = GENERAL_SECTION
 	)
 	default String minimumGeValue()
@@ -623,7 +691,7 @@ public interface AreaLootConfig extends Config
 		keyName = "blockedItems",
 		name = "Blocked items",
 		description = "Comma-separated item names or wildcard patterns to hide, such as Ashes, Bones, Burnt *. Shift+right-click a blocked item to unblock it",
-		position = 5,
+		position = 7,
 		section = GENERAL_SECTION
 	)
 	default String blockedItems()
@@ -642,7 +710,7 @@ public interface AreaLootConfig extends Config
 		keyName = "shiftRightClickBlockItems",
 		name = "Shift+right-click block/unblock",
 		description = "Add a Shift+right-click menu option on ground items to add or remove them from the blocked item list",
-		position = 6,
+		position = 8,
 		section = GENERAL_SECTION
 	)
 	default boolean shiftRightClickBlockItems()
@@ -654,7 +722,7 @@ public interface AreaLootConfig extends Config
 		keyName = "pinSelectedItem",
 		name = "Pin selected item menu option",
 		description = "Move the selected loot item's Take option to the top of the right-click menu",
-		position = 7,
+		position = 9,
 		section = GENERAL_SECTION
 	)
 	default boolean pinSelectedItem()
@@ -678,7 +746,7 @@ public interface AreaLootConfig extends Config
 		keyName = "onlyShowHighlightedItemMenu",
 		name = "Only show highlighted item",
 		description = "When right-clicking the highlighted item's tile, hide other ground items from that menu",
-		position = 8,
+		position = 10,
 		section = GENERAL_SECTION
 	)
 	default boolean onlyShowHighlightedItemMenu()
@@ -694,7 +762,7 @@ public interface AreaLootConfig extends Config
 		keyName = "lootRadius",
 		name = "Loot radius",
 		description = "Maximum tile distance from your player to show in the Area Loot (1-30)",
-		position = 9,
+		position = 11,
 		section = GENERAL_SECTION
 	)
 	default int lootRadius()

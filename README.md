@@ -4,12 +4,12 @@ Area Loot is a RuneLite plugin for quickly finding ground items near your player
 
 <table>
   <tr>
-    <td style="padding-right: 16px;"><strong>List overlay</strong></td>
-    <td style="padding-left: 16px;"><strong>Grid overlay</strong></td>
+    <td style="padding-right: 24px; vertical-align: top;"><strong>List overlay</strong></td>
+    <td style="padding-left: 24px; vertical-align: top;"><strong>Grid overlay</strong></td>
   </tr>
   <tr>
-    <td style="padding-right: 16px;"><img src="docs/area-loot-overlay.png" alt="Area Loot list overlay showing nearby ground items"></td>
-    <td style="padding-left: 16px;"><img src="docs/area-loot-grid-overlay.png" alt="Area Loot grid overlay showing nearby ground items"></td>
+    <td style="padding-right: 24px; vertical-align: top;"><img src="docs/area-loot-overlay.png" alt="Area Loot list overlay showing nearby ground items"></td>
+    <td style="padding-left: 24px; vertical-align: top;"><img src="docs/area-loot-grid-overlay.png" alt="Area Loot grid overlay showing nearby ground items"></td>
   </tr>
 </table>
 
@@ -30,6 +30,7 @@ Area Loot is a RuneLite plugin for quickly finding ground items near your player
 - Configurable item icons, item names, and icon size in list mode.
 - GE value display with configurable value and distance text colors.
 - Configurable tile distance display: none, short form, or long form.
+- Optional footer indicators for visible loot count and total visible GE value.
 - Configurable overlay style, size, position, colors, fade animation, and side-panel visibility.
 - Configurable grid size, icon size, and optional auto-adjust for the icon-grid overlay.
 
@@ -40,9 +41,11 @@ Area Loot is a RuneLite plugin for quickly finding ground items near your player
 - Block specific items by name, including wildcard patterns like Burnt *.
 - Optional Shift right-click menu option to add or remove ground items from the blocked item list.
 - Optional right-click menu filtering so only the highlighted item is shown on crowded loot piles.
+- Optional selected-item right-click menu pinning for the Take option and Examine grouping.
 
 ### Highlighting
 
 - Click an item to highlight its ground tile; click it again to clear the highlight.
 - Configurable selected-item overlay style: fill or outline.
+- Optional selected-item right-click menu text highlighting with configurable scope and color.
 - Optional line from your player to the highlighted item.
