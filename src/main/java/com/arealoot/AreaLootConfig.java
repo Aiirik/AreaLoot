@@ -22,6 +22,157 @@ public interface AreaLootConfig extends Config
 	String GENERAL_SECTION = "general";
 	String HIGHLIGHT_SECTION = "highlight";
 
+	enum MenuHighlightMode
+	{
+		NONE("None"),
+		TAKE("Take"),
+		TAKE_AND_EXAMINE("All");
+
+		private final String name;
+
+		MenuHighlightMode(String name)
+		{
+			this.name = name;
+		}
+
+		@Override
+		public String toString()
+		{
+			return name;
+		}
+	}
+
+	enum OverlayStyle
+	{
+		LIST("List"),
+		GRID("Grid");
+
+		private final String name;
+
+		OverlayStyle(String name)
+		{
+			this.name = name;
+		}
+
+		@Override
+		public String toString()
+		{
+			return name;
+		}
+	}
+
+	enum ListIconSize
+	{
+		DEFAULT("Default", 18),
+		MEDIUM("Medium", 22),
+		LARGE("Large", 26);
+
+		private final String name;
+		private final int pixels;
+
+		ListIconSize(String name, int pixels)
+		{
+			this.name = name;
+			this.pixels = pixels;
+		}
+
+		int getPixels()
+		{
+			return pixels;
+		}
+
+		@Override
+		public String toString()
+		{
+			return name;
+		}
+	}
+
+	enum GridIconSize
+	{
+		SMALL("Small", 22),
+		DEFAULT("Default", 24),
+		LARGE("Large", 32);
+
+		private final String name;
+		private final int pixels;
+
+		GridIconSize(String name, int pixels)
+		{
+			this.name = name;
+			this.pixels = pixels;
+		}
+
+		int getPixels()
+		{
+			return pixels;
+		}
+
+		@Override
+		public String toString()
+		{
+			return name;
+		}
+	}
+
+	enum OverlaySelectionStyle
+	{
+		FILL("Fill"),
+		OUTLINE("Outline");
+
+		private final String name;
+
+		OverlaySelectionStyle(String name)
+		{
+			this.name = name;
+		}
+
+		@Override
+		public String toString()
+		{
+			return name;
+		}
+	}
+
+	enum DistanceMode
+	{
+		NONE("None"),
+		SHORT("Short form"),
+		LONG("Long form");
+
+		private final String name;
+
+		DistanceMode(String name)
+		{
+			this.name = name;
+		}
+
+		@Override
+		public String toString()
+		{
+			return name;
+		}
+	}
+
+	enum SortMode
+	{
+		NEAREST("Nearest"),
+		GE_HIGH_TO_LOW("GE price High-low");
+
+		private final String name;
+
+		SortMode(String name)
+		{
+			this.name = name;
+		}
+
+		@Override
+		public String toString()
+		{
+			return name;
+		}
+	}
+
 	@ConfigSection(
 		name = "Overlay",
 		description = "Overlay hotkeys, style, and behavior",
@@ -126,9 +277,9 @@ public interface AreaLootConfig extends Config
 		position = 4,
 		section = OVERLAY_SECTION
 	)
-	default AreaLootOverlayStyle overlayStyle()
+	default OverlayStyle overlayStyle()
 	{
-		return AreaLootOverlayStyle.LIST;
+		return OverlayStyle.LIST;
 	}
 
 	@Range(
@@ -154,9 +305,9 @@ public interface AreaLootConfig extends Config
 		position = 1,
 		section = OVERLAY_LIST_SECTION
 	)
-	default AreaLootListIconSize listIconSize()
+	default ListIconSize listIconSize()
 	{
-		return AreaLootListIconSize.DEFAULT;
+		return ListIconSize.DEFAULT;
 	}
 
 	@ConfigItem(
@@ -222,9 +373,9 @@ public interface AreaLootConfig extends Config
 		position = 2,
 		section = OVERLAY_GRID_SECTION
 	)
-	default AreaLootGridIconSize gridIconSize()
+	default GridIconSize gridIconSize()
 	{
-		return AreaLootGridIconSize.DEFAULT;
+		return GridIconSize.DEFAULT;
 	}
 
 	@ConfigItem(
@@ -246,9 +397,9 @@ public interface AreaLootConfig extends Config
 		position = 11,
 		section = OVERLAY_SECTION
 	)
-	default AreaLootOverlaySelectionStyle overlaySelectionStyle()
+	default OverlaySelectionStyle overlaySelectionStyle()
 	{
-		return AreaLootOverlaySelectionStyle.FILL;
+		return OverlaySelectionStyle.FILL;
 	}
 
 	@Range(
@@ -427,9 +578,9 @@ public interface AreaLootConfig extends Config
 		position = 1,
 		section = GENERAL_SECTION
 	)
-	default AreaLootDistanceMode tileDistanceMode()
+	default DistanceMode tileDistanceMode()
 	{
-		return AreaLootDistanceMode.SHORT;
+		return DistanceMode.SHORT;
 	}
 
 	@ConfigItem(
@@ -451,9 +602,9 @@ public interface AreaLootConfig extends Config
 		position = 3,
 		section = GENERAL_SECTION
 	)
-	default AreaLootSortMode sortMode()
+	default SortMode sortMode()
 	{
-		return AreaLootSortMode.NEAREST;
+		return SortMode.NEAREST;
 	}
 
 	@ConfigItem(
@@ -500,10 +651,22 @@ public interface AreaLootConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "pinSelectedItem",
+		name = "Pin selected item menu option",
+		description = "Move the selected loot item's Take option to the top of the right-click menu",
+		position = 7,
+		section = GENERAL_SECTION
+	)
+	default boolean pinSelectedItem()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "drawHighlightLine",
 		name = "Draw highlight line",
 		description = "Draw a line from your player to the highlighted loot item",
-		position = 2,
+		position = 4,
 		section = HIGHLIGHT_SECTION
 	)
 	default boolean drawHighlightLine()
@@ -515,7 +678,7 @@ public interface AreaLootConfig extends Config
 		keyName = "onlyShowHighlightedItemMenu",
 		name = "Only show highlighted item",
 		description = "When right-clicking the highlighted item's tile, hide other ground items from that menu",
-		position = 7,
+		position = 8,
 		section = GENERAL_SECTION
 	)
 	default boolean onlyShowHighlightedItemMenu()
@@ -531,7 +694,7 @@ public interface AreaLootConfig extends Config
 		keyName = "lootRadius",
 		name = "Loot radius",
 		description = "Maximum tile distance from your player to show in the Area Loot (1-30)",
-		position = 8,
+		position = 9,
 		section = GENERAL_SECTION
 	)
 	default int lootRadius()
@@ -569,7 +732,7 @@ public interface AreaLootConfig extends Config
 		keyName = "matchLineColor",
 		name = "Line matches tile outline",
 		description = "Use the tile outline color for the locator line instead of the separate line color",
-		position = 3,
+		position = 5,
 		section = HIGHLIGHT_SECTION
 	)
 	default boolean matchLineColor()
@@ -582,11 +745,35 @@ public interface AreaLootConfig extends Config
 		keyName = "highlightLineColor",
 		name = "Line color",
 		description = "Line color for the selected loot item",
-		position = 4,
+		position = 6,
 		section = HIGHLIGHT_SECTION
 	)
 	default Color highlightLineColor()
 	{
 		return new Color(0, 200, 255, 220);
+	}
+
+	@ConfigItem(
+		keyName = "highlightMenuTextMode",
+		name = "Highlight menu text",
+		description = "Color the selected loot item's right-click menu text",
+		position = 2,
+		section = HIGHLIGHT_SECTION
+	)
+	default MenuHighlightMode highlightMenuTextMode()
+	{
+		return MenuHighlightMode.TAKE;
+	}
+
+	@ConfigItem(
+		keyName = "highlightMenuTextColor",
+		name = "Menu text color",
+		description = "Right-click menu text color for the selected loot item",
+		position = 3,
+		section = HIGHLIGHT_SECTION
+	)
+	default Color highlightMenuTextColor()
+	{
+		return new Color(0, 200, 255);
 	}
 }

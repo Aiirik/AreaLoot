@@ -57,7 +57,9 @@ import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.overlay.OverlayManager;
+import net.runelite.client.util.ColorUtil;
 import net.runelite.client.util.HotkeyListener;
+import net.runelite.client.util.Text;
 
 @Slf4j
 @PluginDescriptor(
@@ -365,7 +367,7 @@ public class AreaLootPlugin extends Plugin
 	@Subscribe
 	public void onMenuOpened(MenuOpened event)
 	{
-		if (!config.onlyShowHighlightedItemMenu() || selectedLocation == null)
+		if (selectedLocation == null)
 		{
 			return;
 		}
@@ -374,13 +376,27 @@ public class AreaLootPlugin extends Plugin
 		int selectedSceneX = selectedLocation.getX() - worldView.getBaseX();
 		int selectedSceneY = selectedLocation.getY() - worldView.getBaseY();
 		MenuEntry[] menuEntries = event.getMenuEntries();
-		MenuEntry[] filteredEntries = Arrays.stream(menuEntries)
-			.filter(entry -> shouldKeepMenuEntry(entry, selectedSceneX, selectedSceneY))
-			.toArray(MenuEntry[]::new);
-
-		if (filteredEntries.length != menuEntries.length)
+		for (MenuEntry entry : menuEntries)
 		{
-			client.getMenu().setMenuEntries(filteredEntries);
+			colorSelectedMenuEntry(entry, selectedSceneX, selectedSceneY);
+		}
+
+		MenuEntry[] updatedEntries = menuEntries;
+		if (config.onlyShowHighlightedItemMenu())
+		{
+			updatedEntries = Arrays.stream(updatedEntries)
+				.filter(entry -> shouldKeepMenuEntry(entry, selectedSceneX, selectedSceneY))
+				.toArray(MenuEntry[]::new);
+		}
+
+		if (config.pinSelectedItem())
+		{
+			updatedEntries = promoteSelectedMenuEntries(updatedEntries, selectedSceneX, selectedSceneY);
+		}
+
+		if (updatedEntries != menuEntries)
+		{
+			client.getMenu().setMenuEntries(updatedEntries);
 		}
 	}
 
@@ -658,6 +674,90 @@ public class AreaLootPlugin extends Plugin
 		return entry.getItemId() == selectedItemId || entry.getIdentifier() == selectedItemId;
 	}
 
+	private void colorSelectedMenuEntry(MenuEntry entry, int selectedSceneX, int selectedSceneY)
+	{
+		if (config.highlightMenuTextMode() == AreaLootConfig.MenuHighlightMode.NONE)
+		{
+			return;
+		}
+
+		if (!isSelectedMenuHighlightEntry(entry, selectedSceneX, selectedSceneY))
+		{
+			return;
+		}
+
+		entry.setTarget(ColorUtil.prependColorTag(Text.removeTags(entry.getTarget()), config.highlightMenuTextColor()));
+	}
+
+	private boolean isSelectedMenuHighlightEntry(MenuEntry entry, int selectedSceneX, int selectedSceneY)
+	{
+		return isHighlightedMenuEntry(entry)
+			&& entry.getParam0() == selectedSceneX
+			&& entry.getParam1() == selectedSceneY
+			&& (entry.getItemId() == selectedItemId || entry.getIdentifier() == selectedItemId);
+	}
+
+	private boolean isHighlightedMenuEntry(MenuEntry entry)
+	{
+		switch (config.highlightMenuTextMode())
+		{
+			case TAKE_AND_EXAMINE:
+				return isGroundItemMenuEntry(entry);
+			case TAKE:
+				return isTakeGroundItemMenuEntry(entry);
+			case NONE:
+			default:
+				return false;
+		}
+	}
+
+	private boolean isSelectedGroundItemMenuEntry(MenuEntry entry, int selectedSceneX, int selectedSceneY)
+	{
+		return isTakeGroundItemMenuEntry(entry)
+			&& entry.getParam0() == selectedSceneX
+			&& entry.getParam1() == selectedSceneY
+			&& (entry.getItemId() == selectedItemId || entry.getIdentifier() == selectedItemId);
+	}
+
+	private MenuEntry[] promoteSelectedMenuEntries(MenuEntry[] menuEntries, int selectedSceneX, int selectedSceneY)
+	{
+		List<MenuEntry> examineEntries = new ArrayList<>();
+		List<MenuEntry> selectedExamineEntries = new ArrayList<>();
+		List<MenuEntry> actionEntries = new ArrayList<>();
+		List<MenuEntry> selectedActionEntries = new ArrayList<>();
+		for (MenuEntry entry : menuEntries)
+		{
+			if (isSelectedGroundItemMenuEntry(entry, selectedSceneX, selectedSceneY))
+			{
+				selectedActionEntries.add(entry);
+			}
+			else if (isSelectedGroundItemExamineEntry(entry, selectedSceneX, selectedSceneY))
+			{
+				selectedExamineEntries.add(entry);
+			}
+			else if (isGroundItemExamineEntry(entry))
+			{
+				examineEntries.add(entry);
+			}
+			else
+			{
+				actionEntries.add(entry);
+			}
+		}
+
+		if (selectedActionEntries.isEmpty() && selectedExamineEntries.isEmpty())
+		{
+			return menuEntries;
+		}
+
+		List<MenuEntry> promotedEntries = new ArrayList<>(menuEntries.length);
+		promotedEntries.addAll(examineEntries);
+		promotedEntries.addAll(selectedExamineEntries);
+		promotedEntries.addAll(actionEntries);
+		promotedEntries.addAll(selectedActionEntries);
+		return promotedEntries.toArray(new MenuEntry[0]);
+	}
+
 	private boolean isGroundItemMenuEntry(MenuEntry entry)
 	{
 		switch (entry.getType())
@@ -674,6 +774,34 @@ public class AreaLootPlugin extends Plugin
 			default:
 				return false;
 		}
+	}
+
+	private boolean isTakeGroundItemMenuEntry(MenuEntry entry)
+	{
+		switch (entry.getType())
+		{
+			case GROUND_ITEM_FIRST_OPTION:
+			case GROUND_ITEM_SECOND_OPTION:
+			case GROUND_ITEM_THIRD_OPTION:
+			case GROUND_ITEM_FOURTH_OPTION:
+			case GROUND_ITEM_FIFTH_OPTION:
+				return true;
+			default:
+				return false;
+		}
+	}
+
+	private boolean isSelectedGroundItemExamineEntry(MenuEntry entry, int selectedSceneX, int selectedSceneY)
+	{
+		return isGroundItemExamineEntry(entry)
+			&& entry.getParam0() == selectedSceneX
+			&& entry.getParam1() == selectedSceneY
+			&& (entry.getItemId() == selectedItemId || entry.getIdentifier() == selectedItemId);
+	}
+
+	private boolean isGroundItemExamineEntry(MenuEntry entry)
+	{
+		return entry.getType() == MenuAction.EXAMINE_ITEM_GROUND;
 	}
 
 	private void rebuildPanel(List<AreaLootItem> items)
@@ -743,7 +871,7 @@ public class AreaLootPlugin extends Plugin
 
 	private void sortLoot(List<AreaLootItem> items)
 	{
-		if (config.sortMode() == AreaLootSortMode.GE_HIGH_TO_LOW)
+		if (config.sortMode() == AreaLootConfig.SortMode.GE_HIGH_TO_LOW)
 		{
 			items.sort(Comparator
 				.comparingLong(AreaLootItem::getGeValue).reversed()

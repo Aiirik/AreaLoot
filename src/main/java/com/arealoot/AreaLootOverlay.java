@@ -174,7 +174,7 @@ class AreaLootOverlay extends Overlay
 			fadingOut = true;
 		}
 
-		if (config.overlayStyle() == AreaLootOverlayStyle.GRID)
+		if (config.overlayStyle() == AreaLootConfig.OverlayStyle.GRID)
 		{
 			return renderLootGrid(graphics, items, headerText, emptyText, fading, fadingOut, alpha);
 		}
@@ -419,7 +419,7 @@ class AreaLootOverlay extends Overlay
 		{
 			lines++;
 		}
-		if (config.tileDistanceMode() != AreaLootDistanceMode.NONE)
+		if (config.tileDistanceMode() != AreaLootConfig.DistanceMode.NONE)
 		{
 			lines++;
 		}
@@ -464,11 +464,11 @@ class AreaLootOverlay extends Overlay
 		{
 			width = Math.max(width, metrics.stringWidth(GRID_STABLE_GE_TEXT) + (GRID_CELL_HORIZONTAL_PADDING * 2));
 		}
-		if (config.tileDistanceMode() == AreaLootDistanceMode.SHORT)
+		if (config.tileDistanceMode() == AreaLootConfig.DistanceMode.SHORT)
 		{
 			width = Math.max(width, metrics.stringWidth(GRID_STABLE_DISTANCE_SHORT_TEXT) + (GRID_CELL_HORIZONTAL_PADDING * 2));
 		}
-		else if (config.tileDistanceMode() == AreaLootDistanceMode.LONG)
+		else if (config.tileDistanceMode() == AreaLootConfig.DistanceMode.LONG)
 		{
 			width = Math.max(width, metrics.stringWidth(GRID_STABLE_DISTANCE_LONG_TEXT) + (GRID_CELL_HORIZONTAL_PADDING * 2));
 		}
@@ -510,7 +510,7 @@ class AreaLootOverlay extends Overlay
 	private void renderSelectedOverlayEntry(Graphics2D graphics, Rectangle bounds, boolean rounded)
 	{
 		graphics.setColor(config.overlaySelectedRowColor());
-		if (config.overlaySelectionStyle() == AreaLootOverlaySelectionStyle.OUTLINE)
+		if (config.overlaySelectionStyle() == AreaLootConfig.OverlaySelectionStyle.OUTLINE)
 		{
 			Stroke originalStroke = graphics.getStroke();
 			graphics.setStroke(new BasicStroke(2));
@@ -614,7 +614,7 @@ class AreaLootOverlay extends Overlay
 			}
 			rowWidth += getMetadataWidth(metrics, item, getMaxDistanceWidth(metrics, items, rowCount));
 			if ((config.showItemNamesInListMode() || config.showItemIcons())
-				&& (config.showGeValue() || config.tileDistanceMode() != AreaLootDistanceMode.NONE))
+				&& (config.showGeValue() || config.tileDistanceMode() != AreaLootConfig.DistanceMode.NONE))
 			{
 				rowWidth += METADATA_GAP;
 			}
@@ -664,7 +664,7 @@ class AreaLootOverlay extends Overlay
 
 	private int getMaxDistanceWidth(FontMetrics metrics, List<AreaLootItem> items, int rowCount)
 	{
-		if (config.tileDistanceMode() == AreaLootDistanceMode.NONE)
+		if (config.tileDistanceMode() == AreaLootConfig.DistanceMode.NONE)
 		{
 			return 0;
 		}
