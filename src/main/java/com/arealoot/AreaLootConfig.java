@@ -354,6 +354,35 @@ public interface AreaLootConfig extends Config
 		return true;
 	}
 
+	@ConfigItem(
+		keyName = "useListMinimumWidth",
+		name = "Use list minimum width",
+		description = "Keep list mode at least the configured width while still allowing it to expand for longer content",
+		position = 4,
+		section = OVERLAY_LIST_SECTION
+	)
+	default boolean useListMinimumWidth()
+	{
+		return false;
+	}
+
+	@Range(
+		min = 80,
+		max = 500
+	)
+	@Units(Units.PIXELS)
+	@ConfigItem(
+		keyName = "listMinimumWidth",
+		name = "List minimum width",
+		description = "Minimum list mode width when enabled",
+		position = 5,
+		section = OVERLAY_LIST_SECTION
+	)
+	default int listMinimumWidth()
+	{
+		return 160;
+	}
+
 	@Range(
 		min = 1,
 		max = 10

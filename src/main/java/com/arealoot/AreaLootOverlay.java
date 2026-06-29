@@ -580,7 +580,7 @@ class AreaLootOverlay extends Overlay
 
 	private int getListWidth(FontMetrics metrics, List<AreaLootItem> items, int rowCount, String headerText, String emptyText)
 	{
-		int width = 0;
+		int width = getConfiguredListMinimumWidth();
 		int listIconSize = config.listIconSize().getPixels();
 		if (config.showOverlayTitle())
 		{
@@ -620,6 +620,11 @@ class AreaLootOverlay extends Overlay
 		width = Math.max(width, getFooterWidth(metrics, items, rowCount) + (PADDING * 2));
 
 		return width;
+	}
+
+	private int getConfiguredListMinimumWidth()
+	{
+		return config.useListMinimumWidth() ? Math.max(0, config.listMinimumWidth()) : 0;
 	}
 
 	private int getFooterLineCount(List<AreaLootItem> items, int displayedCount)
