@@ -451,46 +451,12 @@ public interface AreaLootConfig extends Config
 		return OverlaySelectionStyle.FILL;
 	}
 
-	@Range(
-		min = 0,
-		max = 2000
-	)
-	@Units(Units.PIXELS)
-	@ConfigItem(
-		keyName = "overlayX",
-		name = "X position",
-		description = "Default overlay X position before moving it in overlay edit mode",
-		position = 0,
-		section = OVERLAY_ADJUSTMENTS_SECTION
-	)
-	default int overlayX()
-	{
-		return 8;
-	}
-
-	@Range(
-		min = 0,
-		max = 2000
-	)
-	@Units(Units.PIXELS)
-	@ConfigItem(
-		keyName = "overlayY",
-		name = "Y position",
-		description = "Default overlay Y position before moving it in overlay edit mode",
-		position = 1,
-		section = OVERLAY_ADJUSTMENTS_SECTION
-	)
-	default int overlayY()
-	{
-		return 80;
-	}
-
 	@Alpha
 	@ConfigItem(
 		keyName = "overlayBackgroundColor",
 		name = "Background",
 		description = "Overlay background color",
-		position = 2,
+		position = 0,
 		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color overlayBackgroundColor()
@@ -503,7 +469,7 @@ public interface AreaLootConfig extends Config
 		keyName = "overlayBorderColor",
 		name = "Border",
 		description = "Overlay border color",
-		position = 3,
+		position = 1,
 		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color overlayBorderColor()
@@ -515,7 +481,7 @@ public interface AreaLootConfig extends Config
 		keyName = "overlayHeaderColor",
 		name = "Header text",
 		description = "Overlay header text color",
-		position = 4,
+		position = 2,
 		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color overlayHeaderColor()
@@ -527,7 +493,7 @@ public interface AreaLootConfig extends Config
 		keyName = "overlayTextColor",
 		name = "Item text",
 		description = "Overlay item text color",
-		position = 5,
+		position = 3,
 		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color overlayTextColor()
@@ -539,7 +505,7 @@ public interface AreaLootConfig extends Config
 		keyName = "overlaySecondaryTextColor",
 		name = "Status text",
 		description = "Overlay status and empty message text color, such as No nearby loot and auto mode messages",
-		position = 6,
+		position = 4,
 		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color overlaySecondaryTextColor()
@@ -551,7 +517,7 @@ public interface AreaLootConfig extends Config
 		keyName = "geValueTextColor",
 		name = "GE value text",
 		description = "GE value text color in the overlay list and side panel",
-		position = 7,
+		position = 5,
 		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color geValueTextColor()
@@ -563,7 +529,7 @@ public interface AreaLootConfig extends Config
 		keyName = "tileDistanceTextColor",
 		name = "Tile distance text",
 		description = "Tile distance text color in the overlay list and side panel",
-		position = 8,
+		position = 6,
 		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color tileDistanceTextColor()
@@ -575,7 +541,7 @@ public interface AreaLootConfig extends Config
 		keyName = "lootCountTextColor",
 		name = "Loot count text",
 		description = "Loot count footer text color",
-		position = 9,
+		position = 7,
 		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color lootCountTextColor()
@@ -587,7 +553,7 @@ public interface AreaLootConfig extends Config
 		keyName = "totalGeValueTextColor",
 		name = "Total GE text",
 		description = "Total GE value footer text color",
-		position = 10,
+		position = 8,
 		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color totalGeValueTextColor()
@@ -598,9 +564,9 @@ public interface AreaLootConfig extends Config
 	@Alpha
 	@ConfigItem(
 		keyName = "overlaySelectedRowColor",
-		name = "Selected overlay item",
+		name = "Selected item",
 		description = "Selected item color in the list or grid overlay",
-		position = 11,
+		position = 9,
 		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color overlaySelectedRowColor()

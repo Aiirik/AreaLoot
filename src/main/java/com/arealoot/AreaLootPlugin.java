@@ -294,11 +294,7 @@ public class AreaLootPlugin extends Plugin
 		}
 
 		String key = event.getKey();
-		if ("overlayX".equals(key) || "overlayY".equals(key))
-		{
-			overlay.applyConfiguredListBounds();
-		}
-		else if ("sidePanelEnabled".equals(key))
+		if ("sidePanelEnabled".equals(key))
 		{
 			updateSidePanelRegistration();
 		}

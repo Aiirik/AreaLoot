@@ -36,6 +36,7 @@ class AreaLootOverlay extends Overlay
 	private static final int GRID_CELL_VERTICAL_PADDING = 2;
 	private static final int GRID_TEXT_LINE_HEIGHT = 12;
 	private static final int FOOTER_LINE_HEIGHT = 12;
+	private static final int FOOTER_TOP_GAP = 4;
 	private static final String GRID_STABLE_GE_TEXT = "999gp";
 	private static final String GRID_STABLE_DISTANCE_SHORT_TEXT = "30t";
 	private static final String GRID_STABLE_DISTANCE_LONG_TEXT = "30 Tiles";
@@ -66,9 +67,12 @@ class AreaLootOverlay extends Overlay
 		this.itemManager = itemManager;
 		setPosition(OverlayPosition.DYNAMIC);
 		setLayer(OverlayLayer.ABOVE_SCENE);
+		setMovable(true);
+		setSnappable(true);
+		setResettable(true);
 		setResizable(true);
 		setMinimumSize(0);
-		applyConfiguredListBounds();
+		setPreferredSize(new Dimension(0, 0));
 	}
 
 	@Override
@@ -80,12 +84,6 @@ class AreaLootOverlay extends Overlay
 		renderSelectedTile(graphics);
 		graphics.translate(origin.x, origin.y);
 		return listDimension;
-	}
-
-	void applyConfiguredListBounds()
-	{
-		setPreferredLocation(new java.awt.Point(config.overlayX(), config.overlayY()));
-		setPreferredSize(new Dimension(0, 0));
 	}
 
 	private Dimension renderLootList(Graphics2D graphics)
@@ -192,7 +190,8 @@ class AreaLootOverlay extends Overlay
 		int textBaselineOffset = ((rowHeight - metrics.getHeight()) / 2) + metrics.getAscent();
 		int headerHeight = getOverlayHeaderHeight();
 		int footerLineCount = getFooterLineCount(items, rowCount);
-		int height = headerHeight + Math.max(1, rowCount) * rowHeight + PADDING + (footerLineCount * FOOTER_LINE_HEIGHT);
+		int height = headerHeight + Math.max(1, rowCount) * rowHeight + PADDING
+			+ getFooterTopGap(footerLineCount) + (footerLineCount * FOOTER_LINE_HEIGHT);
 		List<SimpleEntry<Rectangle, AreaLootItem>> rowBounds = new ArrayList<>();
 		Composite originalComposite = graphics.getComposite();
 		if (fading)
@@ -275,7 +274,8 @@ class AreaLootOverlay extends Overlay
 			}
 		}
 
-		drawFooterLines(graphics, metrics, items, rowCount, listX + PADDING, rowStartY + (rowCount * rowHeight) + 10);
+		drawFooterLines(graphics, metrics, items, rowCount, listX + PADDING,
+			rowStartY + (rowCount * rowHeight) + 10 + getFooterTopGap(footerLineCount));
 
 		plugin.setOverlayRows(rowBounds);
 		graphics.setComposite(originalComposite);
@@ -323,7 +323,8 @@ class AreaLootOverlay extends Overlay
 		int headerHeight = getOverlayHeaderHeight();
 		int footerLineCount = getFooterLineCount(items, itemCount);
 		overlayWidth = Math.max(overlayWidth, getFooterWidth(metrics, items, itemCount) + (GRID_OUTER_PADDING * 2));
-		int height = headerHeight + (visibleRows * cellHeight) + GRID_OUTER_PADDING + (footerLineCount * FOOTER_LINE_HEIGHT);
+		int height = headerHeight + (visibleRows * cellHeight) + GRID_OUTER_PADDING
+			+ getFooterTopGap(footerLineCount) + (footerLineCount * FOOTER_LINE_HEIGHT);
 
 		List<SimpleEntry<Rectangle, AreaLootItem>> cellBounds = new ArrayList<>();
 		Composite originalComposite = graphics.getComposite();
@@ -397,7 +398,8 @@ class AreaLootOverlay extends Overlay
 			}
 		}
 
-		drawFooterLines(graphics, metrics, items, itemCount, gridX + GRID_OUTER_PADDING, gridStartY + (visibleRows * cellHeight) + 10);
+		drawFooterLines(graphics, metrics, items, itemCount, gridX + GRID_OUTER_PADDING,
+			gridStartY + (visibleRows * cellHeight) + 10 + getFooterTopGap(footerLineCount));
 
 		plugin.setOverlayRows(cellBounds);
 		graphics.setComposite(originalComposite);
@@ -635,11 +637,16 @@ class AreaLootOverlay extends Overlay
 		}
 
 		int lineCount = hasLootSummary() ? 1 : 0;
-		if (items.size() > displayedCount)
+		if (shouldShowMoreItemsLine(items, displayedCount))
 		{
 			lineCount++;
 		}
 		return lineCount;
+	}
+
+	private int getFooterTopGap(int footerLineCount)
+	{
+		return footerLineCount > 0 ? FOOTER_TOP_GAP : 0;
 	}
 
 	private int getFooterWidth(FontMetrics metrics, List<AreaLootItem> items, int displayedCount)
@@ -650,7 +657,7 @@ class AreaLootOverlay extends Overlay
 		}
 
 		int width = getLootSummaryWidth(metrics, items);
-		if (items.size() > displayedCount)
+		if (shouldShowMoreItemsLine(items, displayedCount))
 		{
 			width = Math.max(width, metrics.stringWidth(getMoreItemsText(items, displayedCount)));
 		}
@@ -689,11 +696,16 @@ class AreaLootOverlay extends Overlay
 			drawLootSummary(graphics, metrics, items, x, y);
 			y += FOOTER_LINE_HEIGHT;
 		}
-		if (items.size() > displayedCount)
+		if (shouldShowMoreItemsLine(items, displayedCount))
 		{
 			graphics.setColor(config.overlaySecondaryTextColor());
 			graphics.drawString(getMoreItemsText(items, displayedCount), x, y);
 		}
+	}
+
+	private boolean shouldShowMoreItemsLine(List<AreaLootItem> items, int displayedCount)
+	{
+		return !config.showLootCount() && items.size() > displayedCount;
 	}
 
 	private void drawLootSummary(Graphics2D graphics, FontMetrics metrics, List<AreaLootItem> items, int x, int y)
