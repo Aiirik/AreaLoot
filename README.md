@@ -4,12 +4,14 @@ Area Loot is a RuneLite plugin for quickly finding ground items near your player
 
 <table>
   <tr>
-    <td style="padding-right: 24px; vertical-align: top;"><strong>List overlay</strong></td>
-    <td style="padding-left: 24px; vertical-align: top;"><strong>Grid overlay</strong></td>
+    <td valign="top"><strong>List overlay</strong></td>
+    <td width="24" bgcolor="#000000">&nbsp;</td>
+    <td valign="top"><strong>Grid overlay</strong></td>
   </tr>
   <tr>
-    <td style="padding-right: 24px; vertical-align: top;"><img src="docs/area-loot-overlay.png" alt="Area Loot list overlay showing nearby ground items"></td>
-    <td style="padding-left: 24px; vertical-align: top;"><img src="docs/area-loot-grid-overlay.png" alt="Area Loot grid overlay showing nearby ground items"></td>
+    <td valign="top"><img src="docs/area-loot-overlay.png" alt="Area Loot list overlay showing nearby ground items"></td>
+    <td width="24" bgcolor="#000000">&nbsp;</td>
+    <td valign="top"><img src="docs/area-loot-grid-overlay.png" alt="Area Loot grid overlay showing nearby ground items"></td>
   </tr>
 </table>
 
