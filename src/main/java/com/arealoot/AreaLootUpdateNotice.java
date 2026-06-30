@@ -9,8 +9,8 @@ import net.runelite.client.util.ColorUtil;
 
 final class AreaLootUpdateNotice
 {
-	static final String NOTICE_ID = "1.4.0";
-	static final String MESSAGE = "Area Loot plugin has updated. See the plugin config for new settings. Loot overlay now can only be moved around with Alt+drag!";
+	static final String NOTICE_ID = "1.4.1";
+	static final String MESSAGE = "Area Loot plugin has updated. See the plugin config for new settings.";
 
 	private static final Color NOTICE_COLOR = new Color(160, 45, 45);
 	private static final String CONFIG_GROUP = "area-loot";
