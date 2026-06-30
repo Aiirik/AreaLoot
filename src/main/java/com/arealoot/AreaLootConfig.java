@@ -269,7 +269,7 @@ public interface AreaLootConfig extends Config
 	)
 	default Keybind toggleHotkey()
 	{
-		return new Keybind(KeyEvent.VK_B, 0);
+		return new Keybind(KeyEvent.VK_X, KeyEvent.CTRL_DOWN_MASK);
 	}
 
 	@ConfigItem(
@@ -281,7 +281,7 @@ public interface AreaLootConfig extends Config
 	)
 	default Keybind autoShowHotkey()
 	{
-		return new Keybind(KeyEvent.VK_V, 0);
+		return new Keybind(KeyEvent.VK_Z, KeyEvent.CTRL_DOWN_MASK);
 	}
 
 	@ConfigItem(
