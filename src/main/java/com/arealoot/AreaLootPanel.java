@@ -20,6 +20,7 @@ class AreaLootPanel extends PluginPanel
 	private final AreaLootConfig config;
 	private final ItemManager itemManager;
 	private final JLabel header = new JLabel("Nearby loot");
+	private final JLabel summary = new JLabel();
 
 	AreaLootPanel(AreaLootPlugin plugin, AreaLootConfig config, ItemManager itemManager)
 	{
@@ -29,6 +30,8 @@ class AreaLootPanel extends PluginPanel
 
 		header.setForeground(ColorScheme.TEXT_COLOR);
 		header.setHorizontalAlignment(SwingConstants.CENTER);
+		summary.setForeground(ColorScheme.TEXT_COLOR);
+		summary.setHorizontalAlignment(SwingConstants.CENTER);
 		add(header);
 	}
 
@@ -41,6 +44,13 @@ class AreaLootPanel extends PluginPanel
 		for (AreaLootItem item : items)
 		{
 			add(createRow(item));
+		}
+
+		String summaryText = getSummaryText(items);
+		if (!summaryText.isEmpty())
+		{
+			summary.setText(summaryText);
+			add(summary);
 		}
 
 		revalidate();
@@ -96,6 +106,53 @@ class AreaLootPanel extends PluginPanel
 	private String formatGeValue(AreaLootItem item)
 	{
 		return AreaLootValueFormatter.formatGeValue(item.getGeValue());
+	}
+
+	private String formatGeValue(long value)
+	{
+		return AreaLootValueFormatter.formatGeValue(value);
+	}
+
+	private String getSummaryText(List<AreaLootItem> items)
+	{
+		if (items.isEmpty() || (!config.showLootCount() && config.totalGeValueMode() == AreaLootConfig.TotalGeValueMode.NONE))
+		{
+			return "";
+		}
+
+		String lootCountText = config.showLootCount()
+			? "<font color='" + toHtmlColor(config.lootCountTextColor()) + "'>" + items.size() + (items.size() == 1 ? " item" : " items") + "</font>"
+			: "";
+		String totalGeValueText = getTotalGeValueText(items);
+		if (!lootCountText.isEmpty() && !totalGeValueText.isEmpty())
+		{
+			return "<html>" + lootCountText + "&nbsp;|&nbsp;" + totalGeValueText + "</html>";
+		}
+		return "<html>" + lootCountText + totalGeValueText + "</html>";
+	}
+
+	private String getTotalGeValueText(List<AreaLootItem> items)
+	{
+		switch (config.totalGeValueMode())
+		{
+			case LONG:
+				return "<font color='" + toHtmlColor(config.totalGeValueTextColor()) + "'>Total: " + formatGeValue(getTotalGeValue(items)) + "</font>";
+			case SHORT:
+				return "<font color='" + toHtmlColor(config.totalGeValueTextColor()) + "'>" + formatGeValue(getTotalGeValue(items)) + "</font>";
+			case NONE:
+			default:
+				return "";
+		}
+	}
+
+	private long getTotalGeValue(List<AreaLootItem> items)
+	{
+		long total = 0;
+		for (AreaLootItem item : items)
+		{
+			total += item.getGeValue();
+		}
+		return total;
 	}
 
 	private String formatDistance(AreaLootItem item)
