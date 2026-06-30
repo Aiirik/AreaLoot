@@ -26,7 +26,8 @@ public interface AreaLootConfig extends Config
 	{
 		NONE("None"),
 		TAKE("Take"),
-		TAKE_AND_EXAMINE("All");
+		EXAMINE("Examine"),
+		TAKE_AND_EXAMINE("Both");
 
 		private final String name;
 
@@ -63,8 +64,9 @@ public interface AreaLootConfig extends Config
 
 	enum ListIconSize
 	{
-		DEFAULT("Default", 18),
-		MEDIUM("Medium", 22),
+		NONE("None", 0),
+		DEFAULT("Small", 18),
+		MEDIUM("Default", 22),
 		LARGE("Large", 26);
 
 		private final String name;
@@ -320,19 +322,19 @@ public interface AreaLootConfig extends Config
 
 	@ConfigItem(
 		keyName = "listIconSize",
-		name = "List icon size",
-		description = "Choose the item icon size used by list overlay style",
+		name = "Item icons",
+		description = "Choose whether item icons are hidden or shown with the selected size",
 		position = 1,
 		section = OVERLAY_LIST_SECTION
 	)
 	default ListIconSize listIconSize()
 	{
-		return ListIconSize.DEFAULT;
+		return ListIconSize.MEDIUM;
 	}
 
 	@ConfigItem(
 		keyName = "showItemNamesInListMode",
-		name = "Show item names in list mode",
+		name = "Show item names",
 		description = "Show item names in the overlay list",
 		position = 2,
 		section = OVERLAY_LIST_SECTION
@@ -343,22 +345,10 @@ public interface AreaLootConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "showItemIcons",
-		name = "Show item icons in list mode",
-		description = "Show item icons next to item names in the overlay list and side panel",
-		position = 3,
-		section = OVERLAY_LIST_SECTION
-	)
-	default boolean showItemIcons()
-	{
-		return true;
-	}
-
-	@ConfigItem(
 		keyName = "useListMinimumWidth",
 		name = "Use list minimum width",
 		description = "Keep list mode at least the configured width while still allowing it to expand for longer content",
-		position = 4,
+		position = 3,
 		section = OVERLAY_LIST_SECTION
 	)
 	default boolean useListMinimumWidth()
@@ -375,7 +365,7 @@ public interface AreaLootConfig extends Config
 		keyName = "listMinimumWidth",
 		name = "List minimum width",
 		description = "Minimum list mode width when enabled",
-		position = 5,
+		position = 4,
 		section = OVERLAY_LIST_SECTION
 	)
 	default int listMinimumWidth()
@@ -602,7 +592,7 @@ public interface AreaLootConfig extends Config
 		keyName = "showOverlayTitle",
 		name = "Show overlay title",
 		description = "Show Area Loot or Area Loot (auto) at the top of the overlay",
-		position = 0,
+		position = 1,
 		section = GENERAL_SECTION
 	)
 	default boolean showOverlayTitle()
@@ -624,9 +614,9 @@ public interface AreaLootConfig extends Config
 
 	@ConfigItem(
 		keyName = "showLootCount",
-		name = "Show loot count",
+		name = "Show total loot count",
 		description = "Show the number of visible loot items below the overlay",
-		position = 1,
+		position = 4,
 		section = GENERAL_SECTION
 	)
 	default boolean showLootCount()
@@ -636,9 +626,9 @@ public interface AreaLootConfig extends Config
 
 	@ConfigItem(
 		keyName = "totalGeValueMode",
-		name = "Total GE value",
+		name = "Show total GE value",
 		description = "Choose how the total GE value of visible loot items is shown below the overlay",
-		position = 2,
+		position = 5,
 		section = GENERAL_SECTION
 	)
 	default TotalGeValueMode totalGeValueMode()
@@ -648,9 +638,9 @@ public interface AreaLootConfig extends Config
 
 	@ConfigItem(
 		keyName = "showGeValue",
-		name = "Show GE value",
+		name = "Show item GE value",
 		description = "Show each loot item's total Grand Exchange value",
-		position = 4,
+		position = 2,
 		section = GENERAL_SECTION
 	)
 	default boolean showGeValue()
@@ -662,7 +652,7 @@ public interface AreaLootConfig extends Config
 		keyName = "sortMode",
 		name = "Sort loot by",
 		description = "Choose how Area Loot sorts nearby ground items",
-		position = 5,
+		position = 0,
 		section = GENERAL_SECTION
 	)
 	default SortMode sortMode()
@@ -838,7 +828,7 @@ public interface AreaLootConfig extends Config
 	@ConfigItem(
 		keyName = "highlightMenuTextMode",
 		name = "Highlight menu text",
-		description = "Color the selected loot item's right-click menu text",
+		description = "Choose which right-click menu entries for the selected loot item use the menu text color",
 		position = 2,
 		section = HIGHLIGHT_SECTION
 	)

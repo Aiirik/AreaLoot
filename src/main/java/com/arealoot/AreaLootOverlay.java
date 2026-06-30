@@ -187,6 +187,7 @@ class AreaLootOverlay extends Overlay
 		int distanceWidth = getMaxDistanceWidth(metrics, items, rowCount);
 		int rowHeight = getListRowHeight();
 		int listIconSize = config.listIconSize().getPixels();
+		boolean showItemIcons = showListItemIcons();
 		int textBaselineOffset = ((rowHeight - metrics.getHeight()) / 2) + metrics.getAscent();
 		int headerHeight = getOverlayHeaderHeight();
 		int footerLineCount = getFooterLineCount(items, rowCount);
@@ -239,7 +240,7 @@ class AreaLootOverlay extends Overlay
 			String quantity = item.getQuantity() > 1 ? " x" + item.getQuantity() : "";
 			String text = item.getName() + quantity;
 			int textX = listX + PADDING;
-			if (config.showItemIcons())
+			if (showItemIcons)
 			{
 				AsyncBufferedImage image = itemManager.getImage(item.getId(), item.getQuantity(), false);
 				if (image != null)
@@ -584,6 +585,7 @@ class AreaLootOverlay extends Overlay
 	{
 		int width = getConfiguredListMinimumWidth();
 		int listIconSize = config.listIconSize().getPixels();
+		boolean showItemIcons = showListItemIcons();
 		if (config.showOverlayTitle())
 		{
 			width = Math.max(width, metrics.stringWidth(headerText) + (PADDING * 2));
@@ -598,7 +600,7 @@ class AreaLootOverlay extends Overlay
 			AreaLootItem item = items.get(i);
 			String quantity = item.getQuantity() > 1 ? " x" + item.getQuantity() : "";
 			int rowWidth = PADDING * 2;
-			if (config.showItemIcons())
+			if (showItemIcons)
 			{
 				rowWidth += listIconSize + 6;
 			}
@@ -607,7 +609,7 @@ class AreaLootOverlay extends Overlay
 				rowWidth += metrics.stringWidth(item.getName() + quantity);
 			}
 			rowWidth += getMetadataWidth(metrics, item, getMaxDistanceWidth(metrics, items, rowCount));
-			if ((config.showItemNamesInListMode() || config.showItemIcons())
+			if ((config.showItemNamesInListMode() || showItemIcons)
 				&& (config.showGeValue() || config.tileDistanceMode() != AreaLootConfig.DistanceMode.NONE))
 			{
 				rowWidth += METADATA_GAP;
@@ -810,7 +812,12 @@ class AreaLootOverlay extends Overlay
 
 	private int getListRowHeight()
 	{
-		return Math.max(ROW_HEIGHT, config.listIconSize().getPixels() + 6);
+		return Math.max(ROW_HEIGHT, config.listIconSize().getPixels() + 2);
+	}
+
+	private boolean showListItemIcons()
+	{
+		return config.listIconSize() != AreaLootConfig.ListIconSize.NONE;
 	}
 
 	private int getMaxDistanceWidth(FontMetrics metrics, List<AreaLootItem> items, int rowCount)

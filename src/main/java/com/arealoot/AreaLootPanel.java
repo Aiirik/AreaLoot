@@ -71,7 +71,7 @@ class AreaLootPanel extends PluginPanel
 			BorderFactory.createLineBorder(selected ? config.highlightOutlineColor() : ColorScheme.BORDER_COLOR, selected ? 2 : 1),
 			BorderFactory.createEmptyBorder(3, 6, 3, 6)
 		));
-		if (config.showItemIcons())
+		if (config.listIconSize() != AreaLootConfig.ListIconSize.NONE)
 		{
 			AsyncBufferedImage image = itemManager.getImage(item.getId(), item.getQuantity(), false);
 			if (image != null)

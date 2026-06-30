@@ -726,6 +726,8 @@ public class AreaLootPlugin extends Plugin
 		{
 			case TAKE_AND_EXAMINE:
 				return isGroundItemMenuEntry(entry);
+			case EXAMINE:
+				return isGroundItemExamineEntry(entry);
 			case TAKE:
 				return isTakeGroundItemMenuEntry(entry);
 			case NONE:
