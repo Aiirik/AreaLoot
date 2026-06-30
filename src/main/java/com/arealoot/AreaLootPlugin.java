@@ -7,6 +7,7 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Window;
+import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
 import java.util.ArrayList;
@@ -43,9 +44,12 @@ import net.runelite.api.events.ItemQuantityChanged;
 import net.runelite.api.events.ItemSpawned;
 import net.runelite.api.events.MenuEntryAdded;
 import net.runelite.api.events.MenuOpened;
+import net.runelite.api.gameval.InterfaceID;
+import net.runelite.api.widgets.Widget;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.config.ConfigManager;
+import net.runelite.client.config.Keybind;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.game.ItemManager;
@@ -135,7 +139,7 @@ public class AreaLootPlugin extends Plugin
 	private volatile String overlayStatusText = "";
 	private volatile boolean overlayFadeOutActive;
 
-	private final HotkeyListener overlayHotkeyListener = new HotkeyListener(() -> config.toggleHotkey())
+	private final HotkeyListener overlayHotkeyListener = new NonTypingHotkeyListener(() -> config.toggleHotkey())
 	{
 		@Override
 		public void hotkeyPressed()
@@ -144,7 +148,7 @@ public class AreaLootPlugin extends Plugin
 		}
 	};
 
-	private final HotkeyListener sidePanelHotkeyListener = new HotkeyListener(() -> config.sidePanelHotkey())
+	private final HotkeyListener sidePanelHotkeyListener = new NonTypingHotkeyListener(() -> config.sidePanelHotkey())
 	{
 		@Override
 		public void hotkeyPressed()
@@ -153,7 +157,7 @@ public class AreaLootPlugin extends Plugin
 		}
 	};
 
-	private final HotkeyListener autoShowHotkeyListener = new HotkeyListener(() -> config.autoShowHotkey())
+	private final HotkeyListener autoShowHotkeyListener = new NonTypingHotkeyListener(() -> config.autoShowHotkey())
 	{
 		@Override
 		public void hotkeyPressed()
@@ -1223,6 +1227,59 @@ public class AreaLootPlugin extends Plugin
 		String lastPart = parts.length == 0 ? "" : parts[parts.length - 1];
 		return (firstPart.isEmpty() || itemName.startsWith(firstPart))
 			&& (lastPart.isEmpty() || itemName.endsWith(lastPart));
+	}
+
+	private boolean shouldIgnoreHotkeys()
+	{
+		if (client.getFocusedInputFieldWidget() != null)
+		{
+			return true;
+		}
+
+		Widget chatboxParent = client.getWidget(InterfaceID.Chatbox.UNIVERSE);
+		if (chatboxParent == null || chatboxParent.getOnKeyListener() == null)
+		{
+			return false;
+		}
+
+		Widget chatboxInput = client.getWidget(InterfaceID.Chatbox.INPUT);
+		if (chatboxInput == null)
+		{
+			return true;
+		}
+
+		String chatboxText = Text.removeTags(chatboxInput.getText());
+		return chatboxText == null || !chatboxText.contains("Press Enter to Chat");
+	}
+
+	private class NonTypingHotkeyListener extends HotkeyListener
+	{
+		private NonTypingHotkeyListener(java.util.function.Supplier<Keybind> keybind)
+		{
+			super(keybind);
+		}
+
+		@Override
+		public void keyPressed(KeyEvent event)
+		{
+			if (shouldIgnoreHotkeys())
+			{
+				return;
+			}
+
+			super.keyPressed(event);
+		}
+
+		@Override
+		public void keyTyped(KeyEvent event)
+		{
+			if (shouldIgnoreHotkeys())
+			{
+				return;
+			}
+
+			super.keyTyped(event);
+		}
 	}
 
 	private void removeItem(Tile tile, TileItem item)
