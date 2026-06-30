@@ -302,6 +302,10 @@ public class AreaLootPlugin extends Plugin
 		{
 			updateSidePanelRegistration();
 		}
+		else if (isDisplayConfigKey(key))
+		{
+			rebuildPanel(nearbyLoot);
+		}
 		else if ("rememberOverlayMode".equals(key))
 		{
 			if (config.rememberOverlayMode())
@@ -325,6 +329,27 @@ public class AreaLootPlugin extends Plugin
 					refreshLootSnapshot();
 				});
 			}
+		}
+	}
+
+	private boolean isDisplayConfigKey(String key)
+	{
+		switch (key)
+		{
+			case "sidePanelMaxItems":
+			case "listIconSize":
+			case "showItemNamesInListMode":
+			case "tileDistanceMode":
+			case "showLootCount":
+			case "totalGeValueMode":
+			case "showGeValue":
+			case "geValueTextColor":
+			case "tileDistanceTextColor":
+			case "lootCountTextColor":
+			case "totalGeValueTextColor":
+				return true;
+			default:
+				return false;
 		}
 	}
 

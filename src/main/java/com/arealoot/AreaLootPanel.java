@@ -38,14 +38,22 @@ class AreaLootPanel extends PluginPanel
 	void rebuild(List<AreaLootItem> items)
 	{
 		removeAll();
+		int itemCount = Math.min(items.size(), Math.max(1, config.sidePanelMaxItems()));
 		header.setText(items.isEmpty() ? "No nearby loot" : "Nearby loot (" + items.size() + ")");
 		add(header);
 
-		for (AreaLootItem item : items)
+		for (int i = 0; i < itemCount; i++)
 		{
-			add(createRow(item));
+			add(createRow(items.get(i)));
 		}
 
+		if (items.size() > itemCount && !config.showLootCount())
+		{
+			JLabel more = new JLabel("+" + (items.size() - itemCount) + " more");
+			more.setForeground(ColorScheme.TEXT_COLOR);
+			more.setHorizontalAlignment(SwingConstants.CENTER);
+			add(more);
+		}
 		String summaryText = getSummaryText(items);
 		if (!summaryText.isEmpty())
 		{

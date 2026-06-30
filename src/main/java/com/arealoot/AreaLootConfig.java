@@ -19,6 +19,8 @@ public interface AreaLootConfig extends Config
 	String OVERLAY_GRID_SECTION = "overlayGrid";
 	String OVERLAY_ADJUSTMENTS_SECTION = "overlayAdjustments";
 	String SIDE_PANEL_SECTION = "sidePanel";
+	String MENU_SECTION = "menu";
+	String FILTER_LISTS_SECTION = "filterLists";
 	String GENERAL_SECTION = "general";
 	String HIGHLIGHT_SECTION = "highlight";
 
@@ -210,37 +212,51 @@ public interface AreaLootConfig extends Config
 	String generalSection = GENERAL_SECTION;
 
 	@ConfigSection(
+		name = "Whitelist / Blocklist",
+		description = "Item whitelist and blocklist controls",
+		position = 2
+	)
+	String filterListsSection = FILTER_LISTS_SECTION;
+
+	@ConfigSection(
 		name = "Overlay List Settings",
 		description = "List overlay controls",
-		position = 2
+		position = 3
 	)
 	String overlayListSection = OVERLAY_LIST_SECTION;
 
 	@ConfigSection(
 		name = "Overlay Grid Settings",
 		description = "Grid overlay controls",
-		position = 3
+		position = 4
 	)
 	String overlayGridSection = OVERLAY_GRID_SECTION;
 
 	@ConfigSection(
+		name = "Menu Settings",
+		description = "Right-click menu controls",
+		position = 5
+	)
+	String menuSection = MENU_SECTION;
+
+	@ConfigSection(
 		name = "Side Panel",
 		description = "RuneLite side panel controls",
-		position = 4
+		position = 6
 	)
 	String sidePanelSection = SIDE_PANEL_SECTION;
 
 	@ConfigSection(
-		name = "Overlay Adjustments",
-		description = "Overlay position and colors",
-		position = 5
+		name = "Overlay Colors",
+		description = "Overlay text, background, and selection colors",
+		position = 7
 	)
 	String overlayAdjustmentsSection = OVERLAY_ADJUSTMENTS_SECTION;
 
 	@ConfigSection(
-		name = "Highlight Settings",
-		description = "Selected item tile and line highlight controls",
-		position = 6
+		name = "Highlight Colors",
+		description = "Selected item tile and line colors",
+		position = 8
 	)
 	String highlightSection = HIGHLIGHT_SECTION;
 
@@ -588,11 +604,27 @@ public interface AreaLootConfig extends Config
 		return Keybind.NOT_SET;
 	}
 
+	@Range(
+		min = 1,
+		max = 100
+	)
+	@ConfigItem(
+		keyName = "sidePanelMaxItems",
+		name = "Side panel max items",
+		description = "Maximum number of items shown in the side panel",
+		position = 2,
+		section = SIDE_PANEL_SECTION
+	)
+	default int sidePanelMaxItems()
+	{
+		return 15;
+	}
+
 	@ConfigItem(
 		keyName = "showOverlayTitle",
 		name = "Show overlay title",
 		description = "Show Area Loot or Area Loot (auto) at the top of the overlay",
-		position = 1,
+		position = 3,
 		section = GENERAL_SECTION
 	)
 	default boolean showOverlayTitle()
@@ -604,7 +636,7 @@ public interface AreaLootConfig extends Config
 		keyName = "tileDistanceMode",
 		name = "Show tile distance",
 		description = "Choose whether and how each loot item's distance is shown",
-		position = 3,
+		position = 5,
 		section = GENERAL_SECTION
 	)
 	default DistanceMode tileDistanceMode()
@@ -616,7 +648,7 @@ public interface AreaLootConfig extends Config
 		keyName = "showLootCount",
 		name = "Show total loot count",
 		description = "Show the number of visible loot items below the overlay",
-		position = 4,
+		position = 6,
 		section = GENERAL_SECTION
 	)
 	default boolean showLootCount()
@@ -628,7 +660,7 @@ public interface AreaLootConfig extends Config
 		keyName = "totalGeValueMode",
 		name = "Show total GE value",
 		description = "Choose how the total GE value of visible loot items is shown below the overlay",
-		position = 5,
+		position = 7,
 		section = GENERAL_SECTION
 	)
 	default TotalGeValueMode totalGeValueMode()
@@ -640,7 +672,7 @@ public interface AreaLootConfig extends Config
 		keyName = "showGeValue",
 		name = "Show item GE value",
 		description = "Show each loot item's total Grand Exchange value",
-		position = 2,
+		position = 4,
 		section = GENERAL_SECTION
 	)
 	default boolean showGeValue()
@@ -652,7 +684,7 @@ public interface AreaLootConfig extends Config
 		keyName = "sortMode",
 		name = "Sort loot by",
 		description = "Choose how Area Loot sorts nearby ground items",
-		position = 0,
+		position = 2,
 		section = GENERAL_SECTION
 	)
 	default SortMode sortMode()
@@ -664,7 +696,7 @@ public interface AreaLootConfig extends Config
 		keyName = "minimumGeValue",
 		name = "Minimum GE value",
 		description = "Only show drops worth at least this much GP. Supports values like 1000, 10k, or 1m",
-		position = 6,
+		position = 8,
 		section = GENERAL_SECTION
 	)
 	default String minimumGeValue()
@@ -676,8 +708,8 @@ public interface AreaLootConfig extends Config
 		keyName = "whitelistedItems",
 		name = "Whitelisted items",
 		description = "Comma-separated item names or wildcard patterns to always show, such as Rune *, Clue scroll, Burnt *",
-		position = 7,
-		section = GENERAL_SECTION
+		position = 0,
+		section = FILTER_LISTS_SECTION
 	)
 	default String whitelistedItems()
 	{
@@ -695,8 +727,8 @@ public interface AreaLootConfig extends Config
 		keyName = "blockedItems",
 		name = "Blocked items",
 		description = "Comma-separated item names or wildcard patterns to hide, such as Ashes, Bones, Burnt *. Shift+right-click a blocked item to unblock it",
-		position = 8,
-		section = GENERAL_SECTION
+		position = 1,
+		section = FILTER_LISTS_SECTION
 	)
 	default String blockedItems()
 	{
@@ -714,8 +746,8 @@ public interface AreaLootConfig extends Config
 		keyName = "shiftRightClickBlockItems",
 		name = "Shift+right-click block/whitelist",
 		description = "Add Shift+right-click menu options on ground items to block/unblock or whitelist/unwhitelist them",
-		position = 9,
-		section = GENERAL_SECTION
+		position = 0,
+		section = MENU_SECTION
 	)
 	default boolean shiftRightClickBlockItems()
 	{
@@ -726,8 +758,8 @@ public interface AreaLootConfig extends Config
 		keyName = "pinSelectedItem",
 		name = "Pin selected item menu option",
 		description = "Move the selected loot item's Take option to the top of the right-click menu",
-		position = 10,
-		section = GENERAL_SECTION
+		position = 1,
+		section = MENU_SECTION
 	)
 	default boolean pinSelectedItem()
 	{
@@ -738,8 +770,8 @@ public interface AreaLootConfig extends Config
 		keyName = "drawHighlightLine",
 		name = "Draw highlight line",
 		description = "Draw a line from your player to the highlighted loot item",
-		position = 4,
-		section = HIGHLIGHT_SECTION
+		position = 1,
+		section = GENERAL_SECTION
 	)
 	default boolean drawHighlightLine()
 	{
@@ -750,8 +782,8 @@ public interface AreaLootConfig extends Config
 		keyName = "onlyShowHighlightedItemMenu",
 		name = "Only show highlighted item",
 		description = "When right-clicking the highlighted item's tile, hide other ground items from that menu",
-		position = 11,
-		section = GENERAL_SECTION
+		position = 2,
+		section = MENU_SECTION
 	)
 	default boolean onlyShowHighlightedItemMenu()
 	{
@@ -766,7 +798,7 @@ public interface AreaLootConfig extends Config
 		keyName = "lootRadius",
 		name = "Loot radius",
 		description = "Maximum tile distance from your player to show in the Area Loot (1-30)",
-		position = 12,
+		position = 0,
 		section = GENERAL_SECTION
 	)
 	default int lootRadius()
@@ -804,7 +836,7 @@ public interface AreaLootConfig extends Config
 		keyName = "matchLineColor",
 		name = "Line matches tile outline",
 		description = "Use the tile outline color for the locator line instead of the separate line color",
-		position = 5,
+		position = 2,
 		section = HIGHLIGHT_SECTION
 	)
 	default boolean matchLineColor()
@@ -817,7 +849,7 @@ public interface AreaLootConfig extends Config
 		keyName = "highlightLineColor",
 		name = "Line color",
 		description = "Line color for the selected loot item",
-		position = 6,
+		position = 3,
 		section = HIGHLIGHT_SECTION
 	)
 	default Color highlightLineColor()
@@ -829,8 +861,8 @@ public interface AreaLootConfig extends Config
 		keyName = "highlightMenuTextMode",
 		name = "Highlight menu text",
 		description = "Choose which right-click menu entries for the selected loot item use the menu text color",
-		position = 2,
-		section = HIGHLIGHT_SECTION
+		position = 3,
+		section = MENU_SECTION
 	)
 	default MenuHighlightMode highlightMenuTextMode()
 	{
@@ -841,7 +873,7 @@ public interface AreaLootConfig extends Config
 		keyName = "highlightMenuTextColor",
 		name = "Menu text color",
 		description = "Right-click menu text color for the selected loot item",
-		position = 3,
+		position = 4,
 		section = HIGHLIGHT_SECTION
 	)
 	default Color highlightMenuTextColor()
