@@ -45,6 +45,8 @@ import net.runelite.api.events.ItemSpawned;
 import net.runelite.api.events.MenuEntryAdded;
 import net.runelite.api.events.MenuOpened;
 import net.runelite.api.gameval.InterfaceID;
+import net.runelite.api.gameval.VarClientID;
+import net.runelite.api.vars.InputType;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.chat.ChatMessageManager;
@@ -133,6 +135,7 @@ public class AreaLootPlugin extends Plugin
 	private volatile WorldPoint selectedLocation;
 	private WorldPoint lastPlayerLocation;
 	private int selectedItemId = -1;
+	private int selectedStackId = -1;
 	private volatile boolean manualOverlayEnabled;
 	private volatile boolean autoOverlayEnabled;
 	private volatile long overlayStatusUntilMillis;
@@ -214,6 +217,7 @@ public class AreaLootPlugin extends Plugin
 		selectedLocation = null;
 		lastPlayerLocation = null;
 		selectedItemId = -1;
+		selectedStackId = -1;
 		manualOverlayEnabled = false;
 		autoOverlayEnabled = false;
 		lootDirty = false;
@@ -273,6 +277,7 @@ public class AreaLootPlugin extends Plugin
 			selectedLocation = null;
 			lastPlayerLocation = null;
 			selectedItemId = -1;
+			selectedStackId = -1;
 			manualOverlayEnabled = false;
 			autoOverlayEnabled = false;
 			sidePanelActive = false;
@@ -452,6 +457,7 @@ public class AreaLootPlugin extends Plugin
 	{
 		selectedLocation = item.getLocation();
 		selectedItemId = item.getId();
+		selectedStackId = item.getStackId();
 		rebuildPanel(nearbyLoot);
 	}
 
@@ -459,6 +465,7 @@ public class AreaLootPlugin extends Plugin
 	{
 		selectedLocation = null;
 		selectedItemId = -1;
+		selectedStackId = -1;
 		rebuildPanel(nearbyLoot);
 	}
 
@@ -469,7 +476,7 @@ public class AreaLootPlugin extends Plugin
 
 	boolean isSelectedLoot(AreaLootItem item)
 	{
-		return selectedLocation != null && item.getId() == selectedItemId && item.getLocation().equals(selectedLocation);
+		return isSelectedItem(item);
 	}
 
 	List<AreaLootItem> getNearbyLootSnapshot()
@@ -674,6 +681,7 @@ public class AreaLootPlugin extends Plugin
 		{
 			selectedLocation = null;
 			selectedItemId = -1;
+			selectedStackId = -1;
 		}
 
 		nearbyLoot = Collections.unmodifiableList(items);
@@ -704,7 +712,9 @@ public class AreaLootPlugin extends Plugin
 
 	private boolean isSelectedItem(AreaLootItem item)
 	{
-		return item.getId() == selectedItemId && item.getLocation().equals(selectedLocation);
+		return item.getId() == selectedItemId
+			&& item.getLocation().equals(selectedLocation)
+			&& (config.groupSameTileSelection() || item.getStackId() == selectedStackId);
 	}
 
 	private boolean shouldKeepMenuEntry(MenuEntry entry, int selectedSceneX, int selectedSceneY)
@@ -719,7 +729,7 @@ public class AreaLootPlugin extends Plugin
 			return true;
 		}
 
-		return entry.getItemId() == selectedItemId || entry.getIdentifier() == selectedItemId;
+		return isSelectedMenuItem(entry);
 	}
 
 	private void colorSelectedMenuEntry(MenuEntry entry, int selectedSceneX, int selectedSceneY)
@@ -742,7 +752,7 @@ public class AreaLootPlugin extends Plugin
 		return isHighlightedMenuEntry(entry)
 			&& entry.getParam0() == selectedSceneX
 			&& entry.getParam1() == selectedSceneY
-			&& (entry.getItemId() == selectedItemId || entry.getIdentifier() == selectedItemId);
+			&& isSelectedMenuItem(entry);
 	}
 
 	private boolean isHighlightedMenuEntry(MenuEntry entry)
@@ -766,7 +776,7 @@ public class AreaLootPlugin extends Plugin
 		return isTakeGroundItemMenuEntry(entry)
 			&& entry.getParam0() == selectedSceneX
 			&& entry.getParam1() == selectedSceneY
-			&& (entry.getItemId() == selectedItemId || entry.getIdentifier() == selectedItemId);
+			&& isSelectedMenuItem(entry);
 	}
 
 	private MenuEntry[] promoteSelectedMenuEntries(MenuEntry[] menuEntries, int selectedSceneX, int selectedSceneY)
@@ -846,7 +856,12 @@ public class AreaLootPlugin extends Plugin
 		return isGroundItemExamineEntry(entry)
 			&& entry.getParam0() == selectedSceneX
 			&& entry.getParam1() == selectedSceneY
-			&& (entry.getItemId() == selectedItemId || entry.getIdentifier() == selectedItemId);
+			&& isSelectedMenuItem(entry);
+	}
+
+	private boolean isSelectedMenuItem(MenuEntry entry)
+	{
+		return entry.getItemId() == selectedItemId || entry.getIdentifier() == selectedItemId;
 	}
 
 	private boolean isGroundItemExamineEntry(MenuEntry entry)
@@ -908,6 +923,7 @@ public class AreaLootPlugin extends Plugin
 
 				items.add(new AreaLootItem(
 					tileItem.getId(),
+					System.identityHashCode(tileItem),
 					tileItem.getQuantity(),
 					itemName,
 					location,
@@ -1263,6 +1279,12 @@ public class AreaLootPlugin extends Plugin
 			return true;
 		}
 
+		if (client.getVarcIntValue(VarClientID.MESLAYERMODE) != InputType.NONE.getType()
+			|| client.getVarcIntValue(VarClientID.WORLDMAP_SEARCHING) != 0)
+		{
+			return true;
+		}
+
 		Widget chatboxParent = client.getWidget(InterfaceID.Chatbox.UNIVERSE);
 		if (chatboxParent == null || chatboxParent.getOnKeyListener() == null)
 		{
@@ -1337,6 +1359,7 @@ public class AreaLootPlugin extends Plugin
 		{
 			selectedLocation = null;
 			selectedItemId = -1;
+			selectedStackId = -1;
 		}
 	}
 

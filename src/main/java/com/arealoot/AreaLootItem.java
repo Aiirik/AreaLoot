@@ -7,6 +7,7 @@ import net.runelite.api.coords.WorldPoint;
 class AreaLootItem
 {
 	private final int id;
+	private final int stackId;
 	private final int quantity;
 	private final String name;
 	private final WorldPoint location;
