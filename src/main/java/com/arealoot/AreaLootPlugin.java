@@ -26,6 +26,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.text.JTextComponent;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.ItemComposition;
@@ -50,6 +51,7 @@ import net.runelite.api.vars.InputType;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.chat.ChatMessageManager;
+import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.config.Keybind;
 import net.runelite.client.eventbus.Subscribe;
@@ -1032,24 +1034,48 @@ public class AreaLootPlugin extends Plugin
 		return parseConfiguredItems(config.whitelistedItems());
 	}
 
-	private void addBlockedItem(String itemName)
+	private boolean addBlockedItem(String itemName)
 	{
-		addConfiguredItem(itemName, BLOCKED_ITEMS_KEY, config.blockedItems(), "Blocked items");
+		if (!addConfiguredItem(itemName, BLOCKED_ITEMS_KEY, config.blockedItems(), "Blocked items"))
+		{
+			return false;
+		}
+
+		sendListUpdateMessage("Blocked", itemName);
+		return true;
 	}
 
-	private void removeBlockedItem(String itemName)
+	private boolean removeBlockedItem(String itemName)
 	{
-		removeConfiguredItem(itemName, BLOCKED_ITEMS_KEY, config.blockedItems(), "Blocked items");
+		if (!removeConfiguredItem(itemName, BLOCKED_ITEMS_KEY, config.blockedItems(), "Blocked items"))
+		{
+			return false;
+		}
+
+		sendListUpdateMessage("Unblocked", itemName);
+		return true;
 	}
 
-	private void addWhitelistedItem(String itemName)
+	private boolean addWhitelistedItem(String itemName)
 	{
-		addConfiguredItem(itemName, WHITELISTED_ITEMS_KEY, config.whitelistedItems(), "Whitelisted items");
+		if (!addConfiguredItem(itemName, WHITELISTED_ITEMS_KEY, config.whitelistedItems(), "Whitelisted items"))
+		{
+			return false;
+		}
+
+		sendListUpdateMessage("Whitelisted", itemName);
+		return true;
 	}
 
-	private void removeWhitelistedItem(String itemName)
+	private boolean removeWhitelistedItem(String itemName)
 	{
-		removeConfiguredItem(itemName, WHITELISTED_ITEMS_KEY, config.whitelistedItems(), "Whitelisted items");
+		if (!removeConfiguredItem(itemName, WHITELISTED_ITEMS_KEY, config.whitelistedItems(), "Whitelisted items"))
+		{
+			return false;
+		}
+
+		sendListUpdateMessage("Unwhitelisted", itemName);
+		return true;
 	}
 
 	private boolean isBlockedByExactName(String itemName)
@@ -1067,12 +1093,12 @@ public class AreaLootPlugin extends Plugin
 		return getConfiguredItemList(BLOCKED_ITEMS_KEY, config.blockedItems());
 	}
 
-	private void addConfiguredItem(String itemName, String key, String defaultValue, String configLabel)
+	private boolean addConfiguredItem(String itemName, String key, String defaultValue, String configLabel)
 	{
 		String normalizedItemName = normalizeItemName(itemName);
 		if (normalizedItemName.isEmpty())
 		{
-			return;
+			return false;
 		}
 
 		List<String> configuredItems = getConfiguredItemList(key, defaultValue);
@@ -1080,33 +1106,33 @@ public class AreaLootPlugin extends Plugin
 		{
 			if (normalizeItemName(configuredItem).equals(normalizedItemName))
 			{
-				return;
+				return false;
 			}
 		}
 
 		configuredItems.add(itemName);
-		updateConfiguredItems(key, configLabel, String.join(", ", configuredItems));
+		return updateConfiguredItems(key, configLabel, String.join(", ", configuredItems));
 	}
 
-	private void removeConfiguredItem(String itemName, String key, String defaultValue, String configLabel)
+	private boolean removeConfiguredItem(String itemName, String key, String defaultValue, String configLabel)
 	{
 		String normalizedItemName = normalizeItemName(itemName);
 		if (normalizedItemName.isEmpty())
 		{
-			return;
+			return false;
 		}
 
 		List<String> configuredItems = getConfiguredItemList(key, defaultValue);
 		boolean removed = configuredItems.removeIf(configuredItem -> normalizeItemName(configuredItem).equals(normalizedItemName));
 		if (!removed)
 		{
-			return;
+			return false;
 		}
 
-		updateConfiguredItems(key, configLabel, String.join(", ", configuredItems));
+		return updateConfiguredItems(key, configLabel, String.join(", ", configuredItems));
 	}
 
-	private void updateConfiguredItems(String key, String configLabel, String updatedItems)
+	private boolean updateConfiguredItems(String key, String configLabel, String updatedItems)
 	{
 		configManager.setConfiguration(CONFIG_GROUP, key, updatedItems);
 
@@ -1114,7 +1140,7 @@ public class AreaLootPlugin extends Plugin
 		if (!updatedItems.equals(storedItems))
 		{
 			log.debug("Area Loot failed to update {}. Expected '{}', stored '{}'", configLabel, updatedItems, storedItems);
-			return;
+			return false;
 		}
 
 		lootDirty = true;
@@ -1123,6 +1149,15 @@ public class AreaLootPlugin extends Plugin
 		{
 			refreshLootSnapshot();
 		}
+		return true;
+	}
+
+	private void sendListUpdateMessage(String action, String itemName)
+	{
+		chatMessageManager.queue(QueuedMessage.builder()
+			.type(ChatMessageType.CONSOLE)
+			.runeLiteFormattedMessage("Area Loot " + action + ": " + Text.escapeJagex(itemName))
+			.build());
 	}
 
 	private boolean isConfiguredByExactName(String itemName, List<String> configuredItems)

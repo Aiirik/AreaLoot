@@ -719,7 +719,7 @@ public interface AreaLootConfig extends Config
 	@ConfigItem(
 		keyName = "whitelistedItems",
 		name = "Whitelisted items",
-		description = "Comma-separated item names or wildcard patterns to always show, such as Rune *, Clue scroll, Burnt *",
+		description = "<html>Comma-separated item names to always show.<br>Exact: Rune sword<br>Wildcards: Rune *, * sword, Burnt *<br>Shift+right-click to block/unblock or whitelist/unwhitelist items.</html>",
 		position = 0,
 		section = FILTER_LISTS_SECTION
 	)
@@ -738,7 +738,7 @@ public interface AreaLootConfig extends Config
 	@ConfigItem(
 		keyName = "blockedItems",
 		name = "Blocked items",
-		description = "Comma-separated item names or wildcard patterns to hide, such as Ashes, Bones, Burnt *. Shift+right-click a blocked item to unblock it",
+		description = "<html>Comma-separated item names to hide.<br>Exact: Ashes<br>Wildcards: Rune *, * sword, Burnt *<br>Shift+right-click to block/unblock or whitelist/unwhitelist items.</html>",
 		position = 1,
 		section = FILTER_LISTS_SECTION
 	)
