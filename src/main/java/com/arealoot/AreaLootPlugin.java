@@ -307,6 +307,14 @@ public class AreaLootPlugin extends Plugin
 		{
 			updateSidePanelRegistration();
 		}
+		else if ("keepOverlayAboveGame".equals(key))
+		{
+			if (overlay.applyConfiguredLayer())
+			{
+				overlayManager.remove(overlay);
+				overlayManager.add(overlay);
+			}
+		}
 		else if (isDisplayConfigKey(key))
 		{
 			rebuildPanel(nearbyLoot);

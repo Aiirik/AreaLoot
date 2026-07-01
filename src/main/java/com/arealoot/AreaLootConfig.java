@@ -312,12 +312,24 @@ public interface AreaLootConfig extends Config
 		keyName = "overlayStyle",
 		name = "Overlay style",
 		description = "Choose whether the overlay shows a list or icon grid",
-		position = 4,
+		position = 5,
 		section = OVERLAY_SECTION
 	)
 	default OverlayStyle overlayStyle()
 	{
 		return OverlayStyle.LIST;
+	}
+
+	@ConfigItem(
+		keyName = "keepOverlayAboveGame",
+		name = "Keep overlay above game",
+		description = "Draw the Area Loot overlay above in-game actors and scene elements",
+		position = 4,
+		section = OVERLAY_SECTION
+	)
+	default boolean keepOverlayAboveGame()
+	{
+		return true;
 	}
 
 	@Range(

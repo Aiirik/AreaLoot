@@ -15,11 +15,14 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
 import net.runelite.api.Client;
+import net.runelite.api.GameState;
 import net.runelite.api.Perspective;
 import net.runelite.api.Player;
 import net.runelite.api.Point;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.gameval.InterfaceID;
+import net.runelite.api.widgets.Widget;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
@@ -55,6 +58,7 @@ class AreaLootOverlay extends Overlay
 	private String lastEmptyText = "No nearby loot";
 	private boolean lastVisibleListRendered;
 	private boolean wasShowing;
+	private boolean keepOverlayAboveGame;
 	private long fadeInStartedAtMillis;
 	private long fadeStartedAtMillis;
 
@@ -66,7 +70,8 @@ class AreaLootOverlay extends Overlay
 		this.config = config;
 		this.itemManager = itemManager;
 		setPosition(OverlayPosition.DYNAMIC);
-		setLayer(OverlayLayer.ABOVE_SCENE);
+		keepOverlayAboveGame = !config.keepOverlayAboveGame();
+		applyConfiguredLayer();
 		setMovable(true);
 		setSnappable(true);
 		setResettable(true);
@@ -78,6 +83,12 @@ class AreaLootOverlay extends Overlay
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
+		if (client.getGameState() != GameState.LOGGED_IN || !isGameInterfaceVisible())
+		{
+			clearRenderState();
+			return null;
+		}
+
 		Dimension listDimension = renderLootList(graphics);
 		java.awt.Point origin = getBounds().getLocation();
 		graphics.translate(-origin.x, -origin.y);
@@ -86,17 +97,49 @@ class AreaLootOverlay extends Overlay
 		return listDimension;
 	}
 
+	private boolean isGameInterfaceVisible()
+	{
+		return isVisible(InterfaceID.ToplevelOsrsStretch.VIEWPORT)
+			|| isVisible(InterfaceID.ToplevelPreEoc.VIEWPORT)
+			|| isVisible(InterfaceID.Toplevel.VIEWPORT)
+			|| isVisible(InterfaceID.ToplevelOsm.VIEWPORT);
+	}
+
+	private boolean isVisible(int componentId)
+	{
+		Widget widget = client.getWidget(componentId);
+		return widget != null && !widget.isHidden();
+	}
+
+	private void clearRenderState()
+	{
+		wasShowing = false;
+		lastVisibleListRendered = false;
+		fadeInStartedAtMillis = 0;
+		fadeStartedAtMillis = 0;
+		plugin.finishOverlayFadeOut();
+		plugin.setOverlayRows(new ArrayList<>());
+	}
+
+	boolean applyConfiguredLayer()
+	{
+		boolean configuredOverlayAboveGame = config.keepOverlayAboveGame();
+		if (configuredOverlayAboveGame == keepOverlayAboveGame)
+		{
+			return false;
+		}
+
+		keepOverlayAboveGame = configuredOverlayAboveGame;
+		setLayer(keepOverlayAboveGame ? OverlayLayer.ALWAYS_ON_TOP : OverlayLayer.ABOVE_SCENE);
+		return true;
+	}
+
 	private Dimension renderLootList(Graphics2D graphics)
 	{
 		boolean shouldShow = plugin.shouldShowOverlayList() && !plugin.isOverlayFadeOutActive();
 		if (!shouldShow && (!config.animateOverlay() || !lastVisibleListRendered))
 		{
-			wasShowing = false;
-			lastVisibleListRendered = false;
-			fadeInStartedAtMillis = 0;
-			fadeStartedAtMillis = 0;
-			plugin.finishOverlayFadeOut();
-			plugin.setOverlayRows(new ArrayList<>());
+			clearRenderState();
 			return null;
 		}
 
