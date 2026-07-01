@@ -13,12 +13,21 @@ All notable user-facing changes to Area Loot are documented here.
 
 ### Changed
 
+- Changed `List max items` default from 12 to 10.
+- Changed `Show total loot count` to be enabled by default.
+- Changed `Show total GE value` to default to long format.
 - Changed default hotkeys to `Ctrl+X` for overlay toggle and `Ctrl+Z` for auto show/hide.
+- Improved grid overlay sizing so cells stay stable as item GE values change.
+- Improved grid auto-adjust so the overlay changes by grid rows/columns instead of fluctuating with GP text width.
+- Improved overlay footer layout so total loot and total GE stack on narrow grid overlays.
+- Hid total GE footer text when only one item is visible.
+- Added temporary overlay title status text for toggle and auto show/hide mode changes, with smoother fade behavior.
 - Improved whitelist and blocklist config tooltips with exact-match and wildcard examples.
 - Cleaned up Overlay List Settings labels and config section ordering.
 
 ### Fixed
 
+- Fixed temporary auto-enabled title text popping back in after it faded out.
 - Fixed GE and other text-entry fields triggering Area Loot hotkeys while typing.
 - Fixed overlay visibility on login and click-to-enter screens by only rendering when the game viewport is visible.
 - Fixed layer switching so disabling `Keep overlay above game` restores the original overlay layer behavior.

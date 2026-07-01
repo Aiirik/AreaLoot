@@ -79,6 +79,7 @@ public class AreaLootPlugin extends Plugin
 {
 	private static final long AUTO_STATUS_ENABLED_MILLIS = 1200L;
 	private static final long AUTO_STATUS_DISABLED_MILLIS = 1000L;
+	private static final long OVERLAY_STATUS_FADE_MILLIS = 450L;
 	private static final String CONFIG_GROUP = "area-loot";
 	private static final String BLOCKED_ITEMS_KEY = "blockedItems";
 	private static final String WHITELISTED_ITEMS_KEY = "whitelistedItems";
@@ -142,6 +143,7 @@ public class AreaLootPlugin extends Plugin
 	private volatile boolean manualOverlayEnabled;
 	private volatile boolean autoOverlayEnabled;
 	private volatile long overlayStatusUntilMillis;
+	private volatile String overlayStatusMode = "";
 	private volatile String overlayStatusText = "";
 	private volatile boolean overlayFadeOutActive;
 
@@ -226,6 +228,7 @@ public class AreaLootPlugin extends Plugin
 		lootDirty = false;
 		nextDelayedLootRefreshMillis = 0;
 		overlayStatusUntilMillis = 0;
+		overlayStatusMode = "";
 		overlayStatusText = "";
 		overlayFadeOutActive = false;
 	}
@@ -292,6 +295,7 @@ public class AreaLootPlugin extends Plugin
 			lootDirty = false;
 			nextDelayedLootRefreshMillis = 0;
 			overlayStatusUntilMillis = 0;
+			overlayStatusMode = "";
 			overlayStatusText = "";
 			overlayFadeOutActive = false;
 			rebuildPanel(Collections.emptyList());
@@ -521,9 +525,25 @@ public class AreaLootPlugin extends Plugin
 		return System.currentTimeMillis() < overlayStatusUntilMillis;
 	}
 
+	float getOverlayStatusAlpha()
+	{
+		long remainingMillis = overlayStatusUntilMillis - System.currentTimeMillis();
+		if (remainingMillis <= 0)
+		{
+			return 0.0f;
+		}
+
+		return Math.min(1.0f, remainingMillis / (float) OVERLAY_STATUS_FADE_MILLIS);
+	}
+
 	String getOverlayStatusText()
 	{
 		return overlayStatusText;
+	}
+
+	String getOverlayStatusMode()
+	{
+		return overlayStatusMode;
 	}
 
 	boolean isOverlayFadeOutActive()
@@ -536,6 +556,7 @@ public class AreaLootPlugin extends Plugin
 		overlayFadeOutActive = false;
 		if (!shouldShowOverlayStatus())
 		{
+			overlayStatusMode = "";
 			overlayStatusText = "";
 		}
 	}
@@ -570,18 +591,22 @@ public class AreaLootPlugin extends Plugin
 		clientThread.invoke(() ->
 		{
 			refreshLootSnapshot();
-			boolean wasShowing = shouldShowOverlayList();
 			manualOverlayEnabled = !manualOverlayEnabled;
+			long now = System.currentTimeMillis();
 			if (manualOverlayEnabled)
 			{
 				autoOverlayEnabled = false;
-				overlayStatusUntilMillis = 0;
-				overlayStatusText = "";
+				overlayStatusMode = "toggle";
+				overlayStatusText = "Enabled";
+				overlayStatusUntilMillis = now + AUTO_STATUS_ENABLED_MILLIS;
 				overlayFadeOutActive = false;
 			}
-			else if (wasShowing && config.animateOverlay())
+			else
 			{
-				overlayFadeOutActive = true;
+				overlayStatusMode = "toggle";
+				overlayStatusText = "Disabled";
+				overlayStatusUntilMillis = now + AUTO_STATUS_DISABLED_MILLIS;
+				overlayFadeOutActive = false;
 			}
 			saveOverlayMode();
 		});
@@ -597,13 +622,15 @@ public class AreaLootPlugin extends Plugin
 			if (autoOverlayEnabled)
 			{
 				manualOverlayEnabled = false;
-				overlayStatusText = "Area Loot (auto) Enabled";
+				overlayStatusMode = "auto";
+				overlayStatusText = "Enabled";
 				overlayStatusUntilMillis = now + AUTO_STATUS_ENABLED_MILLIS;
 				overlayFadeOutActive = false;
 			}
 			else
 			{
-				overlayStatusText = "Area Loot (auto) Disabled";
+				overlayStatusMode = "auto";
+				overlayStatusText = "Disabled";
 				overlayStatusUntilMillis = now + AUTO_STATUS_DISABLED_MILLIS;
 				overlayFadeOutActive = false;
 			}
@@ -631,6 +658,7 @@ public class AreaLootPlugin extends Plugin
 		autoOverlayEnabled = !manualOverlayEnabled && Boolean.TRUE.equals(rememberedAutoOverlay);
 		overlayFadeOutActive = false;
 		overlayStatusUntilMillis = 0;
+		overlayStatusMode = "";
 		overlayStatusText = "";
 		if (client.getGameState() == GameState.LOGGED_IN)
 		{

@@ -226,13 +226,14 @@ class AreaLootOverlay extends Overlay
 		int listY = 0;
 		int rowCount = Math.min(items.size(), config.maxOverlayItems());
 		FontMetrics metrics = graphics.getFontMetrics();
-		int listWidth = getListWidth(metrics, items, rowCount, headerText, emptyText);
+		boolean showHeader = shouldShowOverlayTitle(headerText);
+		int listWidth = getListWidth(metrics, items, rowCount, headerText, emptyText, showHeader);
 		int distanceWidth = getMaxDistanceWidth(metrics, items, rowCount);
 		int rowHeight = getListRowHeight();
 		int listIconSize = config.listIconSize().getPixels();
 		boolean showItemIcons = showListItemIcons();
 		int textBaselineOffset = ((rowHeight - metrics.getHeight()) / 2) + metrics.getAscent();
-		int headerHeight = getOverlayHeaderHeight();
+		int headerHeight = getOverlayHeaderHeight(headerText);
 		int footerLineCount = getFooterLineCount(items, rowCount);
 		int height = headerHeight + Math.max(1, rowCount) * rowHeight + PADDING
 			+ getFooterTopGap(footerLineCount) + (footerLineCount * FOOTER_LINE_HEIGHT);
@@ -248,10 +249,9 @@ class AreaLootOverlay extends Overlay
 		graphics.setColor(config.overlayBorderColor());
 		graphics.drawRoundRect(listX, listY, listWidth, height, 6, 6);
 
-		if (config.showOverlayTitle())
+		if (showHeader)
 		{
-			graphics.setColor(config.overlayHeaderColor());
-			graphics.drawString(headerText, listX + PADDING, listY + 15);
+			drawHeaderText(graphics, metrics, headerText, listX + PADDING, listY + 15);
 		}
 
 		int rowStartY = listY + headerHeight;
@@ -356,7 +356,8 @@ class AreaLootOverlay extends Overlay
 		int cellHeight = (GRID_CELL_VERTICAL_PADDING * 2) + gridIconSize + (metadataLines * GRID_TEXT_LINE_HEIGHT);
 		int gridWidth = (columns * cellWidth) + ((columns - 1) * GRID_CELL_GAP);
 		int overlayWidth = gridWidth + (GRID_OUTER_PADDING * 2);
-		if (config.showOverlayTitle())
+		boolean showHeader = shouldShowOverlayTitle(headerText);
+		if (showHeader)
 		{
 			overlayWidth = Math.max(overlayWidth, metrics.stringWidth(headerText) + (GRID_OUTER_PADDING * 2));
 		}
@@ -364,7 +365,7 @@ class AreaLootOverlay extends Overlay
 		{
 			overlayWidth = Math.max(overlayWidth, metrics.stringWidth(emptyText) + (GRID_OUTER_PADDING * 2));
 		}
-		int headerHeight = getOverlayHeaderHeight();
+		int headerHeight = getOverlayHeaderHeight(headerText);
 		int footerLineCount = getFooterLineCount(metrics, items, itemCount, overlayWidth - (GRID_OUTER_PADDING * 2));
 		int height = headerHeight + (visibleRows * cellHeight) + GRID_OUTER_PADDING
 			+ getFooterTopGap(footerLineCount) + (footerLineCount * FOOTER_LINE_HEIGHT);
@@ -381,10 +382,9 @@ class AreaLootOverlay extends Overlay
 		graphics.setColor(config.overlayBorderColor());
 		graphics.drawRoundRect(gridX, gridY, overlayWidth, height, 6, 6);
 
-		if (config.showOverlayTitle())
+		if (showHeader)
 		{
-			graphics.setColor(config.overlayHeaderColor());
-			graphics.drawString(headerText, gridX + GRID_OUTER_PADDING, gridY + 15);
+			drawHeaderText(graphics, metrics, headerText, gridX + GRID_OUTER_PADDING, gridY + 15);
 		}
 
 		int gridStartX = gridX + GRID_OUTER_PADDING;
@@ -548,12 +548,76 @@ class AreaLootOverlay extends Overlay
 
 	private String getHeaderText()
 	{
-		return plugin.isOverlayAutoModeActive() || plugin.shouldShowOverlayStatus() ? "Area Loot (auto)" : "Area Loot";
+		String headerText = "Area Loot";
+		if (plugin.shouldShowOverlayStatus())
+		{
+			headerText += " (" + plugin.getOverlayStatusMode() + ") - " + plugin.getOverlayStatusText();
+		}
+		return headerText;
 	}
 
 	private String getEmptyText()
 	{
-		return plugin.shouldShowOverlayStatus() ? plugin.getOverlayStatusText() : "No nearby loot";
+		return "No nearby loot";
+	}
+
+	private void drawHeaderText(Graphics2D graphics, FontMetrics metrics, String headerText, int x, int y)
+	{
+		String baseText = "Area Loot";
+		graphics.setColor(config.overlayHeaderColor());
+		if (isExpiredEnabledStatusHeader(headerText))
+		{
+			if (config.showOverlayTitle())
+			{
+				graphics.drawString(baseText, x, y);
+			}
+			return;
+		}
+
+		if (!plugin.shouldShowOverlayStatus() || !headerText.startsWith(baseText))
+		{
+			graphics.drawString(headerText, x, y);
+			return;
+		}
+
+		String statusText = headerText.substring(baseText.length());
+		if (!"Enabled".equals(plugin.getOverlayStatusText()))
+		{
+			graphics.drawString(headerText, x, y);
+			return;
+		}
+
+		float statusAlpha = plugin.getOverlayStatusAlpha();
+		if (config.showOverlayTitle())
+		{
+			graphics.drawString(baseText, x, y);
+			drawHeaderTextWithAlpha(graphics, statusText, x + metrics.stringWidth(baseText), y, statusAlpha);
+			return;
+		}
+
+		drawHeaderTextWithAlpha(graphics, baseText + statusText, x, y, statusAlpha);
+	}
+
+	private void drawHeaderTextWithAlpha(Graphics2D graphics, String text, int x, int y, float alpha)
+	{
+		Composite originalComposite = graphics.getComposite();
+		float compositeAlpha = alpha;
+		if (originalComposite instanceof AlphaComposite)
+		{
+			compositeAlpha *= ((AlphaComposite) originalComposite).getAlpha();
+		}
+
+		graphics.setComposite(AlphaComposite.getInstance(
+			AlphaComposite.SRC_OVER,
+			Math.max(0.0f, Math.min(1.0f, compositeAlpha))
+		));
+		graphics.drawString(text, x, y);
+		graphics.setComposite(originalComposite);
+	}
+
+	private boolean isExpiredEnabledStatusHeader(String headerText)
+	{
+		return !plugin.shouldShowOverlayStatus() && headerText.endsWith(" - Enabled");
 	}
 
 	private void renderSelectedTile(Graphics2D graphics)
@@ -596,12 +660,18 @@ class AreaLootOverlay extends Overlay
 		return config.matchLineColor() ? config.highlightOutlineColor() : config.highlightLineColor();
 	}
 
-	private int getListWidth(FontMetrics metrics, List<AreaLootItem> items, int rowCount, String headerText, String emptyText)
+	private int getListWidth(
+		FontMetrics metrics,
+		List<AreaLootItem> items,
+		int rowCount,
+		String headerText,
+		String emptyText,
+		boolean showHeader)
 	{
 		int width = getConfiguredListMinimumWidth();
 		int listIconSize = config.listIconSize().getPixels();
 		boolean showItemIcons = showListItemIcons();
-		if (config.showOverlayTitle())
+		if (showHeader)
 		{
 			width = Math.max(width, metrics.stringWidth(headerText) + (PADDING * 2));
 		}
@@ -877,9 +947,19 @@ class AreaLootOverlay extends Overlay
 		return total;
 	}
 
-	private int getOverlayHeaderHeight()
+	private int getOverlayHeaderHeight(String headerText)
 	{
-		return config.showOverlayTitle() ? HEADER_HEIGHT : PADDING;
+		return shouldShowOverlayTitle(headerText) ? HEADER_HEIGHT : PADDING;
+	}
+
+	private boolean shouldShowOverlayTitle(String headerText)
+	{
+		if (isExpiredEnabledStatusHeader(headerText))
+		{
+			return config.showOverlayTitle();
+		}
+
+		return config.showOverlayTitle() || !"Area Loot".equals(headerText);
 	}
 
 	private String formatGeValue(AreaLootItem item)
