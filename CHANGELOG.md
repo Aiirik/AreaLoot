@@ -2,7 +2,7 @@
 
 All notable user-facing changes to Area Loot are documented here.
 
-## 1.5.0 - 2026-06-30
+## 1.5.0 - 2026-07-1
 
 ### Added
 
