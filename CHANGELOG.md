@@ -22,6 +22,7 @@ All notable user-facing changes to Area Loot are documented here.
 - Improved overlay footer layout so total loot and total GE stack on narrow grid overlays.
 - Hid total GE footer text when only one item is visible.
 - Added temporary overlay title status text for toggle and auto show/hide mode changes, with smoother fade behavior.
+- Changed config sections other than Overlay to start closed by default.
 - Improved whitelist and blocklist config tooltips with exact-match and wildcard examples.
 - Cleaned up Overlay List Settings labels and config section ordering.
 

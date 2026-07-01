@@ -242,56 +242,64 @@ public interface AreaLootConfig extends Config
 	@ConfigSection(
 		name = "General",
 		description = "Shared Area Loot behavior",
-		position = 1
+		position = 1,
+		closedByDefault = true
 	)
 	String generalSection = GENERAL_SECTION;
 
 	@ConfigSection(
 		name = "Whitelist / Blocklist",
 		description = "Item whitelist and blocklist controls",
-		position = 6
+		position = 6,
+		closedByDefault = true
 	)
 	String filterListsSection = FILTER_LISTS_SECTION;
 
 	@ConfigSection(
 		name = "Overlay List Settings",
 		description = "List overlay controls",
-		position = 2
+		position = 2,
+		closedByDefault = true
 	)
 	String overlayListSection = OVERLAY_LIST_SECTION;
 
 	@ConfigSection(
 		name = "Overlay Grid Settings",
 		description = "Grid overlay controls",
-		position = 3
+		position = 3,
+		closedByDefault = true
 	)
 	String overlayGridSection = OVERLAY_GRID_SECTION;
 
 	@ConfigSection(
 		name = "Menu Settings",
 		description = "Right-click menu controls",
-		position = 4
+		position = 4,
+		closedByDefault = true
 	)
 	String menuSection = MENU_SECTION;
 
 	@ConfigSection(
 		name = "Side Panel",
 		description = "RuneLite side panel controls",
-		position = 5
+		position = 5,
+		closedByDefault = true
 	)
 	String sidePanelSection = SIDE_PANEL_SECTION;
 
 	@ConfigSection(
 		name = "Overlay Colors",
 		description = "Overlay text, background, and selection colors",
-		position = 7
+		position = 7,
+		closedByDefault = true
 	)
 	String overlayAdjustmentsSection = OVERLAY_ADJUSTMENTS_SECTION;
 
 	@ConfigSection(
 		name = "Highlight Colors",
 		description = "Selected item tile and line colors",
-		position = 8
+		position = 8,
+		closedByDefault = true
 	)
 	String highlightSection = HIGHLIGHT_SECTION;
 
