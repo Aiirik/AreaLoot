@@ -73,4 +73,4 @@ Area Loot is a RuneLite plugin for quickly finding ground items near your player
 
 ## Change log
 
- Click to view the <a href="/aiiirk/arealoot/blob/master/CHANGELOG.md">CHANGELOG.md</a>
+ Click to view the <a href="https://github.com/Aiirik/AreaLoot/blob/master/CHANGELOG.md">CHANGELOG</a>
