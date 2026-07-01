@@ -392,7 +392,7 @@ public interface AreaLootConfig extends Config
 	)
 	default int maxOverlayItems()
 	{
-		return 12;
+		return 10;
 	}
 
 	@ConfigItem(
@@ -712,7 +712,7 @@ public interface AreaLootConfig extends Config
 	)
 	default boolean showLootCount()
 	{
-		return false;
+		return true;
 	}
 
 	@ConfigItem(
@@ -724,7 +724,7 @@ public interface AreaLootConfig extends Config
 	)
 	default TotalGeValueMode totalGeValueMode()
 	{
-		return TotalGeValueMode.NONE;
+		return TotalGeValueMode.LONG;
 	}
 
 	@ConfigItem(
