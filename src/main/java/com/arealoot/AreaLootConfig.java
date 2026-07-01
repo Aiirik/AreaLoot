@@ -214,35 +214,35 @@ public interface AreaLootConfig extends Config
 	@ConfigSection(
 		name = "Whitelist / Blocklist",
 		description = "Item whitelist and blocklist controls",
-		position = 2
+		position = 6
 	)
 	String filterListsSection = FILTER_LISTS_SECTION;
 
 	@ConfigSection(
 		name = "Overlay List Settings",
 		description = "List overlay controls",
-		position = 3
+		position = 2
 	)
 	String overlayListSection = OVERLAY_LIST_SECTION;
 
 	@ConfigSection(
 		name = "Overlay Grid Settings",
 		description = "Grid overlay controls",
-		position = 4
+		position = 3
 	)
 	String overlayGridSection = OVERLAY_GRID_SECTION;
 
 	@ConfigSection(
 		name = "Menu Settings",
 		description = "Right-click menu controls",
-		position = 5
+		position = 4
 	)
 	String menuSection = MENU_SECTION;
 
 	@ConfigSection(
 		name = "Side Panel",
 		description = "RuneLite side panel controls",
-		position = 6
+		position = 5
 	)
 	String sidePanelSection = SIDE_PANEL_SECTION;
 
@@ -350,7 +350,7 @@ public interface AreaLootConfig extends Config
 
 	@ConfigItem(
 		keyName = "listIconSize",
-		name = "Item icons",
+		name = "List icon size",
 		description = "Choose whether item icons are hidden or shown with the selected size",
 		position = 1,
 		section = OVERLAY_LIST_SECTION
@@ -362,7 +362,7 @@ public interface AreaLootConfig extends Config
 
 	@ConfigItem(
 		keyName = "showItemNamesInListMode",
-		name = "Show item names",
+		name = "List item names",
 		description = "Show item names in the overlay list",
 		position = 2,
 		section = OVERLAY_LIST_SECTION
@@ -374,7 +374,7 @@ public interface AreaLootConfig extends Config
 
 	@ConfigItem(
 		keyName = "useListMinimumWidth",
-		name = "Use list minimum width",
+		name = "List minimum width",
 		description = "Keep list mode at least the configured width while still allowing it to expand for longer content",
 		position = 3,
 		section = OVERLAY_LIST_SECTION
