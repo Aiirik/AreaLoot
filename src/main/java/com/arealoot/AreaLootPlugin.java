@@ -85,7 +85,7 @@ public class AreaLootPlugin extends Plugin
 	private static final String REMEMBERED_MANUAL_OVERLAY_KEY = "rememberedManualOverlayEnabled";
 	private static final String REMEMBERED_AUTO_OVERLAY_KEY = "rememberedAutoOverlayEnabled";
 
-	private final Map<WorldPoint, List<TileItem>> groundItems = new HashMap<>();
+	private final Map<WorldPoint, List<TrackedGroundItem>> groundItems = new HashMap<>();
 	private final Map<Integer, String> itemNameCache = new HashMap<>();
 	private final Map<Integer, Integer> itemPriceCache = new HashMap<>();
 
@@ -132,6 +132,7 @@ public class AreaLootPlugin extends Plugin
 	private boolean sidePanelRegistered;
 	private boolean sidePanelActive;
 	private boolean lootDirty;
+	private long nextDelayedLootRefreshMillis;
 
 	@Getter
 	private volatile WorldPoint selectedLocation;
@@ -223,6 +224,7 @@ public class AreaLootPlugin extends Plugin
 		manualOverlayEnabled = false;
 		autoOverlayEnabled = false;
 		lootDirty = false;
+		nextDelayedLootRefreshMillis = 0;
 		overlayStatusUntilMillis = 0;
 		overlayStatusText = "";
 		overlayFadeOutActive = false;
@@ -232,7 +234,7 @@ public class AreaLootPlugin extends Plugin
 	public void onItemSpawned(ItemSpawned event)
 	{
 		WorldPoint location = event.getTile().getWorldLocation();
-		groundItems.computeIfAbsent(location, ignored -> new ArrayList<>()).add(event.getItem());
+		addItem(location, event.getItem(), System.currentTimeMillis());
 		lootDirty = true;
 	}
 
@@ -246,8 +248,12 @@ public class AreaLootPlugin extends Plugin
 	@Subscribe
 	public void onItemQuantityChanged(ItemQuantityChanged event)
 	{
-		removeItem(event.getTile(), event.getItem());
-		groundItems.computeIfAbsent(event.getTile().getWorldLocation(), ignored -> new ArrayList<>()).add(event.getItem());
+		Long spawnedAtMillis = removeItem(event.getTile(), event.getItem());
+		addItem(
+			event.getTile().getWorldLocation(),
+			event.getItem(),
+			spawnedAtMillis == null ? System.currentTimeMillis() : spawnedAtMillis
+		);
 		lootDirty = true;
 	}
 
@@ -259,7 +265,7 @@ public class AreaLootPlugin extends Plugin
 			return;
 		}
 
-		if (lootDirty || hasPlayerMoved())
+		if (lootDirty || hasPlayerMoved() || hasDelayedLootReady())
 		{
 			lootDirty = false;
 			refreshLootSnapshot();
@@ -284,6 +290,7 @@ public class AreaLootPlugin extends Plugin
 			autoOverlayEnabled = false;
 			sidePanelActive = false;
 			lootDirty = false;
+			nextDelayedLootRefreshMillis = 0;
 			overlayStatusUntilMillis = 0;
 			overlayStatusText = "";
 			overlayFadeOutActive = false;
@@ -332,7 +339,7 @@ public class AreaLootPlugin extends Plugin
 				clearSavedOverlayMode();
 			}
 		}
-		else if ("sortMode".equals(key) || "minimumGeValue".equals(key) || BLOCKED_ITEMS_KEY.equals(key)
+		else if ("sortMode".equals(key) || "minimumGeValue".equals(key) || "overlayItemDelay".equals(key) || BLOCKED_ITEMS_KEY.equals(key)
 			|| WHITELISTED_ITEMS_KEY.equals(key) || "lootRadius".equals(key))
 		{
 			lootDirty = true;
@@ -709,6 +716,11 @@ public class AreaLootPlugin extends Plugin
 		return playerLocation != null && !playerLocation.equals(lastPlayerLocation);
 	}
 
+	private boolean hasDelayedLootReady()
+	{
+		return nextDelayedLootRefreshMillis > 0 && System.currentTimeMillis() >= nextDelayedLootRefreshMillis;
+	}
+
 	private WorldPoint getPlayerLocation()
 	{
 		Player player = client.getLocalPlayer();
@@ -901,8 +913,11 @@ public class AreaLootPlugin extends Plugin
 		Set<String> blockedItems = parseBlockedItems();
 		Set<String> whitelistedItems = parseWhitelistedItems();
 		List<AreaLootItem> items = new ArrayList<>();
+		long now = System.currentTimeMillis();
+		long itemDelayMillis = getOverlayItemDelayMillis();
+		long nextDelayedRefreshMillis = 0;
 
-		for (Map.Entry<WorldPoint, List<TileItem>> entry : groundItems.entrySet())
+		for (Map.Entry<WorldPoint, List<TrackedGroundItem>> entry : groundItems.entrySet())
 		{
 			WorldPoint location = entry.getKey();
 			if (location.getPlane() != playerLocation.getPlane())
@@ -916,8 +931,21 @@ public class AreaLootPlugin extends Plugin
 				continue;
 			}
 
-			for (TileItem tileItem : entry.getValue())
+			for (TrackedGroundItem trackedItem : entry.getValue())
 			{
+				if (itemDelayMillis > 0)
+				{
+					long showAtMillis = trackedItem.getSpawnedAtMillis() + itemDelayMillis;
+					if (now < showAtMillis)
+					{
+						nextDelayedRefreshMillis = nextDelayedRefreshMillis == 0
+							? showAtMillis
+							: Math.min(nextDelayedRefreshMillis, showAtMillis);
+						continue;
+					}
+				}
+
+				TileItem tileItem = trackedItem.getItem();
 				String itemName = getItemName(tileItem.getId());
 				if (isConfiguredItem(itemName, blockedItems))
 				{
@@ -943,8 +971,14 @@ public class AreaLootPlugin extends Plugin
 			}
 		}
 
+		nextDelayedLootRefreshMillis = nextDelayedRefreshMillis;
 		sortLoot(items);
 		return items;
+	}
+
+	private long getOverlayItemDelayMillis()
+	{
+		return config.overlayItemDelay().getSeconds() * 1000L;
 	}
 
 	private void sortLoot(List<AreaLootItem> items)
@@ -1374,20 +1408,29 @@ public class AreaLootPlugin extends Plugin
 		}
 	}
 
-	private void removeItem(Tile tile, TileItem item)
+	private void addItem(WorldPoint location, TileItem item, long spawnedAtMillis)
+	{
+		groundItems.computeIfAbsent(location, ignored -> new ArrayList<>())
+			.add(new TrackedGroundItem(item, spawnedAtMillis));
+	}
+
+	private Long removeItem(Tile tile, TileItem item)
 	{
 		WorldPoint location = tile.getWorldLocation();
-		List<TileItem> items = groundItems.get(location);
+		List<TrackedGroundItem> items = groundItems.get(location);
 		if (items == null)
 		{
-			return;
+			return null;
 		}
 
-		for (Iterator<TileItem> iterator = items.iterator(); iterator.hasNext(); )
+		Long spawnedAtMillis = null;
+		for (Iterator<TrackedGroundItem> iterator = items.iterator(); iterator.hasNext(); )
 		{
-			TileItem current = iterator.next();
+			TrackedGroundItem trackedItem = iterator.next();
+			TileItem current = trackedItem.getItem();
 			if (current == item || current.getId() == item.getId())
 			{
+				spawnedAtMillis = trackedItem.getSpawnedAtMillis();
 				iterator.remove();
 				break;
 			}
@@ -1404,6 +1447,8 @@ public class AreaLootPlugin extends Plugin
 			selectedItemId = -1;
 			selectedStackId = -1;
 		}
+
+		return spawnedAtMillis;
 	}
 
 	private BufferedImage createIcon()
@@ -1437,5 +1482,27 @@ public class AreaLootPlugin extends Plugin
 	AreaLootConfig provideConfig(ConfigManager configManager)
 	{
 		return configManager.getConfig(AreaLootConfig.class);
+	}
+
+	private static final class TrackedGroundItem
+	{
+		private final TileItem item;
+		private final long spawnedAtMillis;
+
+		private TrackedGroundItem(TileItem item, long spawnedAtMillis)
+		{
+			this.item = item;
+			this.spawnedAtMillis = spawnedAtMillis;
+		}
+
+		private TileItem getItem()
+		{
+			return item;
+		}
+
+		private long getSpawnedAtMillis()
+		{
+			return spawnedAtMillis;
+		}
 	}
 }

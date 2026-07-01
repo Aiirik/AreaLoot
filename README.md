@@ -26,6 +26,7 @@ Area Loot is a RuneLite plugin for quickly finding ground items near your player
 - Configurable hotkeys for the overlay, auto show/hide overlay, and side panel.
 - Optional overlay mode persistence across logout/login.
 - Auto show/hide mode that displays the overlay only when nearby loot is available.
+- Optional show delay from 0-10 seconds so instantly picked-up drops do not flash the overlay.
 
 ### Display options
 

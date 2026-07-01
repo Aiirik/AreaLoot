@@ -64,6 +64,41 @@ public interface AreaLootConfig extends Config
 		}
 	}
 
+	enum OverlayItemDelay
+	{
+		NONE("0 seconds", 0),
+		ONE("1 second", 1),
+		TWO("2 seconds", 2),
+		THREE("3 seconds", 3),
+		FOUR("4 seconds", 4),
+		FIVE("5 seconds", 5),
+		SIX("6 seconds", 6),
+		SEVEN("7 seconds", 7),
+		EIGHT("8 seconds", 8),
+		NINE("9 seconds", 9),
+		TEN("10 seconds", 10);
+
+		private final String name;
+		private final int seconds;
+
+		OverlayItemDelay(String name, int seconds)
+		{
+			this.name = name;
+			this.seconds = seconds;
+		}
+
+		int getSeconds()
+		{
+			return seconds;
+		}
+
+		@Override
+		public String toString()
+		{
+			return name;
+		}
+	}
+
 	enum ListIconSize
 	{
 		NONE("None", 0),
@@ -312,7 +347,7 @@ public interface AreaLootConfig extends Config
 		keyName = "overlayStyle",
 		name = "Overlay style",
 		description = "Choose whether the overlay shows a list or icon grid",
-		position = 5,
+		position = 6,
 		section = OVERLAY_SECTION
 	)
 	default OverlayStyle overlayStyle()
@@ -330,6 +365,18 @@ public interface AreaLootConfig extends Config
 	default boolean keepOverlayAboveGame()
 	{
 		return true;
+	}
+
+	@ConfigItem(
+		keyName = "overlayItemDelay",
+		name = "Show item delay",
+		description = "<html>Select a delay to show newly dropped items in Area Loot <br> This helps when drops are constantly picked up instantly and prevents overlay spam</html>",
+		position = 5,
+		section = OVERLAY_SECTION
+	)
+	default OverlayItemDelay overlayItemDelay()
+	{
+		return OverlayItemDelay.NONE;
 	}
 
 	@Range(

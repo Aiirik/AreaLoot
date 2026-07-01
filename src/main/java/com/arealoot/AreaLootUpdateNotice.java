@@ -9,8 +9,8 @@ import net.runelite.client.util.ColorUtil;
 
 final class AreaLootUpdateNotice
 {
-	static final String NOTICE_ID = "1.4.2";
-	static final String MESSAGE = "Area Loot plugin has updated. See the plugin config for new settings.";
+	static final String NOTICE_ID = "1.5.0";
+	static final String MESSAGE = "Area Loot plugin has updated. See the plugin config for new settings. Lots of new changes, take a look!";
 
 	private static final Color NOTICE_COLOR = new Color(160, 45, 45);
 	private static final String CONFIG_GROUP = "area-loot";

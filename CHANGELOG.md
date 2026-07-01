@@ -2,11 +2,12 @@
 
 All notable user-facing changes to Area Loot are documented here.
 
-## 1.4.2 - 2026-06-30
+## 1.5.0 - 2026-06-30
 
 ### Added
 
 - Added a `Keep overlay above game` setting so the overlay can render above in-game actors and scene elements.
+- Added a `Show item delay` setting to wait up to 10 seconds before newly dropped items appear in the overlay.
 - Added chat confirmations for Shift+right-click block, unblock, whitelist, and unwhitelist actions.
 - Added README configuration screenshots.
 
