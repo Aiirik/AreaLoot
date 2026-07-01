@@ -141,6 +141,11 @@ class AreaLootPanel extends PluginPanel
 
 	private String getTotalGeValueText(List<AreaLootItem> items)
 	{
+		if (items.size() <= 1)
+		{
+			return "";
+		}
+
 		switch (config.totalGeValueMode())
 		{
 			case LONG:

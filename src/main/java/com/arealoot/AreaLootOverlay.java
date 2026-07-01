@@ -40,7 +40,7 @@ class AreaLootOverlay extends Overlay
 	private static final int GRID_TEXT_LINE_HEIGHT = 12;
 	private static final int FOOTER_LINE_HEIGHT = 12;
 	private static final int FOOTER_TOP_GAP = 4;
-	private static final String GRID_STABLE_GE_TEXT = "999gp";
+	private static final String[] GRID_STABLE_GE_TEXTS = {"999gp", "999k", "999m"};
 	private static final String GRID_STABLE_DISTANCE_SHORT_TEXT = "30t";
 	private static final String GRID_STABLE_DISTANCE_LONG_TEXT = "30 Tiles";
 	private static final String TRUNCATION_SUFFIX = "...";
@@ -352,7 +352,7 @@ class AreaLootOverlay extends Overlay
 		FontMetrics metrics = graphics.getFontMetrics();
 		int gridIconSize = config.gridIconSize().getPixels();
 		int metadataLines = getGridMetadataLineCount();
-		int cellWidth = getGridCellWidth(metrics, items, itemCount, gridIconSize, columns, configuredColumns);
+		int cellWidth = getStableGridCellWidth(metrics, gridIconSize);
 		int cellHeight = (GRID_CELL_VERTICAL_PADDING * 2) + gridIconSize + (metadataLines * GRID_TEXT_LINE_HEIGHT);
 		int gridWidth = (columns * cellWidth) + ((columns - 1) * GRID_CELL_GAP);
 		int overlayWidth = gridWidth + (GRID_OUTER_PADDING * 2);
@@ -365,8 +365,7 @@ class AreaLootOverlay extends Overlay
 			overlayWidth = Math.max(overlayWidth, metrics.stringWidth(emptyText) + (GRID_OUTER_PADDING * 2));
 		}
 		int headerHeight = getOverlayHeaderHeight();
-		int footerLineCount = getFooterLineCount(items, itemCount);
-		overlayWidth = Math.max(overlayWidth, getFooterWidth(metrics, items, itemCount) + (GRID_OUTER_PADDING * 2));
+		int footerLineCount = getFooterLineCount(metrics, items, itemCount, overlayWidth - (GRID_OUTER_PADDING * 2));
 		int height = headerHeight + (visibleRows * cellHeight) + GRID_OUTER_PADDING
 			+ getFooterTopGap(footerLineCount) + (footerLineCount * FOOTER_LINE_HEIGHT);
 
@@ -443,7 +442,8 @@ class AreaLootOverlay extends Overlay
 		}
 
 		drawFooterLines(graphics, metrics, items, itemCount, gridX + GRID_OUTER_PADDING,
-			gridStartY + (visibleRows * cellHeight) + 10 + getFooterTopGap(footerLineCount));
+			gridStartY + (visibleRows * cellHeight) + 10 + getFooterTopGap(footerLineCount),
+			overlayWidth - (GRID_OUTER_PADDING * 2));
 
 		plugin.setOverlayRows(cellBounds);
 		graphics.setComposite(originalComposite);
@@ -464,43 +464,15 @@ class AreaLootOverlay extends Overlay
 		return lines;
 	}
 
-	private int getGridCellWidth(
-		FontMetrics metrics,
-		List<AreaLootItem> items,
-		int itemCount,
-		int gridIconSize,
-		int columns,
-		int configuredColumns)
-	{
-		if (config.gridAutoAdjust() && columns == configuredColumns)
-		{
-			return getStableGridCellWidth(metrics, gridIconSize);
-		}
-
-		int width = gridIconSize + (GRID_CELL_HORIZONTAL_PADDING * 2);
-		for (int i = 0; i < itemCount; i++)
-		{
-			AreaLootItem item = items.get(i);
-			if (config.showGeValue())
-			{
-				width = Math.max(width, metrics.stringWidth(formatGeValue(item)) + (GRID_CELL_HORIZONTAL_PADDING * 2));
-			}
-
-			String distanceText = formatDistance(item);
-			if (!distanceText.isEmpty())
-			{
-				width = Math.max(width, metrics.stringWidth(distanceText) + (GRID_CELL_HORIZONTAL_PADDING * 2));
-			}
-		}
-		return width;
-	}
-
 	private int getStableGridCellWidth(FontMetrics metrics, int gridIconSize)
 	{
 		int width = gridIconSize + (GRID_CELL_HORIZONTAL_PADDING * 2);
 		if (config.showGeValue())
 		{
-			width = Math.max(width, metrics.stringWidth(GRID_STABLE_GE_TEXT) + (GRID_CELL_HORIZONTAL_PADDING * 2));
+			for (String geText : GRID_STABLE_GE_TEXTS)
+			{
+				width = Math.max(width, metrics.stringWidth(geText) + (GRID_CELL_HORIZONTAL_PADDING * 2));
+			}
 		}
 		if (config.tileDistanceMode() == AreaLootConfig.DistanceMode.SHORT)
 		{
@@ -676,17 +648,39 @@ class AreaLootOverlay extends Overlay
 
 	private int getFooterLineCount(List<AreaLootItem> items, int displayedCount)
 	{
+		return getFooterLineCount(null, items, displayedCount, Integer.MAX_VALUE);
+	}
+
+	private int getFooterLineCount(FontMetrics metrics, List<AreaLootItem> items, int displayedCount, int maxWidth)
+	{
 		if (items.isEmpty())
 		{
 			return 0;
 		}
 
-		int lineCount = hasLootSummary() ? 1 : 0;
+		int lineCount = getLootSummaryLineCount(metrics, items, maxWidth);
 		if (shouldShowMoreItemsLine(items, displayedCount))
 		{
 			lineCount++;
 		}
 		return lineCount;
+	}
+
+	private int getLootSummaryLineCount(FontMetrics metrics, List<AreaLootItem> items, int maxWidth)
+	{
+		if (!hasLootSummary())
+		{
+			return 0;
+		}
+
+		String lootCountText = getLootCountText(items);
+		String totalGeValueText = getTotalGeValueText(items);
+		if (lootCountText.isEmpty() || totalGeValueText.isEmpty())
+		{
+			return 1;
+		}
+
+		return shouldStackLootSummary(metrics, items, maxWidth) ? 2 : 1;
 	}
 
 	private int getFooterTopGap(int footerLineCount)
@@ -731,6 +725,18 @@ class AreaLootOverlay extends Overlay
 
 	private void drawFooterLines(Graphics2D graphics, FontMetrics metrics, List<AreaLootItem> items, int displayedCount, int x, int y)
 	{
+		drawFooterLines(graphics, metrics, items, displayedCount, x, y, Integer.MAX_VALUE);
+	}
+
+	private void drawFooterLines(
+		Graphics2D graphics,
+		FontMetrics metrics,
+		List<AreaLootItem> items,
+		int displayedCount,
+		int x,
+		int y,
+		int maxWidth)
+	{
 		if (items.isEmpty())
 		{
 			return;
@@ -738,13 +744,21 @@ class AreaLootOverlay extends Overlay
 
 		if (hasLootSummary())
 		{
-			drawLootSummary(graphics, metrics, items, x, y);
-			y += FOOTER_LINE_HEIGHT;
+			if (shouldStackLootSummary(metrics, items, maxWidth))
+			{
+				drawStackedLootSummary(graphics, metrics, items, x, y, maxWidth);
+				y += getLootSummaryLineCount(metrics, items, maxWidth) * FOOTER_LINE_HEIGHT;
+			}
+			else
+			{
+				drawLootSummary(graphics, metrics, items, x, y, maxWidth);
+				y += FOOTER_LINE_HEIGHT;
+			}
 		}
 		if (shouldShowMoreItemsLine(items, displayedCount))
 		{
 			graphics.setColor(config.overlaySecondaryTextColor());
-			graphics.drawString(getMoreItemsText(items, displayedCount), x, y);
+			graphics.drawString(fitTextToWidth(metrics, getMoreItemsText(items, displayedCount), maxWidth), x, y);
 		}
 	}
 
@@ -755,26 +769,64 @@ class AreaLootOverlay extends Overlay
 
 	private void drawLootSummary(Graphics2D graphics, FontMetrics metrics, List<AreaLootItem> items, int x, int y)
 	{
+		drawLootSummary(graphics, metrics, items, x, y, Integer.MAX_VALUE);
+	}
+
+	private void drawLootSummary(Graphics2D graphics, FontMetrics metrics, List<AreaLootItem> items, int x, int y, int maxWidth)
+	{
 		String lootCountText = getLootCountText(items);
 		String totalGeValueText = getTotalGeValueText(items);
 		int drawX = x;
 		if (!lootCountText.isEmpty())
 		{
+			lootCountText = fitTextToWidth(metrics, lootCountText, maxWidth);
 			graphics.setColor(config.lootCountTextColor());
 			graphics.drawString(lootCountText, drawX, y);
 			drawX += metrics.stringWidth(lootCountText);
 		}
 		if (!lootCountText.isEmpty() && !totalGeValueText.isEmpty())
 		{
+			if (drawX - x + metrics.stringWidth(" | ") >= maxWidth)
+			{
+				return;
+			}
+
 			graphics.setColor(config.overlaySecondaryTextColor());
 			graphics.drawString(" | ", drawX, y);
 			drawX += metrics.stringWidth(" | ");
 		}
 		if (!totalGeValueText.isEmpty())
 		{
+			totalGeValueText = fitTextToWidth(metrics, totalGeValueText, maxWidth - (drawX - x));
 			graphics.setColor(config.totalGeValueTextColor());
 			graphics.drawString(totalGeValueText, drawX, y);
 		}
+	}
+
+	private void drawStackedLootSummary(Graphics2D graphics, FontMetrics metrics, List<AreaLootItem> items, int x, int y, int maxWidth)
+	{
+		String lootCountText = getLootCountText(items);
+		String totalGeValueText = getTotalGeValueText(items);
+		if (!lootCountText.isEmpty())
+		{
+			graphics.setColor(config.lootCountTextColor());
+			graphics.drawString(fitTextToWidth(metrics, lootCountText, maxWidth), x, y);
+			y += FOOTER_LINE_HEIGHT;
+		}
+		if (!totalGeValueText.isEmpty())
+		{
+			graphics.setColor(config.totalGeValueTextColor());
+			graphics.drawString(fitTextToWidth(metrics, totalGeValueText, maxWidth), x, y);
+		}
+	}
+
+	private boolean shouldStackLootSummary(FontMetrics metrics, List<AreaLootItem> items, int maxWidth)
+	{
+		return metrics != null
+			&& maxWidth != Integer.MAX_VALUE
+			&& !getLootCountText(items).isEmpty()
+			&& !getTotalGeValueText(items).isEmpty()
+			&& getLootSummaryWidth(metrics, items) > maxWidth;
 	}
 
 	private boolean hasLootSummary()
@@ -793,6 +845,11 @@ class AreaLootOverlay extends Overlay
 
 	private String getTotalGeValueText(List<AreaLootItem> items)
 	{
+		if (items.size() <= 1)
+		{
+			return "";
+		}
+
 		switch (config.totalGeValueMode())
 		{
 			case LONG:

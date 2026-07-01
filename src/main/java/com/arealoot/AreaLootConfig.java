@@ -477,7 +477,7 @@ public interface AreaLootConfig extends Config
 	)
 	default int gridRows()
 	{
-		return 5;
+		return 3;
 	}
 
 	@ConfigItem(
