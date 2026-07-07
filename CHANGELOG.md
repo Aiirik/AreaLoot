@@ -2,7 +2,13 @@
 
 All notable user-facing changes to Area Loot are documented here.
 
-## 1.5.0 - 2026-07-1
+## 1.5.1 - 06-Jul-2026
+
+### Fixed
+
+- Fixed list overlay sizing so hiding item names still lets the box shrink and stacks the total loot summary on narrow layouts.
+
+## 1.5.0 - 01-Jul-2026
 
 ### Added
 
@@ -33,7 +39,7 @@ All notable user-facing changes to Area Loot are documented here.
 - Fixed overlay visibility on login and click-to-enter screens by only rendering when the game viewport is visible.
 - Fixed layer switching so disabling `Keep overlay above game` restores the original overlay layer behavior.
 
-## 1.4.1 - 2026-06-30
+## 1.4.1 - 30-Jun-2026
 
 ### Added
 
@@ -50,7 +56,7 @@ All notable user-facing changes to Area Loot are documented here.
 
 - Fixed typing conflicts with single-letter hotkeys when using press-enter-to-chat.
 
-## 1.4.0 - 2026-06-29
+## 1.4.0 - 29-Jun-2026
 
 ### Added
 
@@ -65,7 +71,7 @@ All notable user-facing changes to Area Loot are documented here.
 - Removed the old X/Y coordinate positioning workflow.
 - Improved README image layout.
 
-## 1.3.0 - 2026-06-28
+## 1.3.0 - 28-Jun-2026
 
 ### Added
 
@@ -73,7 +79,7 @@ All notable user-facing changes to Area Loot are documented here.
 - Added selected Examine grouping within the right-click menu.
 - Added overlay footer indicators for loot count and total GE value.
 
-## 1.2.0 - 2026-06-27
+## 1.2.0 - 27-Jun-2026
 
 ### Added
 
@@ -95,7 +101,7 @@ All notable user-facing changes to Area Loot are documented here.
 
 - Fixed update notification color.
 
-## 1.1.0 - 2026-06-24
+## 1.1.0 - 24-Jun-2026
 
 ### Added
 
@@ -103,7 +109,7 @@ All notable user-facing changes to Area Loot are documented here.
 - Added Shift+right-click block/unblock actions for ground items.
 - Added a permissive license file.
 
-## 1.0.0 - 2026-06-24
+## 1.0.0 - 24-Jun-2026
 
 ### Added
 

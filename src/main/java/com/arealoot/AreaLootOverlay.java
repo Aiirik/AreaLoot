@@ -232,11 +232,20 @@ class AreaLootOverlay extends Overlay
 		int rowHeight = getListRowHeight();
 		int listIconSize = config.listIconSize().getPixels();
 		boolean showItemIcons = showListItemIcons();
+		boolean showItemNames = config.showItemNamesInListMode();
 		int textBaselineOffset = ((rowHeight - metrics.getHeight()) / 2) + metrics.getAscent();
 		int headerHeight = getOverlayHeaderHeight(headerText);
-		int footerLineCount = getFooterLineCount(items, rowCount);
-		int height = headerHeight + Math.max(1, rowCount) * rowHeight + PADDING
-			+ getFooterTopGap(footerLineCount) + (footerLineCount * FOOTER_LINE_HEIGHT);
+		int footerLineCount = 0;
+		int height = headerHeight + Math.max(1, rowCount) * rowHeight + PADDING;
+		int footerWidth = 0;
+		boolean showFooter = !items.isEmpty() && (hasLootSummary() || shouldShowMoreItemsLine(items, rowCount));
+		if (showFooter)
+		{
+			footerLineCount = getFooterLineCount(metrics, items, rowCount, listWidth - (PADDING * 2));
+			footerWidth = getFooterWidth(metrics, items, rowCount, footerLineCount);
+			height += getFooterTopGap(footerLineCount) + (footerLineCount * FOOTER_LINE_HEIGHT);
+		}
+		listWidth = Math.max(listWidth, footerWidth + (PADDING * 2));
 		List<SimpleEntry<Rectangle, AreaLootItem>> rowBounds = new ArrayList<>();
 		Composite originalComposite = graphics.getComposite();
 		if (fading)
@@ -294,32 +303,56 @@ class AreaLootOverlay extends Overlay
 				textX += listIconSize + 6;
 			}
 
-			if (config.showItemNamesInListMode())
+			if (showItemNames)
 			{
 				graphics.setColor(config.overlayTextColor());
 				graphics.drawString(text, textX, y + textBaselineOffset);
 			}
-			int metadataRight = listX + listWidth - PADDING;
-			if (distanceWidth > 0)
-			{
-				metadataRight -= distanceWidth + METADATA_GAP;
-			}
-			if (config.showGeValue())
-			{
-				String valueText = formatGeValue(item);
-				graphics.setColor(config.geValueTextColor());
-				graphics.drawString(valueText, metadataRight - metrics.stringWidth(valueText), y + textBaselineOffset);
-			}
 			String distanceText = formatDistance(item);
-			if (!distanceText.isEmpty())
+			if (showItemNames)
 			{
-				graphics.setColor(config.tileDistanceTextColor());
-				graphics.drawString(distanceText, listX + listWidth - PADDING - metrics.stringWidth(distanceText), y + textBaselineOffset);
+				int metadataRight = listX + listWidth - PADDING;
+				if (distanceWidth > 0)
+				{
+					metadataRight -= distanceWidth + METADATA_GAP;
+				}
+				if (config.showGeValue())
+				{
+					String valueText = formatGeValue(item);
+					graphics.setColor(config.geValueTextColor());
+					graphics.drawString(valueText, metadataRight - metrics.stringWidth(valueText), y + textBaselineOffset);
+				}
+				if (!distanceText.isEmpty())
+				{
+					graphics.setColor(config.tileDistanceTextColor());
+					graphics.drawString(distanceText, listX + listWidth - PADDING - metrics.stringWidth(distanceText), y + textBaselineOffset);
+				}
+			}
+			else
+			{
+				int metadataX = textX;
+				if (config.showGeValue())
+				{
+					String valueText = formatGeValue(item);
+					graphics.setColor(config.geValueTextColor());
+					graphics.drawString(valueText, metadataX, y + textBaselineOffset);
+					metadataX += metrics.stringWidth(valueText);
+					if (!distanceText.isEmpty())
+					{
+						metadataX += METADATA_GAP;
+					}
+				}
+				if (!distanceText.isEmpty())
+				{
+					graphics.setColor(config.tileDistanceTextColor());
+					graphics.drawString(distanceText, metadataX, y + textBaselineOffset);
+				}
 			}
 		}
 
 		drawFooterLines(graphics, metrics, items, rowCount, listX + PADDING,
-			rowStartY + (rowCount * rowHeight) + 10 + getFooterTopGap(footerLineCount));
+			rowStartY + (rowCount * rowHeight) + 10 + getFooterTopGap(footerLineCount),
+			listWidth - (PADDING * 2));
 
 		plugin.setOverlayRows(rowBounds);
 		graphics.setComposite(originalComposite);
@@ -671,6 +704,7 @@ class AreaLootOverlay extends Overlay
 		int width = getConfiguredListMinimumWidth();
 		int listIconSize = config.listIconSize().getPixels();
 		boolean showItemIcons = showListItemIcons();
+		boolean showItemNames = config.showItemNamesInListMode();
 		if (showHeader)
 		{
 			width = Math.max(width, metrics.stringWidth(headerText) + (PADDING * 2));
@@ -689,12 +723,14 @@ class AreaLootOverlay extends Overlay
 			{
 				rowWidth += listIconSize + 6;
 			}
-			if (config.showItemNamesInListMode())
+			if (showItemNames)
 			{
 				rowWidth += metrics.stringWidth(item.getName() + quantity);
 			}
-			rowWidth += getMetadataWidth(metrics, item, getMaxDistanceWidth(metrics, items, rowCount));
-			if ((config.showItemNamesInListMode() || showItemIcons)
+			rowWidth += showItemNames
+				? getMetadataWidth(metrics, item, getMaxDistanceWidth(metrics, items, rowCount))
+				: getCompactMetadataWidth(metrics, item);
+			if (showItemNames
 				&& (config.showGeValue() || config.tileDistanceMode() != AreaLootConfig.DistanceMode.NONE))
 			{
 				rowWidth += METADATA_GAP;
@@ -706,8 +742,6 @@ class AreaLootOverlay extends Overlay
 		{
 			width = Math.max(width, metrics.stringWidth("+" + (items.size() - rowCount) + " more") + (PADDING * 2));
 		}
-		width = Math.max(width, getFooterWidth(metrics, items, rowCount) + (PADDING * 2));
-
 		return width;
 	}
 
@@ -758,15 +792,29 @@ class AreaLootOverlay extends Overlay
 		return footerLineCount > 0 ? FOOTER_TOP_GAP : 0;
 	}
 
-	private int getFooterWidth(FontMetrics metrics, List<AreaLootItem> items, int displayedCount)
+	private int getFooterWidth(FontMetrics metrics, List<AreaLootItem> items, int displayedCount, int footerLineCount)
 	{
 		if (items.isEmpty())
 		{
 			return 0;
 		}
 
-		int width = getLootSummaryWidth(metrics, items);
-		if (shouldShowMoreItemsLine(items, displayedCount))
+		int width = 0;
+		boolean showMoreItemsLine = shouldShowMoreItemsLine(items, displayedCount);
+		int summaryLineCount = footerLineCount - (showMoreItemsLine ? 1 : 0);
+		if (hasLootSummary())
+		{
+			if (summaryLineCount > 1)
+			{
+				width = Math.max(width, metrics.stringWidth(getLootCountText(items)));
+				width = Math.max(width, metrics.stringWidth(getTotalGeValueText(items)));
+			}
+			else
+			{
+				width = Math.max(width, getLootSummaryWidth(metrics, items));
+			}
+		}
+		if (showMoreItemsLine)
 		{
 			width = Math.max(width, metrics.stringWidth(getMoreItemsText(items, displayedCount)));
 		}
@@ -986,6 +1034,25 @@ class AreaLootOverlay extends Overlay
 				width += METADATA_GAP;
 			}
 			width += distanceWidth;
+		}
+		return width;
+	}
+
+	private int getCompactMetadataWidth(FontMetrics metrics, AreaLootItem item)
+	{
+		int width = 0;
+		if (config.showGeValue())
+		{
+			width += metrics.stringWidth(formatGeValue(item));
+		}
+		String distanceText = formatDistance(item);
+		if (!distanceText.isEmpty())
+		{
+			if (width > 0)
+			{
+				width += METADATA_GAP;
+			}
+			width += metrics.stringWidth(distanceText);
 		}
 		return width;
 	}
