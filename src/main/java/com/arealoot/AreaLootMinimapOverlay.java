@@ -18,6 +18,8 @@ import net.runelite.client.ui.overlay.OverlayUtil;
 
 class AreaLootMinimapOverlay extends Overlay
 {
+	private static final double MINIMAP_DOT_EDGE_OFFSET = 2.5;
+
 	private final Client client;
 	private final AreaLootPlugin plugin;
 	private final AreaLootConfig config;
@@ -89,7 +91,24 @@ class AreaLootMinimapOverlay extends Overlay
 		Stroke originalStroke = graphics.getStroke();
 		graphics.setStroke(new BasicStroke(1f));
 		graphics.setColor(config.highlightMinimapLineColor());
-		graphics.drawLine(playerMinimapPoint.getX(), playerMinimapPoint.getY(), itemMinimapPoint.getX(), itemMinimapPoint.getY());
+		Point lineEnd = moveToward(itemMinimapPoint, playerMinimapPoint, MINIMAP_DOT_EDGE_OFFSET);
+		graphics.drawLine(playerMinimapPoint.getX(), playerMinimapPoint.getY(), lineEnd.getX(), lineEnd.getY());
 		graphics.setStroke(originalStroke);
+	}
+
+	private Point moveToward(Point from, Point to, double pixels)
+	{
+		double dx = to.getX() - from.getX();
+		double dy = to.getY() - from.getY();
+		double distance = Math.hypot(dx, dy);
+		if (distance <= pixels || distance == 0)
+		{
+			return to;
+		}
+
+		return new Point(
+			(int) Math.round(from.getX() + ((dx / distance) * pixels)),
+			(int) Math.round(from.getY() + ((dy / distance) * pixels))
+		);
 	}
 }

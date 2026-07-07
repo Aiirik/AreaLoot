@@ -946,10 +946,23 @@ public interface AreaLootConfig extends Config
 
 	@Alpha
 	@ConfigItem(
+		keyName = "highlightLineColor",
+		name = "Line color",
+		description = "Line color for the selected loot item",
+		position = 2,
+		section = HIGHLIGHT_SECTION
+	)
+	default Color highlightLineColor()
+	{
+		return highlightOutlineColor();
+	}
+
+	@Alpha
+	@ConfigItem(
 		keyName = "highlightMinimapDotColor",
 		name = "Minimap dot color",
 		description = "Dot color for the selected loot item's minimap marker",
-		position = 2,
+		position = 3,
 		section = HIGHLIGHT_SECTION
 	)
 	default Color highlightMinimapDotColor()
@@ -962,37 +975,12 @@ public interface AreaLootConfig extends Config
 		keyName = "highlightMinimapLineColor",
 		name = "Minimap line color",
 		description = "Line color for the selected loot item's minimap marker",
-		position = 3,
+		position = 4,
 		section = HIGHLIGHT_SECTION
 	)
 	default Color highlightMinimapLineColor()
 	{
 		return highlightOutlineColor();
-	}
-
-	@ConfigItem(
-		keyName = "matchLineColor",
-		name = "Line matches tile outline",
-		description = "Use the tile outline color for the locator line instead of the separate line color",
-		position = 4,
-		section = HIGHLIGHT_SECTION
-	)
-	default boolean matchLineColor()
-	{
-		return true;
-	}
-
-	@Alpha
-	@ConfigItem(
-		keyName = "highlightLineColor",
-		name = "Line color",
-		description = "Line color for the selected loot item",
-		position = 5,
-		section = HIGHLIGHT_SECTION
-	)
-	default Color highlightLineColor()
-	{
-		return new Color(0, 200, 255, 220);
 	}
 
 	@ConfigItem(
@@ -1011,7 +999,7 @@ public interface AreaLootConfig extends Config
 		keyName = "highlightMenuTextColor",
 		name = "Menu text color",
 		description = "Right-click menu text color for the selected loot item",
-		position = 6,
+		position = 5,
 		section = HIGHLIGHT_SECTION
 	)
 	default Color highlightMenuTextColor()

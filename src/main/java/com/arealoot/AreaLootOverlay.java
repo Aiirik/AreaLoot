@@ -690,7 +690,7 @@ class AreaLootOverlay extends Overlay
 
 	private Color getHighlightLineColor()
 	{
-		return config.matchLineColor() ? config.highlightOutlineColor() : config.highlightLineColor();
+		return config.highlightLineColor();
 	}
 
 	private int getListWidth(

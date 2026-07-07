@@ -2,7 +2,16 @@
 
 All notable user-facing changes to Area Loot are documented here.
 
-## 1.5.1 - 06-Jul-2026
+## 1.5.1 - 07-Jul-2026
+
+### Added
+
+- Added selected-item minimap markers with separate dot and line toggles, plus independent color settings for each.
+- Added a dedicated `Minimap Settings` section for the selected-item minimap markers.
+
+### Changed
+
+- Removed the `Line matches tile outline` option and now use the explicit line color setting directly.
 
 ### Fixed
 
