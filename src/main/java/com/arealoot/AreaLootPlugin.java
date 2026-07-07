@@ -109,6 +109,9 @@ public class AreaLootPlugin extends Plugin
 	private AreaLootOverlay overlay;
 
 	@Inject
+	private AreaLootMinimapOverlay minimapOverlay;
+
+	@Inject
 	private AreaLootMouseListener mouseListener;
 
 	@Inject
@@ -193,6 +196,7 @@ public class AreaLootPlugin extends Plugin
 			.build();
 
 		overlayManager.add(overlay);
+		overlayManager.add(minimapOverlay);
 		keyManager.registerKeyListener(overlayHotkeyListener);
 		keyManager.registerKeyListener(autoShowHotkeyListener);
 		mouseManager.registerMouseListener(mouseListener);
@@ -214,6 +218,7 @@ public class AreaLootPlugin extends Plugin
 		keyManager.unregisterKeyListener(autoShowHotkeyListener);
 		keyManager.unregisterKeyListener(overlayHotkeyListener);
 		overlayManager.remove(overlay);
+		overlayManager.remove(minimapOverlay);
 		groundItems.clear();
 		itemNameCache.clear();
 		itemPriceCache.clear();

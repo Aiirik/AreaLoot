@@ -20,6 +20,7 @@ public interface AreaLootConfig extends Config
 	String OVERLAY_ADJUSTMENTS_SECTION = "overlayAdjustments";
 	String SIDE_PANEL_SECTION = "sidePanel";
 	String MENU_SECTION = "menu";
+	String MINIMAP_SECTION = "minimap";
 	String FILTER_LISTS_SECTION = "filterLists";
 	String GENERAL_SECTION = "general";
 	String HIGHLIGHT_SECTION = "highlight";
@@ -280,9 +281,17 @@ public interface AreaLootConfig extends Config
 	String menuSection = MENU_SECTION;
 
 	@ConfigSection(
+		name = "Minimap Settings",
+		description = "Minimap markers for the selected loot item",
+		position = 5,
+		closedByDefault = true
+	)
+	String minimapSection = MINIMAP_SECTION;
+
+	@ConfigSection(
 		name = "Side Panel",
 		description = "RuneLite side panel controls",
-		position = 5,
+		position = 6,
 		closedByDefault = true
 	)
 	String sidePanelSection = SIDE_PANEL_SECTION;
@@ -290,7 +299,7 @@ public interface AreaLootConfig extends Config
 	@ConfigSection(
 		name = "Overlay Colors",
 		description = "Overlay text, background, and selection colors",
-		position = 7,
+		position = 8,
 		closedByDefault = true
 	)
 	String overlayAdjustmentsSection = OVERLAY_ADJUSTMENTS_SECTION;
@@ -298,7 +307,7 @@ public interface AreaLootConfig extends Config
 	@ConfigSection(
 		name = "Highlight Colors",
 		description = "Selected item tile and line colors",
-		position = 8,
+		position = 9,
 		closedByDefault = true
 	)
 	String highlightSection = HIGHLIGHT_SECTION;
@@ -846,10 +855,34 @@ public interface AreaLootConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "drawMinimapDot",
+		name = "Draw minimap dot",
+		description = "Show a dot on the minimap for the selected loot item",
+		position = 0,
+		section = MINIMAP_SECTION
+	)
+	default boolean drawMinimapDot()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "drawMinimapLine",
+		name = "Draw minimap line",
+		description = "Show a line on the minimap from your player to the selected loot item",
+		position = 1,
+		section = MINIMAP_SECTION
+	)
+	default boolean drawMinimapLine()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		keyName = "groupSameTileSelection",
 		name = "Group same-tile selection",
 		description = "Treat matching stacks of the same item on the same tile as one selection",
-		position = 3,
+		position = 2,
 		section = GENERAL_SECTION
 	)
 	default boolean groupSameTileSelection()
@@ -911,11 +944,37 @@ public interface AreaLootConfig extends Config
 		return new Color(0, 200, 255, 220);
 	}
 
+	@Alpha
+	@ConfigItem(
+		keyName = "highlightMinimapDotColor",
+		name = "Minimap dot color",
+		description = "Dot color for the selected loot item's minimap marker",
+		position = 2,
+		section = HIGHLIGHT_SECTION
+	)
+	default Color highlightMinimapDotColor()
+	{
+		return highlightOutlineColor();
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "highlightMinimapLineColor",
+		name = "Minimap line color",
+		description = "Line color for the selected loot item's minimap marker",
+		position = 3,
+		section = HIGHLIGHT_SECTION
+	)
+	default Color highlightMinimapLineColor()
+	{
+		return highlightOutlineColor();
+	}
+
 	@ConfigItem(
 		keyName = "matchLineColor",
 		name = "Line matches tile outline",
 		description = "Use the tile outline color for the locator line instead of the separate line color",
-		position = 2,
+		position = 4,
 		section = HIGHLIGHT_SECTION
 	)
 	default boolean matchLineColor()
@@ -928,7 +987,7 @@ public interface AreaLootConfig extends Config
 		keyName = "highlightLineColor",
 		name = "Line color",
 		description = "Line color for the selected loot item",
-		position = 3,
+		position = 5,
 		section = HIGHLIGHT_SECTION
 	)
 	default Color highlightLineColor()
@@ -952,7 +1011,7 @@ public interface AreaLootConfig extends Config
 		keyName = "highlightMenuTextColor",
 		name = "Menu text color",
 		description = "Right-click menu text color for the selected loot item",
-		position = 4,
+		position = 6,
 		section = HIGHLIGHT_SECTION
 	)
 	default Color highlightMenuTextColor()
