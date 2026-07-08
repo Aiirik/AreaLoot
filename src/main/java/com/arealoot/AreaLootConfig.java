@@ -233,6 +233,26 @@ public interface AreaLootConfig extends Config
 		}
 	}
 
+	enum SelectedItemFooterMode
+	{
+		OFF("Off"),
+		SHORT("Short"),
+		LONG("Long");
+
+		private final String name;
+
+		SelectedItemFooterMode(String name)
+		{
+			this.name = name;
+		}
+
+		@Override
+		public String toString()
+		{
+			return name;
+		}
+	}
+
 	@ConfigSection(
 		name = "Overlay",
 		description = "Overlay hotkeys, style, and behavior",
@@ -533,6 +553,30 @@ public interface AreaLootConfig extends Config
 		return OverlaySelectionStyle.FILL;
 	}
 
+	@ConfigItem(
+		keyName = "showSelectedItemName",
+		name = "Selected item name tile",
+		description = "Show the selected loot item's name over the highlighted tile",
+		position = 12,
+		section = OVERLAY_SECTION
+	)
+	default boolean showSelectedItemName()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "showSelectedItemNameInOverlay",
+		name = "Selected item name",
+		description = "Choose how the selected loot item is shown in the overlay footer",
+		position = 13,
+		section = OVERLAY_SECTION
+	)
+	default SelectedItemFooterMode showSelectedItemNameInOverlay()
+	{
+		return SelectedItemFooterMode.OFF;
+	}
+
 	@Alpha
 	@ConfigItem(
 		keyName = "overlayBackgroundColor",
@@ -632,10 +676,22 @@ public interface AreaLootConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "totalGeValueLabelTextColor",
+		name = "Total GE label",
+		description = "Total GE label footer text color",
+		position = 8,
+		section = OVERLAY_ADJUSTMENTS_SECTION
+	)
+	default Color totalGeValueLabelTextColor()
+	{
+		return new Color(165, 165, 165);
+	}
+
+	@ConfigItem(
 		keyName = "totalGeValueTextColor",
 		name = "Total GE text",
 		description = "Total GE value footer text color",
-		position = 8,
+		position = 9,
 		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color totalGeValueTextColor()
@@ -643,12 +699,36 @@ public interface AreaLootConfig extends Config
 		return new Color(210, 190, 35);
 	}
 
+	@ConfigItem(
+		keyName = "selectedItemNameLabelTextColor",
+		name = "Selected item label",
+		description = "Selected item label text color in the overlay footer",
+		position = 10,
+		section = OVERLAY_ADJUSTMENTS_SECTION
+	)
+	default Color selectedItemNameLabelTextColor()
+	{
+		return new Color(165, 165, 165);
+	}
+
+	@ConfigItem(
+		keyName = "selectedItemNameTextColor",
+		name = "Selected item name",
+		description = "Selected loot item name text color",
+		position = 11,
+		section = OVERLAY_ADJUSTMENTS_SECTION
+	)
+	default Color selectedItemNameTextColor()
+	{
+		return Color.WHITE;
+	}
+
 	@Alpha
 	@ConfigItem(
 		keyName = "overlaySelectedRowColor",
 		name = "Selected item",
 		description = "Selected item color in the list or grid overlay",
-		position = 9,
+		position = 12,
 		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color overlaySelectedRowColor()

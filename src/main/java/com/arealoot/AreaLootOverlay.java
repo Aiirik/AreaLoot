@@ -238,7 +238,8 @@ class AreaLootOverlay extends Overlay
 		int footerLineCount = 0;
 		int height = headerHeight + Math.max(1, rowCount) * rowHeight + PADDING;
 		int footerWidth = 0;
-		boolean showFooter = !items.isEmpty() && (hasLootSummary() || shouldShowMoreItemsLine(items, rowCount));
+		boolean showFooter = !items.isEmpty()
+			&& (hasLootSummary() || shouldShowMoreItemsLine(items, rowCount) || shouldShowSelectedItemFooter());
 		if (showFooter)
 		{
 			footerLineCount = getFooterLineCount(metrics, items, rowCount, listWidth - (PADDING * 2));
@@ -684,11 +685,38 @@ class AreaLootOverlay extends Overlay
 		graphics.setColor(outlineColor);
 		graphics.setStroke(new BasicStroke(2));
 		graphics.draw(tile);
+
+		if (config.showSelectedItemName())
+		{
+			AreaLootItem selectedItem = getSelectedItem();
+			if (selectedItem != null)
+			{
+				Point textLocation = Perspective.getCanvasTextLocation(client, graphics, localPoint, selectedItem.getName(), 0);
+				if (textLocation != null)
+				{
+					graphics.setColor(config.selectedItemNameTextColor());
+					graphics.drawString(selectedItem.getName(), textLocation.getX(), textLocation.getY());
+				}
+			}
+		}
 	}
 
 	private Color getHighlightLineColor()
 	{
 		return config.highlightLineColor();
+	}
+
+	private AreaLootItem getSelectedItem()
+	{
+		for (AreaLootItem item : plugin.getNearbyLootSnapshot())
+		{
+			if (plugin.isSelectedLoot(item))
+			{
+				return item;
+			}
+		}
+
+		return null;
 	}
 
 	private int getListWidth(
@@ -736,6 +764,11 @@ class AreaLootOverlay extends Overlay
 			width = Math.max(width, rowWidth);
 		}
 
+		if (shouldShowSelectedItemFooter())
+		{
+			width = Math.max(width, metrics.stringWidth(getSelectedItemFooterText()) + (PADDING * 2));
+		}
+
 		if (items.size() > rowCount)
 		{
 			width = Math.max(width, metrics.stringWidth("+" + (items.size() - rowCount) + " more") + (PADDING * 2));
@@ -760,7 +793,8 @@ class AreaLootOverlay extends Overlay
 			return 0;
 		}
 
-		int lineCount = getLootSummaryLineCount(metrics, items, maxWidth);
+		int lineCount = shouldShowSelectedItemFooter() ? 1 : 0;
+		lineCount += getLootSummaryLineCount(metrics, items, maxWidth);
 		if (shouldShowMoreItemsLine(items, displayedCount))
 		{
 			lineCount++;
@@ -776,7 +810,7 @@ class AreaLootOverlay extends Overlay
 		}
 
 		String lootCountText = getLootCountText(items);
-		String totalGeValueText = getTotalGeValueText(items);
+		String totalGeValueText = getTotalGeValueValueText(items);
 		if (lootCountText.isEmpty() || totalGeValueText.isEmpty())
 		{
 			return 1;
@@ -800,12 +834,17 @@ class AreaLootOverlay extends Overlay
 		int width = 0;
 		boolean showMoreItemsLine = shouldShowMoreItemsLine(items, displayedCount);
 		int summaryLineCount = footerLineCount - (showMoreItemsLine ? 1 : 0);
+		if (shouldShowSelectedItemFooter())
+		{
+			width = Math.max(width, getSelectedItemFooterWidth(metrics));
+			summaryLineCount = Math.max(0, summaryLineCount - 1);
+		}
 		if (hasLootSummary())
 		{
 			if (summaryLineCount > 1)
 			{
 				width = Math.max(width, metrics.stringWidth(getLootCountText(items)));
-				width = Math.max(width, metrics.stringWidth(getTotalGeValueText(items)));
+				width = Math.max(width, getTotalGeValueWidth(metrics, items));
 			}
 			else
 			{
@@ -823,7 +862,7 @@ class AreaLootOverlay extends Overlay
 	{
 		int width = 0;
 		String lootCountText = getLootCountText(items);
-		String totalGeValueText = getTotalGeValueText(items);
+		String totalGeValueText = getTotalGeValueValueText(items);
 		if (!lootCountText.isEmpty())
 		{
 			width += metrics.stringWidth(lootCountText);
@@ -834,7 +873,7 @@ class AreaLootOverlay extends Overlay
 		}
 		if (!totalGeValueText.isEmpty())
 		{
-			width += metrics.stringWidth(totalGeValueText);
+			width += getTotalGeValueWidth(metrics, items);
 		}
 		return width;
 	}
@@ -858,6 +897,11 @@ class AreaLootOverlay extends Overlay
 			return;
 		}
 
+		if (shouldShowSelectedItemFooter())
+		{
+			drawSelectedItemFooter(graphics, metrics, x, y, maxWidth);
+			y += FOOTER_LINE_HEIGHT;
+		}
 		if (hasLootSummary())
 		{
 			if (shouldStackLootSummary(metrics, items, maxWidth))
@@ -878,9 +922,83 @@ class AreaLootOverlay extends Overlay
 		}
 	}
 
+	private void drawSelectedItemFooter(Graphics2D graphics, FontMetrics metrics, int x, int y, int maxWidth)
+	{
+		String labelText = getSelectedItemFooterLabelText();
+		String valueText = getSelectedItemFooterValueText();
+		if (valueText.isEmpty())
+		{
+			return;
+		}
+
+		if (labelText.isEmpty())
+		{
+			graphics.setColor(config.selectedItemNameTextColor());
+			graphics.drawString(fitTextToWidth(metrics, valueText, maxWidth), x, y);
+			return;
+		}
+
+		int labelWidth = metrics.stringWidth(labelText);
+		int valueWidth = Math.max(0, maxWidth - labelWidth);
+		String fittedLabelText = fitTextToWidth(metrics, labelText, maxWidth);
+		if (fittedLabelText.isEmpty())
+		{
+			graphics.setColor(config.selectedItemNameTextColor());
+			graphics.drawString(fitTextToWidth(metrics, valueText, maxWidth), x, y);
+			return;
+		}
+
+		int fittedLabelWidth = metrics.stringWidth(fittedLabelText);
+		String fittedValueText = fitTextToWidth(metrics, valueText, valueWidth);
+		graphics.setColor(config.selectedItemNameLabelTextColor());
+		graphics.drawString(fittedLabelText, x, y);
+		graphics.setColor(config.selectedItemNameTextColor());
+		graphics.drawString(fittedValueText, x + fittedLabelWidth, y);
+	}
+
 	private boolean shouldShowMoreItemsLine(List<AreaLootItem> items, int displayedCount)
 	{
 		return !config.showLootCount() && items.size() > displayedCount;
+	}
+
+	private boolean shouldShowSelectedItemFooter()
+	{
+		return config.showSelectedItemNameInOverlay() != AreaLootConfig.SelectedItemFooterMode.OFF
+			&& getSelectedItem() != null;
+	}
+
+	private int getSelectedItemFooterWidth(FontMetrics metrics)
+	{
+		String text = getSelectedItemFooterText();
+		if (text.isEmpty())
+		{
+			return 0;
+		}
+
+		return metrics.stringWidth(text);
+	}
+
+	private String getSelectedItemFooterLabelText()
+	{
+		return config.showSelectedItemNameInOverlay() == AreaLootConfig.SelectedItemFooterMode.LONG ? "Selected: " : "";
+	}
+
+	private String getSelectedItemFooterValueText()
+	{
+		AreaLootItem selectedItem = getSelectedItem();
+		return selectedItem == null ? "" : selectedItem.getName();
+	}
+
+	private String getSelectedItemFooterText()
+	{
+		String valueText = getSelectedItemFooterValueText();
+		if (valueText.isEmpty())
+		{
+			return "";
+		}
+
+		String labelText = getSelectedItemFooterLabelText();
+		return labelText + valueText;
 	}
 
 	private void drawLootSummary(Graphics2D graphics, FontMetrics metrics, List<AreaLootItem> items, int x, int y)
@@ -891,7 +1009,8 @@ class AreaLootOverlay extends Overlay
 	private void drawLootSummary(Graphics2D graphics, FontMetrics metrics, List<AreaLootItem> items, int x, int y, int maxWidth)
 	{
 		String lootCountText = getLootCountText(items);
-		String totalGeValueText = getTotalGeValueText(items);
+		String totalGeValueLabelText = getTotalGeValueLabelText(items);
+		String totalGeValueText = getTotalGeValueValueText(items);
 		int drawX = x;
 		if (!lootCountText.isEmpty())
 		{
@@ -913,16 +1032,29 @@ class AreaLootOverlay extends Overlay
 		}
 		if (!totalGeValueText.isEmpty())
 		{
-			totalGeValueText = fitTextToWidth(metrics, totalGeValueText, maxWidth - (drawX - x));
+			int remainingWidth = Math.max(0, maxWidth - (drawX - x));
+			String fittedLabelText = fitTextToWidth(metrics, totalGeValueLabelText, remainingWidth);
+			if (fittedLabelText.isEmpty())
+			{
+				graphics.setColor(config.totalGeValueTextColor());
+				graphics.drawString(fitTextToWidth(metrics, totalGeValueText, remainingWidth), drawX, y);
+				return;
+			}
+
+			int labelWidth = metrics.stringWidth(fittedLabelText);
+			String fittedValueText = fitTextToWidth(metrics, totalGeValueText, Math.max(0, remainingWidth - labelWidth));
+			graphics.setColor(config.totalGeValueLabelTextColor());
+			graphics.drawString(fittedLabelText, drawX, y);
 			graphics.setColor(config.totalGeValueTextColor());
-			graphics.drawString(totalGeValueText, drawX, y);
+			graphics.drawString(fittedValueText, drawX + labelWidth, y);
 		}
 	}
 
 	private void drawStackedLootSummary(Graphics2D graphics, FontMetrics metrics, List<AreaLootItem> items, int x, int y, int maxWidth)
 	{
 		String lootCountText = getLootCountText(items);
-		String totalGeValueText = getTotalGeValueText(items);
+		String totalGeValueLabelText = getTotalGeValueLabelText(items);
+		String totalGeValueText = getTotalGeValueValueText(items);
 		if (!lootCountText.isEmpty())
 		{
 			graphics.setColor(config.lootCountTextColor());
@@ -931,8 +1063,20 @@ class AreaLootOverlay extends Overlay
 		}
 		if (!totalGeValueText.isEmpty())
 		{
+			String fittedLabelText = fitTextToWidth(metrics, totalGeValueLabelText, maxWidth);
+			if (fittedLabelText.isEmpty())
+			{
+				graphics.setColor(config.totalGeValueTextColor());
+				graphics.drawString(fitTextToWidth(metrics, totalGeValueText, maxWidth), x, y);
+				return;
+			}
+
+			int labelWidth = metrics.stringWidth(fittedLabelText);
+			String fittedValueText = fitTextToWidth(metrics, totalGeValueText, Math.max(0, maxWidth - labelWidth));
+			graphics.setColor(config.totalGeValueLabelTextColor());
+			graphics.drawString(fittedLabelText, x, y);
 			graphics.setColor(config.totalGeValueTextColor());
-			graphics.drawString(fitTextToWidth(metrics, totalGeValueText, maxWidth), x, y);
+			graphics.drawString(fittedValueText, x + labelWidth, y);
 		}
 	}
 
@@ -941,7 +1085,7 @@ class AreaLootOverlay extends Overlay
 		return metrics != null
 			&& maxWidth != Integer.MAX_VALUE
 			&& !getLootCountText(items).isEmpty()
-			&& !getTotalGeValueText(items).isEmpty()
+			&& !getTotalGeValueValueText(items).isEmpty()
 			&& getLootSummaryWidth(metrics, items) > maxWidth;
 	}
 
@@ -959,7 +1103,17 @@ class AreaLootOverlay extends Overlay
 		return items.size() + (items.size() == 1 ? " item" : " items");
 	}
 
-	private String getTotalGeValueText(List<AreaLootItem> items)
+	private String getTotalGeValueLabelText(List<AreaLootItem> items)
+	{
+		if (items.size() <= 1 || config.totalGeValueMode() == AreaLootConfig.TotalGeValueMode.NONE)
+		{
+			return "";
+		}
+
+		return "Total: ";
+	}
+
+	private String getTotalGeValueValueText(List<AreaLootItem> items)
 	{
 		if (items.size() <= 1)
 		{
@@ -969,7 +1123,6 @@ class AreaLootOverlay extends Overlay
 		switch (config.totalGeValueMode())
 		{
 			case LONG:
-				return "Total: " + formatGeValue(getTotalGeValue(items));
 			case SHORT:
 				return formatGeValue(getTotalGeValue(items));
 			case NONE:
@@ -991,6 +1144,18 @@ class AreaLootOverlay extends Overlay
 			total += item.getGeValue();
 		}
 		return total;
+	}
+
+	private int getTotalGeValueWidth(FontMetrics metrics, List<AreaLootItem> items)
+	{
+		String labelText = getTotalGeValueLabelText(items);
+		String valueText = getTotalGeValueValueText(items);
+		if (valueText.isEmpty())
+		{
+			return 0;
+		}
+
+		return metrics.stringWidth(labelText) + metrics.stringWidth(valueText);
 	}
 
 	private int getOverlayHeaderHeight(String headerText)
