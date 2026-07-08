@@ -335,17 +335,15 @@ class AreaLootOverlay extends Overlay
 				{
 					String valueText = formatGeValue(item);
 					graphics.setColor(config.geValueTextColor());
+					int valueWidth = metrics.stringWidth(valueText);
+					int distanceGap = !distanceText.isEmpty() ? METADATA_GAP : 0;
 					graphics.drawString(valueText, metadataX, y + textBaselineOffset);
-					metadataX += metrics.stringWidth(valueText);
-					if (!distanceText.isEmpty())
-					{
-						metadataX += METADATA_GAP;
-					}
+					metadataX += valueWidth + distanceGap;
 				}
 				if (!distanceText.isEmpty())
 				{
 					graphics.setColor(config.tileDistanceTextColor());
-					graphics.drawString(distanceText, metadataX, y + textBaselineOffset);
+					graphics.drawString(distanceText, listX + listWidth - PADDING - metrics.stringWidth(distanceText), y + textBaselineOffset);
 				}
 			}
 		}

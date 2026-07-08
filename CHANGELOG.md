@@ -2,6 +2,12 @@
 
 All notable user-facing changes to Area Loot are documented here.
 
+## 1.5.2 - 08-Jul-2026
+
+### Fixed
+
+- Fixed compact list mode so tile distance text stays right-aligned when item names are hidden.
+
 ## 1.5.1 - 07-Jul-2026
 
 ### Added
@@ -16,6 +22,7 @@ All notable user-facing changes to Area Loot are documented here.
 ### Fixed
 
 - Fixed list overlay sizing so hiding item names still lets the box shrink and stacks the total loot summary on narrow layouts.
+- Fixed compact list mode so tile distance text stays right-aligned when item names are hidden.
 
 ## 1.5.0 - 01-Jul-2026
 
