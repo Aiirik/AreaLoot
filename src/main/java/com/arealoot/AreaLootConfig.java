@@ -254,24 +254,24 @@ public interface AreaLootConfig extends Config
 	}
 
 	@ConfigSection(
-		name = "Overlay",
-		description = "Overlay hotkeys, style, and behavior",
-		position = 0
-	)
-	String overlaySection = OVERLAY_SECTION;
-
-	@ConfigSection(
 		name = "General",
-		description = "Shared Area Loot behavior",
-		position = 1,
-		closedByDefault = true
+		description = "Core loot behavior and hotkeys",
+		position = 0
 	)
 	String generalSection = GENERAL_SECTION;
 
 	@ConfigSection(
+		name = "Overlay",
+		description = "Overlay display and behavior",
+		position = 1,
+		closedByDefault = true
+	)
+	String overlaySection = OVERLAY_SECTION;
+
+	@ConfigSection(
 		name = "Whitelist / Blocklist",
 		description = "Item whitelist and blocklist controls",
-		position = 6,
+		position = 7,
 		closedByDefault = true
 	)
 	String filterListsSection = FILTER_LISTS_SECTION;
@@ -337,7 +337,7 @@ public interface AreaLootConfig extends Config
 		name = "Overlay toggle hotkey",
 		description = "Toggles the Area Loot overlay list",
 		position = 0,
-		section = OVERLAY_SECTION
+		section = GENERAL_SECTION
 	)
 	default Keybind toggleHotkey()
 	{
@@ -349,7 +349,7 @@ public interface AreaLootConfig extends Config
 		name = "Auto show/hide hotkey",
 		description = "Toggles auto show/hide mode for the overlay list",
 		position = 1,
-		section = OVERLAY_SECTION
+		section = GENERAL_SECTION
 	)
 	default Keybind autoShowHotkey()
 	{
@@ -361,7 +361,7 @@ public interface AreaLootConfig extends Config
 		name = "Remember overlay mode",
 		description = "Restore the overlay mode after logging back in",
 		position = 2,
-		section = OVERLAY_SECTION
+		section = GENERAL_SECTION
 	)
 	default boolean rememberOverlayMode()
 	{
@@ -372,8 +372,8 @@ public interface AreaLootConfig extends Config
 		keyName = "animateOverlay",
 		name = "Fade in/out overlay",
 		description = "Fade the overlay list in and out when it appears or hides",
-		position = 3,
-		section = OVERLAY_SECTION
+		position = 4,
+		section = GENERAL_SECTION
 	)
 	default boolean animateOverlay()
 	{
@@ -384,7 +384,7 @@ public interface AreaLootConfig extends Config
 		keyName = "overlayStyle",
 		name = "Overlay style",
 		description = "Choose whether the overlay shows a list or icon grid",
-		position = 6,
+		position = 0,
 		section = OVERLAY_SECTION
 	)
 	default OverlayStyle overlayStyle()
@@ -396,8 +396,8 @@ public interface AreaLootConfig extends Config
 		keyName = "keepOverlayAboveGame",
 		name = "Keep overlay above game",
 		description = "Draw the Area Loot overlay above in-game actors and scene elements",
-		position = 4,
-		section = OVERLAY_SECTION
+		position = 3,
+		section = GENERAL_SECTION
 	)
 	default boolean keepOverlayAboveGame()
 	{
@@ -545,7 +545,7 @@ public interface AreaLootConfig extends Config
 		keyName = "overlaySelectionStyle",
 		name = "Selected item style",
 		description = "Choose how the selected item is shown in the overlay",
-		position = 11,
+		position = 14,
 		section = OVERLAY_SECTION
 	)
 	default OverlaySelectionStyle overlaySelectionStyle()
@@ -555,10 +555,10 @@ public interface AreaLootConfig extends Config
 
 	@ConfigItem(
 		keyName = "showSelectedItemName",
-		name = "Selected item name tile",
+		name = "Selected item name on tile",
 		description = "Show the selected loot item's name over the highlighted tile",
-		position = 12,
-		section = OVERLAY_SECTION
+		position = 7,
+		section = GENERAL_SECTION
 	)
 	default boolean showSelectedItemName()
 	{
@@ -569,7 +569,7 @@ public interface AreaLootConfig extends Config
 		keyName = "showSelectedItemNameInOverlay",
 		name = "Selected item name",
 		description = "Choose how the selected loot item is shown in the overlay footer",
-		position = 13,
+		position = 6,
 		section = OVERLAY_SECTION
 	)
 	default SelectedItemFooterMode showSelectedItemNameInOverlay()
@@ -781,7 +781,7 @@ public interface AreaLootConfig extends Config
 		name = "Show overlay title",
 		description = "Show Area Loot or Area Loot (auto) at the top of the overlay",
 		position = 4,
-		section = GENERAL_SECTION
+		section = OVERLAY_SECTION
 	)
 	default boolean showOverlayTitle()
 	{
@@ -792,8 +792,8 @@ public interface AreaLootConfig extends Config
 		keyName = "tileDistanceMode",
 		name = "Show tile distance",
 		description = "Choose whether and how each loot item's distance is shown",
-		position = 6,
-		section = GENERAL_SECTION
+		position = 8,
+		section = OVERLAY_SECTION
 	)
 	default DistanceMode tileDistanceMode()
 	{
@@ -804,8 +804,8 @@ public interface AreaLootConfig extends Config
 		keyName = "showLootCount",
 		name = "Show total loot count",
 		description = "Show the number of visible loot items below the overlay",
-		position = 7,
-		section = GENERAL_SECTION
+		position = 9,
+		section = OVERLAY_SECTION
 	)
 	default boolean showLootCount()
 	{
@@ -816,8 +816,8 @@ public interface AreaLootConfig extends Config
 		keyName = "totalGeValueMode",
 		name = "Show total GE value",
 		description = "Choose how the total GE value of visible loot items is shown below the overlay",
-		position = 8,
-		section = GENERAL_SECTION
+		position = 10,
+		section = OVERLAY_SECTION
 	)
 	default TotalGeValueMode totalGeValueMode()
 	{
@@ -828,8 +828,8 @@ public interface AreaLootConfig extends Config
 		keyName = "showGeValue",
 		name = "Show item GE value",
 		description = "Show each loot item's total Grand Exchange value",
-		position = 5,
-		section = GENERAL_SECTION
+		position = 7,
+		section = OVERLAY_SECTION
 	)
 	default boolean showGeValue()
 	{
@@ -841,7 +841,7 @@ public interface AreaLootConfig extends Config
 		name = "Sort loot by",
 		description = "Choose how Area Loot sorts nearby ground items",
 		position = 2,
-		section = GENERAL_SECTION
+		section = OVERLAY_SECTION
 	)
 	default SortMode sortMode()
 	{
@@ -852,8 +852,8 @@ public interface AreaLootConfig extends Config
 		keyName = "minimumGeValue",
 		name = "Minimum GE value",
 		description = "Only show drops worth at least this much GP. Supports values like 1000, 10k, or 1m",
-		position = 9,
-		section = GENERAL_SECTION
+		position = 11,
+		section = OVERLAY_SECTION
 	)
 	default String minimumGeValue()
 	{
@@ -926,7 +926,7 @@ public interface AreaLootConfig extends Config
 		keyName = "drawHighlightLine",
 		name = "Draw highlight line",
 		description = "Draw a line from your player to the highlighted loot item",
-		position = 1,
+		position = 6,
 		section = GENERAL_SECTION
 	)
 	default boolean drawHighlightLine()
@@ -962,8 +962,8 @@ public interface AreaLootConfig extends Config
 		keyName = "groupSameTileSelection",
 		name = "Group same-tile selection",
 		description = "Treat matching stacks of the same item on the same tile as one selection",
-		position = 2,
-		section = GENERAL_SECTION
+		position = 3,
+		section = OVERLAY_SECTION
 	)
 	default boolean groupSameTileSelection()
 	{
@@ -990,7 +990,7 @@ public interface AreaLootConfig extends Config
 		keyName = "lootRadius",
 		name = "Loot radius",
 		description = "Maximum tile distance from your player to show in the Area Loot (1-30)",
-		position = 0,
+		position = 5,
 		section = GENERAL_SECTION
 	)
 	default int lootRadius()
