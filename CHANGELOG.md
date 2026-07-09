@@ -9,6 +9,7 @@ All notable user-facing changes to Area Loot are documented here.
 - Added an option to show the selected loot item's name over the highlighted tile, with its own overlay text color setting.
 - Added a selected-item footer mode in the overlay, with Short and Long display options.
 - Added separate selected-item label/name colors and total GE label/value colors in the overlay color settings.
+- Added a grid fill direction option so grid overlays can populate horizontally or vertically.
 
 ### Fixed
 

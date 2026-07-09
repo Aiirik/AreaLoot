@@ -376,10 +376,19 @@ class AreaLootOverlay extends Overlay
 		int itemCount = Math.min(items.size(), maxItems);
 		int columns = configuredColumns;
 		int visibleRows = configuredRows;
+		boolean verticalFill = config.gridFillDirection() == AreaLootConfig.GridFillDirection.VERTICAL;
 		if (config.gridAutoAdjust())
 		{
-			columns = Math.max(1, Math.min(configuredColumns, Math.max(1, itemCount)));
-			visibleRows = Math.max(1, (int) Math.ceil(itemCount / (double) columns));
+			if (verticalFill)
+			{
+				visibleRows = Math.max(1, Math.min(configuredRows, Math.max(1, itemCount)));
+				columns = Math.max(1, (int) Math.ceil(itemCount / (double) visibleRows));
+			}
+			else
+			{
+				columns = Math.max(1, Math.min(configuredColumns, Math.max(1, itemCount)));
+				visibleRows = Math.max(1, (int) Math.ceil(itemCount / (double) columns));
+			}
 		}
 		FontMetrics metrics = graphics.getFontMetrics();
 		int gridIconSize = config.gridIconSize().getPixels();
@@ -399,6 +408,9 @@ class AreaLootOverlay extends Overlay
 		}
 		int headerHeight = getOverlayHeaderHeight(headerText);
 		int footerLineCount = getFooterLineCount(metrics, items, itemCount, overlayWidth - (GRID_OUTER_PADDING * 2));
+		int footerWidth = getFooterWidth(metrics, items, itemCount, footerLineCount);
+		overlayWidth = Math.max(overlayWidth, footerWidth + (GRID_OUTER_PADDING * 2));
+		footerLineCount = getFooterLineCount(metrics, items, itemCount, overlayWidth - (GRID_OUTER_PADDING * 2));
 		int height = headerHeight + (visibleRows * cellHeight) + GRID_OUTER_PADDING
 			+ getFooterTopGap(footerLineCount) + (footerLineCount * FOOTER_LINE_HEIGHT);
 
@@ -433,8 +445,8 @@ class AreaLootOverlay extends Overlay
 		for (int i = 0; i < itemCount; i++)
 		{
 			AreaLootItem item = items.get(i);
-			int column = i % columns;
-			int row = i / columns;
+			int column = verticalFill ? i / visibleRows : i % columns;
+			int row = verticalFill ? i % visibleRows : i / columns;
 			int x = gridStartX + (column * (cellWidth + GRID_CELL_GAP));
 			int y = gridStartY + (row * cellHeight);
 			Rectangle localCell = new Rectangle(x, y, cellWidth, cellHeight);

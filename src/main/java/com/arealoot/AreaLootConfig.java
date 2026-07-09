@@ -155,6 +155,25 @@ public interface AreaLootConfig extends Config
 		}
 	}
 
+	enum GridFillDirection
+	{
+		HORIZONTAL("Horizontal"),
+		VERTICAL("Vertical");
+
+		private final String name;
+
+		GridFillDirection(String name)
+		{
+			this.name = name;
+		}
+
+		@Override
+		public String toString()
+		{
+			return name;
+		}
+	}
+
 	enum OverlaySelectionStyle
 	{
 		FILL("Fill"),
@@ -408,7 +427,7 @@ public interface AreaLootConfig extends Config
 		keyName = "overlayItemDelay",
 		name = "Show item delay",
 		description = "<html>Select a delay to show newly dropped items in Area Loot <br> This helps when drops are constantly picked up instantly and prevents overlay spam</html>",
-		position = 5,
+		position = 3,
 		section = OVERLAY_SECTION
 	)
 	default OverlayItemDelay overlayItemDelay()
@@ -539,6 +558,18 @@ public interface AreaLootConfig extends Config
 	default boolean gridAutoAdjust()
 	{
 		return true;
+	}
+
+	@ConfigItem(
+		keyName = "gridFillDirection",
+		name = "Grid fill direction",
+		description = "Choose whether grid items fill left-to-right or top-to-bottom",
+		position = 4,
+		section = OVERLAY_GRID_SECTION
+	)
+	default GridFillDirection gridFillDirection()
+	{
+		return GridFillDirection.HORIZONTAL;
 	}
 
 	@ConfigItem(
@@ -780,7 +811,7 @@ public interface AreaLootConfig extends Config
 		keyName = "showOverlayTitle",
 		name = "Show overlay title",
 		description = "Show Area Loot or Area Loot (auto) at the top of the overlay",
-		position = 4,
+		position = 5,
 		section = OVERLAY_SECTION
 	)
 	default boolean showOverlayTitle()
@@ -962,7 +993,7 @@ public interface AreaLootConfig extends Config
 		keyName = "groupSameTileSelection",
 		name = "Group same-tile selection",
 		description = "Treat matching stacks of the same item on the same tile as one selection",
-		position = 3,
+		position = 4,
 		section = OVERLAY_SECTION
 	)
 	default boolean groupSameTileSelection()
