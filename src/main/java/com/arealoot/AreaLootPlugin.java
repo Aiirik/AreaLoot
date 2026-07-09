@@ -140,6 +140,7 @@ public class AreaLootPlugin extends Plugin
 
 	@Getter
 	private volatile WorldPoint selectedLocation;
+	private volatile AreaLootItem selectedLootItem;
 	private WorldPoint lastPlayerLocation;
 	private int selectedItemId = -1;
 	private int selectedStackId = -1;
@@ -225,6 +226,7 @@ public class AreaLootPlugin extends Plugin
 		nearbyLoot = Collections.emptyList();
 		clearOverlayRows();
 		selectedLocation = null;
+		selectedLootItem = null;
 		lastPlayerLocation = null;
 		selectedItemId = -1;
 		selectedStackId = -1;
@@ -291,6 +293,7 @@ public class AreaLootPlugin extends Plugin
 			nearbyLoot = Collections.emptyList();
 			clearOverlayRows();
 			selectedLocation = null;
+			selectedLootItem = null;
 			lastPlayerLocation = null;
 			selectedItemId = -1;
 			selectedStackId = -1;
@@ -484,12 +487,14 @@ public class AreaLootPlugin extends Plugin
 		selectedLocation = item.getLocation();
 		selectedItemId = item.getId();
 		selectedStackId = item.getStackId();
+		selectedLootItem = item;
 		rebuildPanel(nearbyLoot);
 	}
 
 	void clearSelectedLoot()
 	{
 		selectedLocation = null;
+		selectedLootItem = null;
 		selectedItemId = -1;
 		selectedStackId = -1;
 		rebuildPanel(nearbyLoot);
@@ -503,6 +508,11 @@ public class AreaLootPlugin extends Plugin
 	boolean isSelectedLoot(AreaLootItem item)
 	{
 		return isSelectedItem(item);
+	}
+
+	AreaLootItem getSelectedLootItem()
+	{
+		return selectedLootItem;
 	}
 
 	List<AreaLootItem> getNearbyLootSnapshot()
@@ -727,15 +737,33 @@ public class AreaLootPlugin extends Plugin
 	{
 		lastPlayerLocation = getPlayerLocation();
 		List<AreaLootItem> items = getNearbyLoot();
-		if (selectedLocation != null && items.stream().noneMatch(this::isSelectedItem))
-		{
-			selectedLocation = null;
-			selectedItemId = -1;
-			selectedStackId = -1;
-		}
+		refreshSelectedLootItem(items);
 
 		nearbyLoot = Collections.unmodifiableList(items);
 		rebuildPanel(nearbyLoot);
+	}
+
+	private void refreshSelectedLootItem(List<AreaLootItem> items)
+	{
+		if (selectedLocation == null)
+		{
+			selectedLootItem = null;
+			return;
+		}
+
+		for (AreaLootItem item : items)
+		{
+			if (isSelectedItem(item))
+			{
+				selectedLootItem = item;
+				return;
+			}
+		}
+
+		selectedLocation = null;
+		selectedLootItem = null;
+		selectedItemId = -1;
+		selectedStackId = -1;
 	}
 
 	private boolean shouldMaintainLootSnapshot()
@@ -1477,6 +1505,7 @@ public class AreaLootPlugin extends Plugin
 		if (location.equals(selectedLocation) && selectedItemId == item.getId())
 		{
 			selectedLocation = null;
+			selectedLootItem = null;
 			selectedItemId = -1;
 			selectedStackId = -1;
 		}

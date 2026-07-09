@@ -700,7 +700,7 @@ class AreaLootOverlay extends Overlay
 
 		if (config.showSelectedItemName())
 		{
-			AreaLootItem selectedItem = getSelectedItem();
+			AreaLootItem selectedItem = plugin.getSelectedLootItem();
 			if (selectedItem != null)
 			{
 				Point textLocation = Perspective.getCanvasTextLocation(client, graphics, localPoint, selectedItem.getName(), 0);
@@ -716,19 +716,6 @@ class AreaLootOverlay extends Overlay
 	private Color getHighlightLineColor()
 	{
 		return config.highlightLineColor();
-	}
-
-	private AreaLootItem getSelectedItem()
-	{
-		for (AreaLootItem item : plugin.getNearbyLootSnapshot())
-		{
-			if (plugin.isSelectedLoot(item))
-			{
-				return item;
-			}
-		}
-
-		return null;
 	}
 
 	private int getListWidth(
@@ -976,7 +963,7 @@ class AreaLootOverlay extends Overlay
 	private boolean shouldShowSelectedItemFooter()
 	{
 		return config.showSelectedItemNameInOverlay() != AreaLootConfig.SelectedItemFooterMode.OFF
-			&& getSelectedItem() != null;
+			&& plugin.getSelectedLootItem() != null;
 	}
 
 	private int getSelectedItemFooterWidth(FontMetrics metrics)
@@ -997,7 +984,7 @@ class AreaLootOverlay extends Overlay
 
 	private String getSelectedItemFooterValueText()
 	{
-		AreaLootItem selectedItem = getSelectedItem();
+		AreaLootItem selectedItem = plugin.getSelectedLootItem();
 		return selectedItem == null ? "" : selectedItem.getName();
 	}
 
