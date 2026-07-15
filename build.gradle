@@ -15,6 +15,13 @@ repositories {
 
 def runeLiteVersion = 'latest.release'
 def pluginMainClass = 'com.arealoot.AreaLootPluginTest'
+version = '1.5.3'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(17)
+	}
+}
 
 dependencies {
 	compileOnly group: 'net.runelite', name:'client', version: runeLiteVersion
@@ -32,6 +39,11 @@ group = 'com.arealoot'
 tasks.withType(JavaCompile).configureEach {
 	options.encoding = 'UTF-8'
 	options.release.set(11)
+}
+
+tasks.named('processResources') {
+	from('runelite-plugin.properties')
+	from('icon.png')
 }
 
 tasks.register('run', JavaExec) {
@@ -66,4 +78,8 @@ tasks.register('shadowJar', Jar) {
 	group = BasePlugin.BUILD_GROUP
 	archiveClassifier.set('shadow')
 	archiveFileName.set("${rootProject.name}-${project.version}-all.jar")
+}
+
+tasks.named('build') {
+	dependsOn tasks.named('shadowJar')
 }

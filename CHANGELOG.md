@@ -2,6 +2,12 @@
 
 All notable user-facing changes to Area Loot are documented here.
 
+## 1.5.3 - 15-Jul-2026
+
+### Fixed
+
+- Fixed install/uninstall behavior.
+
 ## 1.5.2 - 08-Jul-2026
 
 ### Added
