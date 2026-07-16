@@ -2,6 +2,12 @@
 
 All notable user-facing changes to Area Loot are documented here.
 
+## 1.5.4 - 16-Jul-2026
+
+### Fixed
+
+- Fixed plugin startup after a hub update so the plugin can be enabled without restarting RuneLite.
+
 ## 1.5.3 - 15-Jul-2026
 
 ### Fixed

@@ -182,7 +182,6 @@ public class AreaLootPlugin extends Plugin
 	protected void startUp()
 	{
 		log.debug("Area Loot started");
-		restoreOverlayMode();
 		panel = new AreaLootPanel(this, config, itemManager);
 		navButton = NavigationButton.builder()
 			.tooltip("Area Loot")
@@ -202,6 +201,7 @@ public class AreaLootPlugin extends Plugin
 		keyManager.registerKeyListener(autoShowHotkeyListener);
 		mouseManager.registerMouseListener(mouseListener);
 		updateSidePanelRegistration();
+		clientThread.invoke(this::restoreOverlayMode);
 	}
 
 	@Override
