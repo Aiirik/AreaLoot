@@ -4,6 +4,10 @@ All notable user-facing changes to Area Loot are documented here.
 
 ## 1.5.4 - 16-Jul-2026
 
+### Added
+
+- Added an option in Menu Settings to disable update notifications in the chatbox.
+
 ### Fixed
 
 - Fixed plugin startup after a hub update so the plugin can be enabled without restarting RuneLite.

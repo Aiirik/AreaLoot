@@ -20,7 +20,10 @@ final class AreaLootUpdateNotice
 	{
 	}
 
-	static void announceIfNeeded(ConfigManager configManager, ChatMessageManager chatMessageManager)
+	static void announceIfNeeded(
+		ConfigManager configManager,
+		ChatMessageManager chatMessageManager,
+		boolean disableUpdateNotifications)
 	{
 		String lastNoticeId = configManager.getConfiguration(CONFIG_GROUP, LAST_NOTICE_ID_KEY);
 		if (NOTICE_ID.equals(lastNoticeId))
@@ -28,10 +31,13 @@ final class AreaLootUpdateNotice
 			return;
 		}
 
-		chatMessageManager.queue(QueuedMessage.builder()
-			.type(ChatMessageType.CONSOLE)
-			.runeLiteFormattedMessage(ColorUtil.wrapWithColorTag(MESSAGE, NOTICE_COLOR))
-			.build());
+		if (!disableUpdateNotifications)
+		{
+			chatMessageManager.queue(QueuedMessage.builder()
+				.type(ChatMessageType.CONSOLE)
+				.runeLiteFormattedMessage(ColorUtil.wrapWithColorTag(MESSAGE, NOTICE_COLOR))
+				.build());
+		}
 		configManager.setConfiguration(CONFIG_GROUP, LAST_NOTICE_ID_KEY, NOTICE_ID);
 	}
 }

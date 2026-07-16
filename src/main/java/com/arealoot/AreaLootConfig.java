@@ -597,6 +597,18 @@ public interface AreaLootConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "disableUpdateNotifications",
+		name = "Disable update notifications",
+		description = "Hide the chatbox message shown when Area Loot updates",
+		position = 8,
+		section = GENERAL_SECTION
+	)
+	default boolean disableUpdateNotifications()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		keyName = "showSelectedItemNameInOverlay",
 		name = "Selected item name",
 		description = "Choose how the selected loot item is shown in the overlay footer",

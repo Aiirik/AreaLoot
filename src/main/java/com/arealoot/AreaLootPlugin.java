@@ -311,7 +311,7 @@ public class AreaLootPlugin extends Plugin
 		else if (event.getGameState() == GameState.LOGGED_IN)
 		{
 			restoreOverlayMode();
-			AreaLootUpdateNotice.announceIfNeeded(configManager, chatMessageManager);
+			AreaLootUpdateNotice.announceIfNeeded(configManager, chatMessageManager, config.disableUpdateNotifications());
 		}
 	}
 
