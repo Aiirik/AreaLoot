@@ -2,6 +2,12 @@
 
 All notable user-facing changes to Area Loot are documented here.
 
+## 1.5.5 - 22-Jul-2026
+
+### Added
+
+- Added an option to group identical nearby drops into a single overlay row while still highlighting every matching drop when selected, replacing the old same-tile selection option.
+
 ## 1.5.4 - 16-Jul-2026
 
 ### Added

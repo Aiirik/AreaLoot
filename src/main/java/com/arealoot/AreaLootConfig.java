@@ -1002,13 +1002,13 @@ public interface AreaLootConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "groupSameTileSelection",
-		name = "Group same-tile selection",
-		description = "Treat matching stacks of the same item on the same tile as one selection",
+		keyName = "groupSameItemOverlay",
+		name = "Group same items on overlay",
+		description = "Group identical nearby drops into one overlay row and highlight them together when selected",
 		position = 4,
 		section = OVERLAY_SECTION
 	)
-	default boolean groupSameTileSelection()
+	default boolean groupSameItemOverlay()
 	{
 		return false;
 	}

@@ -12,7 +12,12 @@ import java.awt.Rectangle;
 import java.awt.Stroke;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import javax.inject.Inject;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
@@ -40,6 +45,7 @@ class AreaLootOverlay extends Overlay
 	private static final int GRID_TEXT_LINE_HEIGHT = 12;
 	private static final int FOOTER_LINE_HEIGHT = 12;
 	private static final int FOOTER_TOP_GAP = 4;
+	private static final String GRID_STABLE_QUANTITY_TEXT = "x999";
 	private static final String[] GRID_STABLE_GE_TEXTS = {"999gp", "999k", "999m"};
 	private static final String GRID_STABLE_DISTANCE_SHORT_TEXT = "30t";
 	private static final String GRID_STABLE_DISTANCE_LONG_TEXT = "30 Tiles";
@@ -144,7 +150,7 @@ class AreaLootOverlay extends Overlay
 		}
 
 		long now = System.currentTimeMillis();
-		List<AreaLootItem> items = plugin.getNearbyLootSnapshot();
+		List<AreaLootItem> items = getOverlayLootItems(plugin.getNearbyLootSnapshot());
 		String headerText;
 		String emptyText;
 		float alpha = 1.0f;
@@ -285,7 +291,7 @@ class AreaLootOverlay extends Overlay
 				rowBounds.add(new SimpleEntry<>(clickRow, item));
 			}
 
-			if (plugin.isSelectedLoot(item))
+			if (plugin.isSelectedOverlayLoot(item))
 			{
 				renderSelectedOverlayEntry(graphics, localRow, false);
 			}
@@ -392,8 +398,8 @@ class AreaLootOverlay extends Overlay
 		}
 		FontMetrics metrics = graphics.getFontMetrics();
 		int gridIconSize = config.gridIconSize().getPixels();
-		int metadataLines = getGridMetadataLineCount();
-		int cellWidth = getStableGridCellWidth(metrics, gridIconSize);
+		int metadataLines = getGridMetadataLineCount(items);
+		int cellWidth = getStableGridCellWidth(metrics, gridIconSize, items);
 		int cellHeight = (GRID_CELL_VERTICAL_PADDING * 2) + gridIconSize + (metadataLines * GRID_TEXT_LINE_HEIGHT);
 		int gridWidth = (columns * cellWidth) + ((columns - 1) * GRID_CELL_GAP);
 		int overlayWidth = gridWidth + (GRID_OUTER_PADDING * 2);
@@ -456,7 +462,7 @@ class AreaLootOverlay extends Overlay
 				cellBounds.add(new SimpleEntry<>(clickCell, item));
 			}
 
-			if (plugin.isSelectedLoot(item))
+			if (plugin.isSelectedOverlayLoot(item))
 			{
 				renderSelectedOverlayEntry(graphics, localCell, true);
 			}
@@ -469,6 +475,12 @@ class AreaLootOverlay extends Overlay
 			}
 
 			int textY = y + GRID_CELL_VERTICAL_PADDING + gridIconSize + 10;
+			if (item.getQuantity() > 1)
+			{
+				graphics.setColor(config.overlayTextColor());
+				drawCenteredGridText(graphics, metrics, "x" + item.getQuantity(), x, textY, cellWidth);
+				textY += GRID_TEXT_LINE_HEIGHT;
+			}
 			if (config.showGeValue())
 			{
 				String valueText = formatGeValue(item);
@@ -494,9 +506,13 @@ class AreaLootOverlay extends Overlay
 		return new Dimension(overlayWidth, height);
 	}
 
-	private int getGridMetadataLineCount()
+	private int getGridMetadataLineCount(List<AreaLootItem> items)
 	{
 		int lines = 0;
+		if (shouldShowGridQuantityLine(items))
+		{
+			lines++;
+		}
 		if (config.showGeValue())
 		{
 			lines++;
@@ -508,9 +524,13 @@ class AreaLootOverlay extends Overlay
 		return lines;
 	}
 
-	private int getStableGridCellWidth(FontMetrics metrics, int gridIconSize)
+	private int getStableGridCellWidth(FontMetrics metrics, int gridIconSize, List<AreaLootItem> items)
 	{
 		int width = gridIconSize + (GRID_CELL_HORIZONTAL_PADDING * 2);
+		if (shouldShowGridQuantityLine(items))
+		{
+			width = Math.max(width, metrics.stringWidth(GRID_STABLE_QUANTITY_TEXT) + (GRID_CELL_HORIZONTAL_PADDING * 2));
+		}
 		if (config.showGeValue())
 		{
 			for (String geText : GRID_STABLE_GE_TEXTS)
@@ -527,6 +547,23 @@ class AreaLootOverlay extends Overlay
 			width = Math.max(width, metrics.stringWidth(GRID_STABLE_DISTANCE_LONG_TEXT) + (GRID_CELL_HORIZONTAL_PADDING * 2));
 		}
 		return width;
+	}
+
+	private boolean shouldShowGridQuantityLine(List<AreaLootItem> items)
+	{
+		if (!config.groupSameItemOverlay())
+		{
+			return false;
+		}
+
+		for (AreaLootItem item : items)
+		{
+			if (item.getQuantity() > 1)
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private void drawCenteredGridText(Graphics2D graphics, FontMetrics metrics, String text, int x, int y, int cellWidth)
@@ -666,20 +703,8 @@ class AreaLootOverlay extends Overlay
 
 	private void renderSelectedTile(Graphics2D graphics)
 	{
-		WorldPoint selectedLocation = plugin.getSelectedLocation();
-		if (selectedLocation == null)
-		{
-			return;
-		}
-
-		LocalPoint localPoint = LocalPoint.fromWorld(client, selectedLocation);
-		if (localPoint == null)
-		{
-			return;
-		}
-
-		Polygon tile = Perspective.getCanvasTilePoly(client, localPoint);
-		if (tile == null)
+		List<AreaLootItem> selectedItems = plugin.getSelectedLootItems();
+		if (selectedItems.isEmpty())
 		{
 			return;
 		}
@@ -687,21 +712,43 @@ class AreaLootOverlay extends Overlay
 		Color fill = config.highlightColor();
 		Color outlineColor = config.highlightOutlineColor();
 		Color lineColor = getHighlightLineColor();
-		if (config.drawHighlightLine())
+		AreaLootItem selectedItem = selectedItems.get(0);
+		Set<WorldPoint> renderedLocations = new HashSet<>();
+		for (AreaLootItem item : selectedItems)
 		{
-			renderHighlightLine(graphics, localPoint, lineColor);
-		}
+			if (!renderedLocations.add(item.getLocation()))
+			{
+				continue;
+			}
 
-		graphics.setColor(fill);
-		graphics.fill(tile);
-		graphics.setColor(outlineColor);
-		graphics.setStroke(new BasicStroke(2));
-		graphics.draw(tile);
+			LocalPoint localPoint = LocalPoint.fromWorld(client, item.getLocation());
+			if (localPoint == null)
+			{
+				continue;
+			}
+
+			Polygon tile = Perspective.getCanvasTilePoly(client, localPoint);
+			if (tile == null)
+			{
+				continue;
+			}
+
+			if (config.drawHighlightLine())
+			{
+				renderHighlightLine(graphics, localPoint, lineColor);
+			}
+
+			graphics.setColor(fill);
+			graphics.fill(tile);
+			graphics.setColor(outlineColor);
+			graphics.setStroke(new BasicStroke(2));
+			graphics.draw(tile);
+		}
 
 		if (config.showSelectedItemName())
 		{
-			AreaLootItem selectedItem = plugin.getSelectedLootItem();
-			if (selectedItem != null)
+			LocalPoint localPoint = LocalPoint.fromWorld(client, selectedItem.getLocation());
+			if (localPoint != null)
 			{
 				Point textLocation = Perspective.getCanvasTextLocation(client, graphics, localPoint, selectedItem.getName(), 0);
 				if (textLocation != null)
@@ -711,6 +758,53 @@ class AreaLootOverlay extends Overlay
 				}
 			}
 		}
+	}
+
+	private List<AreaLootItem> getOverlayLootItems(List<AreaLootItem> items)
+	{
+		if (!config.groupSameItemOverlay() || items.size() < 2)
+		{
+			return items;
+		}
+
+		Map<Integer, LootGroup> groupedItems = new LinkedHashMap<>();
+		for (AreaLootItem item : items)
+		{
+			LootGroup group = groupedItems.get(item.getId());
+			if (group == null)
+			{
+				groupedItems.put(item.getId(), new LootGroup(item));
+			}
+			else
+			{
+				group.add(item);
+			}
+		}
+
+		List<AreaLootItem> groupedLoot = new ArrayList<>(groupedItems.size());
+		for (LootGroup group : groupedItems.values())
+		{
+			groupedLoot.add(group.toItem());
+		}
+
+		sortLoot(groupedLoot);
+		return groupedLoot;
+	}
+
+	private void sortLoot(List<AreaLootItem> items)
+	{
+		if (config.sortMode() == AreaLootConfig.SortMode.GE_HIGH_TO_LOW)
+		{
+			items.sort(Comparator
+				.comparingLong(AreaLootItem::getGeValue).reversed()
+				.thenComparingInt(AreaLootItem::getDistance)
+				.thenComparing(AreaLootItem::getName, String.CASE_INSENSITIVE_ORDER));
+			return;
+		}
+
+		items.sort(Comparator
+			.comparingInt(AreaLootItem::getDistance)
+			.thenComparing(AreaLootItem::getName, String.CASE_INSENSITIVE_ORDER));
 	}
 
 	private Color getHighlightLineColor()
@@ -1363,6 +1457,43 @@ class AreaLootOverlay extends Overlay
 			(int) Math.round(to.x + ((dx / distance) * pixels)),
 			(int) Math.round(to.y + ((dy / distance) * pixels))
 		);
+	}
+
+	private static final class LootGroup
+	{
+		private AreaLootItem representative;
+		private int totalQuantity;
+		private long totalGeValue;
+
+		private LootGroup(AreaLootItem item)
+		{
+			representative = item;
+			totalQuantity = item.getQuantity();
+			totalGeValue = item.getGeValue();
+		}
+
+		private void add(AreaLootItem item)
+		{
+			totalQuantity += item.getQuantity();
+			totalGeValue += item.getGeValue();
+			if (item.getDistance() < representative.getDistance())
+			{
+				representative = item;
+			}
+		}
+
+		private AreaLootItem toItem()
+		{
+			return new AreaLootItem(
+				representative.getId(),
+				representative.getStackId(),
+				totalQuantity,
+				representative.getName(),
+				representative.getLocation(),
+				representative.getDistance(),
+				totalGeValue
+			);
+		}
 	}
 
 	private static class LineIntersection

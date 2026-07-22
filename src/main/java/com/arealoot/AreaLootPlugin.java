@@ -351,7 +351,7 @@ public class AreaLootPlugin extends Plugin
 				clearSavedOverlayMode();
 			}
 		}
-		else if ("sortMode".equals(key) || "minimumGeValue".equals(key) || "overlayItemDelay".equals(key) || BLOCKED_ITEMS_KEY.equals(key)
+		else if ("sortMode".equals(key) || "minimumGeValue".equals(key) || "overlayItemDelay".equals(key) || "groupSameItemOverlay".equals(key) || BLOCKED_ITEMS_KEY.equals(key)
 			|| WHITELISTED_ITEMS_KEY.equals(key) || "lootRadius".equals(key))
 		{
 			lootDirty = true;
@@ -502,7 +502,7 @@ public class AreaLootPlugin extends Plugin
 
 	boolean hasSelectedLoot()
 	{
-		return selectedLocation != null;
+		return selectedItemId != -1;
 	}
 
 	boolean isSelectedLoot(AreaLootItem item)
@@ -510,9 +510,37 @@ public class AreaLootPlugin extends Plugin
 		return isSelectedItem(item);
 	}
 
+	boolean isSelectedOverlayLoot(AreaLootItem item)
+	{
+		if (config.groupSameItemOverlay())
+		{
+			return selectedItemId != -1 && item.getId() == selectedItemId;
+		}
+
+		return isSelectedItem(item);
+	}
+
 	AreaLootItem getSelectedLootItem()
 	{
 		return selectedLootItem;
+	}
+
+	List<AreaLootItem> getSelectedLootItems()
+	{
+		if (selectedItemId == -1)
+		{
+			return Collections.emptyList();
+		}
+
+		List<AreaLootItem> selectedItems = new ArrayList<>();
+		for (AreaLootItem item : nearbyLoot)
+		{
+			if (isSelectedOverlayLoot(item))
+			{
+				selectedItems.add(item);
+			}
+		}
+		return selectedItems;
 	}
 
 	List<AreaLootItem> getNearbyLootSnapshot()
@@ -745,7 +773,26 @@ public class AreaLootPlugin extends Plugin
 
 	private void refreshSelectedLootItem(List<AreaLootItem> items)
 	{
-		if (selectedLocation == null)
+		if (selectedItemId == -1)
+		{
+			selectedLootItem = null;
+			return;
+		}
+
+		if (config.groupSameItemOverlay())
+		{
+			for (AreaLootItem item : items)
+			{
+				if (item.getId() == selectedItemId)
+				{
+					selectedLocation = item.getLocation();
+					selectedStackId = item.getStackId();
+					selectedLootItem = item;
+					return;
+				}
+			}
+		}
+		else if (selectedLocation == null)
 		{
 			selectedLootItem = null;
 			return;
@@ -768,7 +815,7 @@ public class AreaLootPlugin extends Plugin
 
 	private boolean shouldMaintainLootSnapshot()
 	{
-		return manualOverlayEnabled || autoOverlayEnabled || sidePanelActive || selectedLocation != null;
+		return manualOverlayEnabled || autoOverlayEnabled || sidePanelActive || selectedItemId != -1;
 	}
 
 	private boolean hasPlayerMoved()
@@ -797,7 +844,7 @@ public class AreaLootPlugin extends Plugin
 	{
 		return item.getId() == selectedItemId
 			&& item.getLocation().equals(selectedLocation)
-			&& (config.groupSameTileSelection() || item.getStackId() == selectedStackId);
+			&& item.getStackId() == selectedStackId;
 	}
 
 	private boolean shouldKeepMenuEntry(MenuEntry entry, int selectedSceneX, int selectedSceneY)
@@ -1502,7 +1549,7 @@ public class AreaLootPlugin extends Plugin
 			groundItems.remove(location);
 		}
 
-		if (location.equals(selectedLocation) && selectedItemId == item.getId())
+		if (!config.groupSameItemOverlay() && location.equals(selectedLocation) && selectedItemId == item.getId())
 		{
 			selectedLocation = null;
 			selectedLootItem = null;
