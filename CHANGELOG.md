@@ -11,6 +11,7 @@ All notable user-facing changes to Area Loot are documented here.
 ### Fixed
 
 - Fixed plugin startup after a hub update so the plugin can be enabled without restarting RuneLite.
+- Fixed footer spacing so loot count and total GE footer lines no longer leave blank space when those footer options are disabled or hidden by the current item count.
 
 ## 1.5.3 - 15-Jul-2026
 

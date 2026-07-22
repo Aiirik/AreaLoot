@@ -132,6 +132,10 @@ class AreaLootPanel extends PluginPanel
 			? "<font color='" + toHtmlColor(config.lootCountTextColor()) + "'>" + items.size() + (items.size() == 1 ? " item" : " items") + "</font>"
 			: "";
 		String totalGeValueText = getTotalGeValueText(items);
+		if (lootCountText.isEmpty() && totalGeValueText.isEmpty())
+		{
+			return "";
+		}
 		if (!lootCountText.isEmpty() && !totalGeValueText.isEmpty())
 		{
 			return "<html>" + lootCountText + "&nbsp;|&nbsp;" + totalGeValueText + "</html>";

@@ -239,7 +239,7 @@ class AreaLootOverlay extends Overlay
 		int height = headerHeight + Math.max(1, rowCount) * rowHeight + PADDING;
 		int footerWidth = 0;
 		boolean showFooter = !items.isEmpty()
-			&& (hasLootSummary() || shouldShowMoreItemsLine(items, rowCount) || shouldShowSelectedItemFooter());
+			&& (hasVisibleLootSummary(items) || shouldShowMoreItemsLine(items, rowCount) || shouldShowSelectedItemFooter());
 		if (showFooter)
 		{
 			footerLineCount = getFooterLineCount(metrics, items, rowCount, listWidth - (PADDING * 2));
@@ -803,7 +803,7 @@ class AreaLootOverlay extends Overlay
 
 	private int getLootSummaryLineCount(FontMetrics metrics, List<AreaLootItem> items, int maxWidth)
 	{
-		if (!hasLootSummary())
+		if (!hasVisibleLootSummary(items))
 		{
 			return 0;
 		}
@@ -838,7 +838,7 @@ class AreaLootOverlay extends Overlay
 			width = Math.max(width, getSelectedItemFooterWidth(metrics));
 			summaryLineCount = Math.max(0, summaryLineCount - 1);
 		}
-		if (hasLootSummary())
+		if (hasVisibleLootSummary(items))
 		{
 			if (summaryLineCount > 1)
 			{
@@ -901,7 +901,7 @@ class AreaLootOverlay extends Overlay
 			drawSelectedItemFooter(graphics, metrics, x, y, maxWidth);
 			y += FOOTER_LINE_HEIGHT;
 		}
-		if (hasLootSummary())
+		if (hasVisibleLootSummary(items))
 		{
 			if (shouldStackLootSummary(metrics, items, maxWidth))
 			{
@@ -1088,9 +1088,9 @@ class AreaLootOverlay extends Overlay
 			&& getLootSummaryWidth(metrics, items) > maxWidth;
 	}
 
-	private boolean hasLootSummary()
+	private boolean hasVisibleLootSummary(List<AreaLootItem> items)
 	{
-		return config.showLootCount() || config.totalGeValueMode() != AreaLootConfig.TotalGeValueMode.NONE;
+		return !getLootCountText(items).isEmpty() || !getTotalGeValueValueText(items).isEmpty();
 	}
 
 	private String getLootCountText(List<AreaLootItem> items)
