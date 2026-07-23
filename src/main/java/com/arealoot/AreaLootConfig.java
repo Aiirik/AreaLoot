@@ -943,8 +943,8 @@ public interface AreaLootConfig extends Config
 
 	@ConfigItem(
 		keyName = "shiftRightClickBlockItems",
-		name = "Shift+right-click block/whitelist",
-		description = "Add Shift+right-click menu options on ground items to block/unblock or whitelist/unwhitelist them",
+		name = "Shift+right-click submenu",
+		description = "Add a single Area Loot submenu on ground items with block and whitelist actions",
 		position = 0,
 		section = MENU_SECTION
 	)

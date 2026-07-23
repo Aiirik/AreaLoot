@@ -32,6 +32,7 @@ import net.runelite.api.GameState;
 import net.runelite.api.ItemComposition;
 import net.runelite.api.KeyCode;
 import net.runelite.api.MenuAction;
+import net.runelite.api.Menu;
 import net.runelite.api.MenuEntry;
 import net.runelite.api.Player;
 import net.runelite.api.Tile;
@@ -405,13 +406,24 @@ public class AreaLootPlugin extends Plugin
 		boolean blockedByName = isBlockedByExactName(itemName);
 		boolean whitelistedByName = isWhitelistedByExactName(itemName);
 
-		client.createMenuEntry(-1)
+		MenuEntry areaLootEntry = client.createMenuEntry(-1)
+			.setParam0(event.getActionParam0())
+			.setParam1(event.getActionParam1())
+			.setIdentifier(event.getIdentifier())
+			.setItemId(event.getItemId())
+			.setTarget("")
+			.setOption("Area Loot")
+			.setType(MenuAction.RUNELITE_LOW_PRIORITY)
+			.setDeprioritized(true);
+
+		Menu submenu = areaLootEntry.createSubMenu();
+		submenu.createMenuEntry(-1)
 			.setParam0(event.getActionParam0())
 			.setParam1(event.getActionParam1())
 			.setIdentifier(event.getIdentifier())
 			.setItemId(event.getItemId())
 			.setTarget(event.getTarget())
-			.setOption(blockedByName ? "Unblock in Area Loot" : "Block in Area Loot")
+			.setOption(blockedByName ? "Unblock" : "Block")
 			.setType(MenuAction.RUNELITE)
 			.onClick(entry ->
 			{
@@ -425,13 +437,13 @@ public class AreaLootPlugin extends Plugin
 				}
 			});
 
-		client.createMenuEntry(-1)
+		submenu.createMenuEntry(-1)
 			.setParam0(event.getActionParam0())
 			.setParam1(event.getActionParam1())
 			.setIdentifier(event.getIdentifier())
 			.setItemId(event.getItemId())
 			.setTarget(event.getTarget())
-			.setOption(whitelistedByName ? "Unwhitelist in Area Loot" : "Whitelist in Area Loot")
+			.setOption(whitelistedByName ? "Unwhitelist" : "Whitelist")
 			.setType(MenuAction.RUNELITE)
 			.onClick(entry ->
 			{

@@ -7,6 +7,7 @@ All notable user-facing changes to Area Loot are documented here.
 ### Added
 
 - Added an option to group identical nearby drops into a single overlay row while still highlighting every matching drop when selected, replacing the old same-tile selection option.
+- Added a single `Area Loot` submenu for shift-right-click item filtering, replacing the separate block and whitelist top-level entries.
 
 ## 1.5.4 - 16-Jul-2026
 
