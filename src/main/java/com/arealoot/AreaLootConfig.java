@@ -504,6 +504,34 @@ public interface AreaLootConfig extends Config
 		return 160;
 	}
 
+	@ConfigItem(
+		keyName = "condenseListItemNames",
+		name = "Condensed item names",
+		description = "Wrap long item names onto a second line in the overlay list",
+		position = 5,
+		section = OVERLAY_LIST_SECTION
+	)
+	default boolean condenseListItemNames()
+	{
+		return false;
+	}
+
+	@Range(
+		min = 4,
+		max = 40
+	)
+	@ConfigItem(
+		keyName = "condenseListItemNamesWidth",
+		name = "Condensed name length",
+		description = "Only wrap item names that are at least this many characters long in the overlay list",
+		position = 6,
+		section = OVERLAY_LIST_SECTION
+	)
+	default int condenseListItemNamesWidth()
+	{
+		return 14;
+	}
+
 	@Range(
 		min = 1,
 		max = 10

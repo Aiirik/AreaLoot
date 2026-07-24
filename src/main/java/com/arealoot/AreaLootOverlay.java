@@ -45,6 +45,9 @@ class AreaLootOverlay extends Overlay
 	private static final int GRID_TEXT_LINE_HEIGHT = 12;
 	private static final int FOOTER_LINE_HEIGHT = 12;
 	private static final int FOOTER_TOP_GAP = 4;
+	private static final int CONDENSED_NAME_LINE_GAP = 1;
+	private static final int CONDENSED_NAME_EXTRA_PADDING = 2;
+	private static final int CONDENSED_ROW_GAP = 3;
 	private static final String GRID_STABLE_QUANTITY_TEXT = "x999";
 	private static final String[] GRID_STABLE_GE_TEXTS = {"999gp", "999k", "999m"};
 	private static final String GRID_STABLE_DISTANCE_SHORT_TEXT = "30t";
@@ -233,16 +236,27 @@ class AreaLootOverlay extends Overlay
 		int rowCount = Math.min(items.size(), config.maxOverlayItems());
 		FontMetrics metrics = graphics.getFontMetrics();
 		boolean showHeader = shouldShowOverlayTitle(headerText);
-		int listWidth = getListWidth(metrics, items, rowCount, headerText, emptyText, showHeader);
-		int distanceWidth = getMaxDistanceWidth(metrics, items, rowCount);
-		int rowHeight = getListRowHeight();
-		int listIconSize = config.listIconSize().getPixels();
 		boolean showItemIcons = showListItemIcons();
 		boolean showItemNames = config.showItemNamesInListMode();
-		int textBaselineOffset = ((rowHeight - metrics.getHeight()) / 2) + metrics.getAscent();
+		int listIconSize = config.listIconSize().getPixels();
+		int distanceWidth = getMaxDistanceWidth(metrics, items, rowCount);
+		boolean condenseItemNames = shouldCondenseListItemNames() && showItemNames;
+		List<ListRowLayout> rowLayouts = buildListRowLayouts(
+			metrics,
+			items,
+			rowCount,
+			distanceWidth,
+			listIconSize,
+			showItemIcons,
+			showItemNames,
+			condenseItemNames,
+			config.condenseListItemNamesWidth());
+		int rowHeight = getListRowHeight(metrics, listIconSize, rowLayouts);
+		int listWidth = getListWidth(metrics, rowLayouts, items.size(), rowCount, headerText, emptyText, showHeader);
 		int headerHeight = getOverlayHeaderHeight(headerText);
 		int footerLineCount = 0;
-		int height = headerHeight + Math.max(1, rowCount) * rowHeight + PADDING;
+		int condensedRowGapCount = getCondensedRowGapCount(rowLayouts);
+		int height = headerHeight + Math.max(1, rowCount) * rowHeight + (condensedRowGapCount * CONDENSED_ROW_GAP) + PADDING;
 		int footerWidth = 0;
 		boolean showFooter = !items.isEmpty()
 			&& (hasVisibleLootSummary(items) || shouldShowMoreItemsLine(items, rowCount) || shouldShowSelectedItemFooter());
@@ -280,10 +294,12 @@ class AreaLootOverlay extends Overlay
 			return new Dimension(listWidth, height);
 		}
 
+		int rowY = rowStartY;
 		for (int i = 0; i < rowCount; i++)
 		{
 			AreaLootItem item = items.get(i);
-			int y = rowStartY + (i * rowHeight);
+			ListRowLayout layout = rowLayouts.get(i);
+			int y = rowY;
 			Rectangle localRow = new Rectangle(listX, y, listWidth, rowHeight);
 			Rectangle clickRow = new Rectangle(origin.x + listX, origin.y + y, listWidth, rowHeight);
 			if (!fadingOut)
@@ -296,8 +312,6 @@ class AreaLootOverlay extends Overlay
 				renderSelectedOverlayEntry(graphics, localRow, false);
 			}
 
-			String quantity = item.getQuantity() > 1 ? " x" + item.getQuantity() : "";
-			String text = item.getName() + quantity;
 			int textX = listX + PADDING;
 			if (showItemIcons)
 			{
@@ -310,53 +324,65 @@ class AreaLootOverlay extends Overlay
 				textX += listIconSize + 6;
 			}
 
+			String distanceText = formatDistance(item);
+			int textTop = y + getListTextTopPadding(rowHeight, layout.getTextBlockHeight(metrics));
+			int textBaseline = textTop + metrics.getAscent();
 			if (showItemNames)
 			{
 				graphics.setColor(config.overlayTextColor());
-				graphics.drawString(text, textX, y + textBaselineOffset);
-			}
-			String distanceText = formatDistance(item);
-			if (showItemNames)
-			{
+				graphics.drawString(layout.getFirstLine(), textX, textBaseline);
+				if (layout.hasSecondLine())
+				{
+					graphics.drawString(layout.getSecondLine(), textX, textBaseline + metrics.getHeight() + CONDENSED_NAME_LINE_GAP);
+				}
+
 				int metadataRight = listX + listWidth - PADDING;
 				if (distanceWidth > 0)
 				{
 					metadataRight -= distanceWidth + METADATA_GAP;
 				}
+				int metadataBaseline = getListMetadataBaseline(textTop, layout, metrics);
 				if (config.showGeValue())
 				{
 					String valueText = formatGeValue(item);
 					graphics.setColor(config.geValueTextColor());
-					graphics.drawString(valueText, metadataRight - metrics.stringWidth(valueText), y + textBaselineOffset);
+					graphics.drawString(valueText, metadataRight - metrics.stringWidth(valueText), metadataBaseline);
 				}
 				if (!distanceText.isEmpty())
 				{
 					graphics.setColor(config.tileDistanceTextColor());
-					graphics.drawString(distanceText, listX + listWidth - PADDING - metrics.stringWidth(distanceText), y + textBaselineOffset);
+					graphics.drawString(distanceText, listX + listWidth - PADDING - metrics.stringWidth(distanceText), metadataBaseline);
 				}
 			}
 			else
 			{
 				int metadataX = textX;
+				int metadataBaseline = getListMetadataBaseline(textTop, layout, metrics);
 				if (config.showGeValue())
 				{
 					String valueText = formatGeValue(item);
 					graphics.setColor(config.geValueTextColor());
 					int valueWidth = metrics.stringWidth(valueText);
 					int distanceGap = !distanceText.isEmpty() ? METADATA_GAP : 0;
-					graphics.drawString(valueText, metadataX, y + textBaselineOffset);
+					graphics.drawString(valueText, metadataX, metadataBaseline);
 					metadataX += valueWidth + distanceGap;
 				}
 				if (!distanceText.isEmpty())
 				{
 					graphics.setColor(config.tileDistanceTextColor());
-					graphics.drawString(distanceText, listX + listWidth - PADDING - metrics.stringWidth(distanceText), y + textBaselineOffset);
+					graphics.drawString(distanceText, listX + listWidth - PADDING - metrics.stringWidth(distanceText), metadataBaseline);
 				}
+			}
+
+			rowY += rowHeight;
+			if (layout.hasSecondLine() && i < rowCount - 1)
+			{
+				rowY += CONDENSED_ROW_GAP;
 			}
 		}
 
 		drawFooterLines(graphics, metrics, items, rowCount, listX + PADDING,
-			rowStartY + (rowCount * rowHeight) + 10 + getFooterTopGap(footerLineCount),
+			rowY + 10 + getFooterTopGap(footerLineCount),
 			listWidth - (PADDING * 2));
 
 		plugin.setOverlayRows(rowBounds);
@@ -814,47 +840,26 @@ class AreaLootOverlay extends Overlay
 
 	private int getListWidth(
 		FontMetrics metrics,
-		List<AreaLootItem> items,
-		int rowCount,
+		List<ListRowLayout> rowLayouts,
+		int totalItemCount,
+		int displayedItemCount,
 		String headerText,
 		String emptyText,
 		boolean showHeader)
 	{
 		int width = getConfiguredListMinimumWidth();
-		int listIconSize = config.listIconSize().getPixels();
-		boolean showItemIcons = showListItemIcons();
-		boolean showItemNames = config.showItemNamesInListMode();
 		if (showHeader)
 		{
 			width = Math.max(width, metrics.stringWidth(headerText) + (PADDING * 2));
 		}
-		if (items.isEmpty())
+		if (rowLayouts.isEmpty())
 		{
 			return Math.max(width, metrics.stringWidth(emptyText) + (PADDING * 2));
 		}
 
-		for (int i = 0; i < rowCount; i++)
+		for (ListRowLayout rowLayout : rowLayouts)
 		{
-			AreaLootItem item = items.get(i);
-			String quantity = item.getQuantity() > 1 ? " x" + item.getQuantity() : "";
-			int rowWidth = PADDING * 2;
-			if (showItemIcons)
-			{
-				rowWidth += listIconSize + 6;
-			}
-			if (showItemNames)
-			{
-				rowWidth += metrics.stringWidth(item.getName() + quantity);
-			}
-			rowWidth += showItemNames
-				? getMetadataWidth(metrics, item, getMaxDistanceWidth(metrics, items, rowCount))
-				: getCompactMetadataWidth(metrics, item);
-			if (showItemNames
-				&& (config.showGeValue() || config.tileDistanceMode() != AreaLootConfig.DistanceMode.NONE))
-			{
-				rowWidth += METADATA_GAP;
-			}
-			width = Math.max(width, rowWidth);
+			width = Math.max(width, rowLayout.getRowWidth());
 		}
 
 		if (shouldShowSelectedItemFooter())
@@ -862,9 +867,9 @@ class AreaLootOverlay extends Overlay
 			width = Math.max(width, metrics.stringWidth(getSelectedItemFooterText()) + (PADDING * 2));
 		}
 
-		if (items.size() > rowCount)
+		if (totalItemCount > displayedItemCount)
 		{
-			width = Math.max(width, metrics.stringWidth("+" + (items.size() - rowCount) + " more") + (PADDING * 2));
+			width = Math.max(width, metrics.stringWidth("+" + (totalItemCount - displayedItemCount) + " more") + (PADDING * 2));
 		}
 		return width;
 	}
@@ -1313,14 +1318,251 @@ class AreaLootOverlay extends Overlay
 		return width;
 	}
 
-	private int getListRowHeight()
+	private int getListRowHeight(FontMetrics metrics, int listIconSize, List<ListRowLayout> rowLayouts)
 	{
-		return Math.max(ROW_HEIGHT, config.listIconSize().getPixels() + 2);
+		int rowHeight = Math.max(ROW_HEIGHT, listIconSize + 2);
+		for (ListRowLayout rowLayout : rowLayouts)
+		{
+			rowHeight = Math.max(rowHeight, rowLayout.getRowHeight(metrics));
+		}
+		return rowHeight;
+	}
+
+	private int getListTextTopPadding(int rowHeight, int textBlockHeight)
+	{
+		return Math.max(0, (rowHeight - textBlockHeight) / 2);
+	}
+
+	private int getCondensedRowGapCount(List<ListRowLayout> rowLayouts)
+	{
+		int gapCount = 0;
+		for (int i = 0; i < rowLayouts.size() - 1; i++)
+		{
+			if (rowLayouts.get(i).hasSecondLine())
+			{
+				gapCount++;
+			}
+		}
+		return gapCount;
+	}
+
+	private int getListMetadataBaseline(int textTop, ListRowLayout layout, FontMetrics metrics)
+	{
+		if (!layout.hasSecondLine())
+		{
+			return textTop + metrics.getAscent();
+		}
+
+		return textTop + metrics.getAscent() + ((metrics.getHeight() + CONDENSED_NAME_LINE_GAP) / 2);
+	}
+
+	private List<ListRowLayout> buildListRowLayouts(
+		FontMetrics metrics,
+		List<AreaLootItem> items,
+		int rowCount,
+		int distanceWidth,
+		int listIconSize,
+		boolean showItemIcons,
+		boolean showItemNames,
+		boolean condenseItemNames,
+		int condenseWidthThreshold)
+	{
+		List<ListRowLayout> rowLayouts = new ArrayList<>();
+		for (int i = 0; i < rowCount; i++)
+		{
+			rowLayouts.add(createListRowLayout(
+				metrics,
+				items.get(i),
+				distanceWidth,
+				listIconSize,
+				showItemIcons,
+				showItemNames,
+				condenseItemNames,
+				condenseWidthThreshold));
+		}
+		return rowLayouts;
+	}
+
+	private ListRowLayout createListRowLayout(
+		FontMetrics metrics,
+		AreaLootItem item,
+		int distanceWidth,
+		int listIconSize,
+		boolean showItemIcons,
+		boolean showItemNames,
+		boolean condenseItemNames,
+		int condenseWidthThreshold)
+	{
+		String quantity = item.getQuantity() > 1 ? " x" + item.getQuantity() : "";
+		String text = item.getName() + quantity;
+		String firstLine = text;
+		String secondLine = "";
+		if (shouldWrapListItemName(metrics, text, condenseItemNames, condenseWidthThreshold))
+		{
+			String[] wrappedLines = wrapListItemName(metrics, text);
+			firstLine = wrappedLines[0];
+			secondLine = wrappedLines[1];
+		}
+
+		int rowWidth = PADDING * 2;
+		if (showItemIcons)
+		{
+			rowWidth += listIconSize + 6;
+		}
+
+		if (showItemNames)
+		{
+			int metadataWidth = getMetadataWidth(metrics, item, distanceWidth);
+			int gapWidth = metadataWidth > 0 ? METADATA_GAP : 0;
+			int firstLineWidth = metrics.stringWidth(firstLine);
+			int secondLineWidth = metrics.stringWidth(secondLine);
+			if (secondLine.isEmpty())
+			{
+				rowWidth += firstLineWidth + metadataWidth + gapWidth;
+			}
+			else
+			{
+				int nameBlockWidth = Math.max(firstLineWidth, secondLineWidth);
+				rowWidth += nameBlockWidth + metadataWidth + gapWidth;
+			}
+		}
+		else
+		{
+			rowWidth += getCompactMetadataWidth(metrics, item);
+		}
+
+		return new ListRowLayout(firstLine, secondLine, rowWidth);
+	}
+
+	private boolean shouldWrapListItemName(FontMetrics metrics, String text, boolean condenseItemNames, int condenseWidthThreshold)
+	{
+		if (!condenseItemNames)
+		{
+			return false;
+		}
+
+		String trimmed = text == null ? "" : text.trim();
+		if (trimmed.isEmpty())
+		{
+			return false;
+		}
+
+		if (trimmed.length() < condenseWidthThreshold)
+		{
+			return false;
+		}
+
+		int fullWidth = metrics.stringWidth(trimmed);
+		String[] wrappedLines = wrapListItemName(metrics, trimmed);
+		return wrappedLines[1] != null && !wrappedLines[1].isEmpty()
+			&& Math.max(metrics.stringWidth(wrappedLines[0]), metrics.stringWidth(wrappedLines[1])) < fullWidth;
+	}
+
+	private String[] wrapListItemName(FontMetrics metrics, String text)
+	{
+		String trimmed = text == null ? "" : text.trim();
+		if (trimmed.isEmpty())
+		{
+			return new String[] {"", ""};
+		}
+
+		String[] words = trimmed.split("\\s+");
+		if (words.length < 2)
+		{
+			return new String[] {trimmed, ""};
+		}
+
+		int fullWidth = metrics.stringWidth(trimmed);
+		int bestSplit = -1;
+		int bestWidth = fullWidth;
+		for (int splitIndex = 1; splitIndex < words.length; splitIndex++)
+		{
+			String firstLine = joinWords(words, 0, splitIndex);
+			String secondLine = joinWords(words, splitIndex, words.length);
+			int splitWidth = Math.max(metrics.stringWidth(firstLine), metrics.stringWidth(secondLine));
+			if (splitWidth < bestWidth)
+			{
+				bestWidth = splitWidth;
+				bestSplit = splitIndex;
+			}
+		}
+
+		if (bestSplit == -1)
+		{
+			return new String[] {trimmed, ""};
+		}
+
+		return new String[] {joinWords(words, 0, bestSplit), joinWords(words, bestSplit, words.length)};
+	}
+
+	private String joinWords(String[] words, int from, int to)
+	{
+		StringBuilder builder = new StringBuilder();
+		for (int i = from; i < to; i++)
+		{
+			if (builder.length() > 0)
+			{
+				builder.append(' ');
+			}
+			builder.append(words[i]);
+		}
+		return builder.toString();
+	}
+
+	private boolean shouldCondenseListItemNames()
+	{
+		return config.condenseListItemNames();
 	}
 
 	private boolean showListItemIcons()
 	{
 		return config.listIconSize() != AreaLootConfig.ListIconSize.NONE;
+	}
+
+	private static final class ListRowLayout
+	{
+		private final String firstLine;
+		private final String secondLine;
+		private final int rowWidth;
+
+		private ListRowLayout(String firstLine, String secondLine, int rowWidth)
+		{
+			this.firstLine = firstLine;
+			this.secondLine = secondLine;
+			this.rowWidth = rowWidth;
+		}
+
+		private String getFirstLine()
+		{
+			return firstLine;
+		}
+
+		private String getSecondLine()
+		{
+			return secondLine;
+		}
+
+		private boolean hasSecondLine()
+		{
+			return !secondLine.isEmpty();
+		}
+
+		private int getRowWidth()
+		{
+			return rowWidth;
+		}
+
+		private int getTextBlockHeight(FontMetrics metrics)
+		{
+			return hasSecondLine()
+				? (metrics.getHeight() * 2) + CONDENSED_NAME_LINE_GAP
+				: metrics.getHeight();
+		}
+
+		private int getRowHeight(FontMetrics metrics)
+		{
+			return getTextBlockHeight(metrics) + CONDENSED_NAME_EXTRA_PADDING;
+		}
 	}
 
 	private int getMaxDistanceWidth(FontMetrics metrics, List<AreaLootItem> items, int rowCount)
