@@ -532,6 +532,34 @@ public interface AreaLootConfig extends Config
 		return 14;
 	}
 
+	@ConfigItem(
+		keyName = "condenseListFooterItemNames",
+		name = "Condensed footer item names",
+		description = "Wrap long selected item names in the list footer onto a second line",
+		position = 7,
+		section = OVERLAY_LIST_SECTION
+	)
+	default boolean condenseListFooterItemNames()
+	{
+		return false;
+	}
+
+	@Range(
+		min = 4,
+		max = 40
+	)
+	@ConfigItem(
+		keyName = "condenseListFooterItemNamesLength",
+		name = "Footer name length",
+		description = "Only wrap list footer item names that are at least this many characters long",
+		position = 8,
+		section = OVERLAY_LIST_SECTION
+	)
+	default int condenseListFooterItemNamesLength()
+	{
+		return 14;
+	}
+
 	@Range(
 		min = 1,
 		max = 10
@@ -598,6 +626,34 @@ public interface AreaLootConfig extends Config
 	default GridFillDirection gridFillDirection()
 	{
 		return GridFillDirection.HORIZONTAL;
+	}
+
+	@ConfigItem(
+		keyName = "condenseGridFooterItemNames",
+		name = "Condensed footer item names",
+		description = "Wrap long selected item names in the grid footer onto a second line",
+		position = 5,
+		section = OVERLAY_GRID_SECTION
+	)
+	default boolean condenseGridFooterItemNames()
+	{
+		return false;
+	}
+
+	@Range(
+		min = 4,
+		max = 40
+	)
+	@ConfigItem(
+		keyName = "condenseGridFooterItemNamesLength",
+		name = "Footer name length",
+		description = "Only wrap grid footer item names that are at least this many characters long",
+		position = 6,
+		section = OVERLAY_GRID_SECTION
+	)
+	default int condenseGridFooterItemNamesLength()
+	{
+		return 14;
 	}
 
 	@ConfigItem(

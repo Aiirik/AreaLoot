@@ -864,7 +864,7 @@ class AreaLootOverlay extends Overlay
 
 		if (shouldShowSelectedItemFooter())
 		{
-			width = Math.max(width, metrics.stringWidth(getSelectedItemFooterText()) + (PADDING * 2));
+			width = Math.max(width, getSelectedItemFooterLayout(metrics, Integer.MAX_VALUE).getWidth() + (PADDING * 2));
 		}
 
 		if (totalItemCount > displayedItemCount)
@@ -891,7 +891,7 @@ class AreaLootOverlay extends Overlay
 			return 0;
 		}
 
-		int lineCount = shouldShowSelectedItemFooter() ? 1 : 0;
+		int lineCount = getSelectedItemFooterLineCount(metrics, maxWidth);
 		lineCount += getLootSummaryLineCount(metrics, items, maxWidth);
 		if (shouldShowMoreItemsLine(items, displayedCount))
 		{
@@ -934,8 +934,9 @@ class AreaLootOverlay extends Overlay
 		int summaryLineCount = footerLineCount - (showMoreItemsLine ? 1 : 0);
 		if (shouldShowSelectedItemFooter())
 		{
-			width = Math.max(width, getSelectedItemFooterWidth(metrics));
-			summaryLineCount = Math.max(0, summaryLineCount - 1);
+			SelectedItemFooterLayout footerLayout = getSelectedItemFooterLayout(metrics, Integer.MAX_VALUE);
+			width = Math.max(width, footerLayout.getWidth());
+			summaryLineCount = Math.max(0, summaryLineCount - footerLayout.getLineCount());
 		}
 		if (hasVisibleLootSummary(items))
 		{
@@ -997,8 +998,9 @@ class AreaLootOverlay extends Overlay
 
 		if (shouldShowSelectedItemFooter())
 		{
-			drawSelectedItemFooter(graphics, metrics, x, y, maxWidth);
-			y += FOOTER_LINE_HEIGHT;
+			SelectedItemFooterLayout footerLayout = getSelectedItemFooterLayout(metrics, maxWidth);
+			drawSelectedItemFooter(graphics, metrics, footerLayout, x, y, maxWidth);
+			y += footerLayout.getLineCount() * FOOTER_LINE_HEIGHT;
 		}
 		if (hasVisibleLootSummary(items))
 		{
@@ -1020,34 +1022,65 @@ class AreaLootOverlay extends Overlay
 		}
 	}
 
-	private void drawSelectedItemFooter(Graphics2D graphics, FontMetrics metrics, int x, int y, int maxWidth)
+	private void drawSelectedItemFooter(
+		Graphics2D graphics,
+		FontMetrics metrics,
+		SelectedItemFooterLayout footerLayout,
+		int x,
+		int y,
+		int maxWidth)
 	{
-		String labelText = getSelectedItemFooterLabelText();
-		String valueText = getSelectedItemFooterValueText();
-		if (valueText.isEmpty())
+		if (footerLayout.isEmpty())
 		{
 			return;
 		}
 
-		if (labelText.isEmpty())
+		if (footerLayout.hasSecondLine())
+		{
+			String labelText = footerLayout.getLabelText();
+			String firstLine = footerLayout.getFirstLine();
+			if (labelText.isEmpty())
+			{
+				graphics.setColor(config.selectedItemNameTextColor());
+				graphics.drawString(fitTextToWidth(metrics, firstLine, maxWidth), x, y);
+			}
+			else
+			{
+				int labelWidth = metrics.stringWidth(labelText);
+				String fittedLabelText = fitTextToWidth(metrics, labelText, maxWidth);
+				int fittedLabelWidth = metrics.stringWidth(fittedLabelText);
+				String firstValueLine = firstLine.length() > labelText.length() ? firstLine.substring(labelText.length()) : "";
+				String fittedFirstValueLine = fitTextToWidth(metrics, firstValueLine, Math.max(0, maxWidth - labelWidth));
+				graphics.setColor(config.selectedItemNameLabelTextColor());
+				graphics.drawString(fittedLabelText, x, y);
+				graphics.setColor(config.selectedItemNameTextColor());
+				graphics.drawString(fittedFirstValueLine, x + fittedLabelWidth, y);
+			}
+			graphics.setColor(config.selectedItemNameTextColor());
+			graphics.drawString(fitTextToWidth(metrics, footerLayout.getSecondLine(), maxWidth), x, y + FOOTER_LINE_HEIGHT);
+			return;
+		}
+
+		if (footerLayout.getLabelText().isEmpty())
 		{
 			graphics.setColor(config.selectedItemNameTextColor());
-			graphics.drawString(fitTextToWidth(metrics, valueText, maxWidth), x, y);
+			graphics.drawString(fitTextToWidth(metrics, footerLayout.getFirstLine(), maxWidth), x, y);
 			return;
 		}
 
+		String labelText = footerLayout.getLabelText();
 		int labelWidth = metrics.stringWidth(labelText);
 		int valueWidth = Math.max(0, maxWidth - labelWidth);
 		String fittedLabelText = fitTextToWidth(metrics, labelText, maxWidth);
 		if (fittedLabelText.isEmpty())
 		{
 			graphics.setColor(config.selectedItemNameTextColor());
-			graphics.drawString(fitTextToWidth(metrics, valueText, maxWidth), x, y);
+			graphics.drawString(fitTextToWidth(metrics, footerLayout.getFirstLine(), maxWidth), x, y);
 			return;
 		}
 
 		int fittedLabelWidth = metrics.stringWidth(fittedLabelText);
-		String fittedValueText = fitTextToWidth(metrics, valueText, valueWidth);
+		String fittedValueText = fitTextToWidth(metrics, footerLayout.getFirstLine().substring(labelText.length()), valueWidth);
 		graphics.setColor(config.selectedItemNameLabelTextColor());
 		graphics.drawString(fittedLabelText, x, y);
 		graphics.setColor(config.selectedItemNameTextColor());
@@ -1065,15 +1098,14 @@ class AreaLootOverlay extends Overlay
 			&& plugin.getSelectedLootItem() != null;
 	}
 
-	private int getSelectedItemFooterWidth(FontMetrics metrics)
+	private int getSelectedItemFooterLineCount(FontMetrics metrics, int maxWidth)
 	{
-		String text = getSelectedItemFooterText();
-		if (text.isEmpty())
+		if (!shouldShowSelectedItemFooter())
 		{
 			return 0;
 		}
 
-		return metrics.stringWidth(text);
+		return getSelectedItemFooterLayout(metrics, maxWidth).getLineCount();
 	}
 
 	private String getSelectedItemFooterLabelText()
@@ -1097,6 +1129,64 @@ class AreaLootOverlay extends Overlay
 
 		String labelText = getSelectedItemFooterLabelText();
 		return labelText + valueText;
+	}
+
+	private SelectedItemFooterLayout getSelectedItemFooterLayout(FontMetrics metrics, int maxWidth)
+	{
+		String labelText = getSelectedItemFooterLabelText();
+		String valueText = getSelectedItemFooterValueText();
+		if (valueText.isEmpty())
+		{
+			return SelectedItemFooterLayout.EMPTY;
+		}
+
+		if (!shouldCondenseSelectedItemFooter() || valueText.length() < getSelectedItemFooterLengthThreshold())
+		{
+			String text = labelText + valueText;
+			return new SelectedItemFooterLayout(labelText, text, "", metrics.stringWidth(text));
+		}
+
+		String[] wrappedValue = wrapListItemName(metrics, valueText);
+		if (wrappedValue[1].isEmpty())
+		{
+			String text = labelText + valueText;
+			return new SelectedItemFooterLayout(labelText, text, "", metrics.stringWidth(text));
+		}
+
+		String firstLine = labelText + wrappedValue[0];
+		String secondLine = wrappedValue[1];
+		int width = Math.max(metrics.stringWidth(firstLine), metrics.stringWidth(secondLine));
+		if (maxWidth != Integer.MAX_VALUE)
+		{
+			width = Math.min(width, maxWidth);
+		}
+		return new SelectedItemFooterLayout(labelText, firstLine, secondLine, width);
+	}
+
+	private boolean shouldCondenseSelectedItemFooter()
+	{
+		switch (config.overlayStyle())
+		{
+			case GRID:
+				return config.condenseGridFooterItemNames();
+			case LIST:
+				return config.condenseListFooterItemNames();
+			default:
+				return false;
+		}
+	}
+
+	private int getSelectedItemFooterLengthThreshold()
+	{
+		switch (config.overlayStyle())
+		{
+			case GRID:
+				return config.condenseGridFooterItemNamesLength();
+			case LIST:
+				return config.condenseListFooterItemNamesLength();
+			default:
+				return Integer.MAX_VALUE;
+		}
 	}
 
 	private void drawLootSummary(Graphics2D graphics, FontMetrics metrics, List<AreaLootItem> items, int x, int y)
@@ -1562,6 +1652,59 @@ class AreaLootOverlay extends Overlay
 		private int getRowHeight(FontMetrics metrics)
 		{
 			return getTextBlockHeight(metrics) + CONDENSED_NAME_EXTRA_PADDING;
+		}
+	}
+
+	private static final class SelectedItemFooterLayout
+	{
+		private static final SelectedItemFooterLayout EMPTY = new SelectedItemFooterLayout("", "", "", 0);
+
+		private final String labelText;
+		private final String firstLine;
+		private final String secondLine;
+		private final int width;
+
+		private SelectedItemFooterLayout(String labelText, String firstLine, String secondLine, int width)
+		{
+			this.labelText = labelText;
+			this.firstLine = firstLine;
+			this.secondLine = secondLine;
+			this.width = width;
+		}
+
+		private String getLabelText()
+		{
+			return labelText;
+		}
+
+		private String getFirstLine()
+		{
+			return firstLine;
+		}
+
+		private String getSecondLine()
+		{
+			return secondLine;
+		}
+
+		private boolean hasSecondLine()
+		{
+			return !secondLine.isEmpty();
+		}
+
+		private boolean isEmpty()
+		{
+			return firstLine.isEmpty() && secondLine.isEmpty();
+		}
+
+		private int getLineCount()
+		{
+			return hasSecondLine() ? 2 : 1;
+		}
+
+		private int getWidth()
+		{
+			return width;
 		}
 	}
 

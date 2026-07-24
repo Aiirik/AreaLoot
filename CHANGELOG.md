@@ -9,6 +9,8 @@ All notable user-facing changes to Area Loot are documented here.
 - Added an option to group identical nearby drops into a single overlay row while still highlighting every matching drop when selected, replacing the old same-tile selection option.
 - Added a single `Area Loot` submenu for shift-right-click item filtering, replacing the separate block and whitelist top-level entries.
 - Added a `Condensed item names` option in list overlay settings, with a width threshold so short entries stay on one line while long names can wrap onto two lines.
+- Added a `Condensed footer item names` option in list overlay settings so long selected item names can wrap in the list footer without widening the overlay.
+- Added a `Condensed footer item names` option in grid overlay settings so long selected item names can wrap in the grid footer instead of widening the overlay.
 
 ## 1.5.4 - 16-Jul-2026
 
