@@ -49,8 +49,8 @@ public interface AreaLootConfig extends Config
 
 	enum ThemePreset
 	{
-		Default("Default"),
 		Custom("Custom"),
+		Default("Default"),
 		Classic("Classic"),
 		LightClassic("Light classic"),
 		Light("Light"),
@@ -786,7 +786,7 @@ public interface AreaLootConfig extends Config
 
 	@ConfigItem(
 		keyName = "customColorStartingPoint",
-		name = "Color theme",
+		name = "Custom theme",
 		description = "Select colors as a starting point for a custom theme. You may briefly see a RuneLite update popup while the plugin refreshes to show the new colors.",
 		position = 1,
 		section = OVERLAY_ADJUSTMENTS_SECTION
