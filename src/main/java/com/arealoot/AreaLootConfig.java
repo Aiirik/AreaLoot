@@ -24,6 +24,7 @@ public interface AreaLootConfig extends Config
 	String FILTER_LISTS_SECTION = "filterLists";
 	String GENERAL_SECTION = "general";
 	String HIGHLIGHT_SECTION = "highlight";
+	String THEME_SHARING_SECTION = "themeSharing";
 
 	enum MenuHighlightMode
 	{
@@ -35,6 +36,65 @@ public interface AreaLootConfig extends Config
 		private final String name;
 
 		MenuHighlightMode(String name)
+		{
+			this.name = name;
+		}
+
+		@Override
+		public String toString()
+		{
+			return name;
+		}
+	}
+
+	enum ThemePreset
+	{
+		Default("Default"),
+		Custom("Custom"),
+		Classic("Classic"),
+		LightClassic("Light classic"),
+		Light("Light"),
+		Dark("Dark"),
+		Gold("Gold"),
+		Zaros("Zaros"),
+		Guthix("Guthix"),
+		Saradomin("Saradomin"),
+		Blood("Blood");
+
+		private final String name;
+
+		ThemePreset(String name)
+		{
+			this.name = name;
+		}
+
+		@Override
+		public String toString()
+		{
+			return name;
+		}
+	}
+
+	enum CustomColorStartingPoint
+	{
+		Default("Default"),
+		Classic("Classic"),
+		LightClassic("Light classic"),
+		Light("Light"),
+		Dark("Dark"),
+		Gold("Gold"),
+		Zaros("Zaros"),
+		Guthix("Guthix"),
+		Saradomin("Saradomin"),
+		Blood("Blood"),
+		Custom1("Custom 1"),
+		Custom2("Custom 2"),
+		Custom3("Custom 3"),
+		SidePanelTheme("Panel theme");
+
+		private final String name;
+
+		CustomColorStartingPoint(String name)
 		{
 			this.name = name;
 		}
@@ -350,6 +410,14 @@ public interface AreaLootConfig extends Config
 		closedByDefault = true
 	)
 	String highlightSection = HIGHLIGHT_SECTION;
+
+	@ConfigSection(
+		name = "Theme Sharing",
+		description = "Named theme side panel settings",
+		position = 10,
+		closedByDefault = true
+	)
+	String themeSharingSection = THEME_SHARING_SECTION;
 
 	@ConfigItem(
 		keyName = "toggleHotkey",
@@ -704,12 +772,36 @@ public interface AreaLootConfig extends Config
 		return SelectedItemFooterMode.OFF;
 	}
 
+	@ConfigItem(
+		keyName = "themePreset",
+		name = "Theme preset",
+		description = "Use a preset overlay theme, or Custom to use the color settings below",
+		position = 0,
+		section = OVERLAY_ADJUSTMENTS_SECTION
+	)
+	default ThemePreset themePreset()
+	{
+		return ThemePreset.Default;
+	}
+
+	@ConfigItem(
+		keyName = "customColorStartingPoint",
+		name = "Color theme",
+		description = "Select colors as a starting point for a custom theme. You may briefly see a RuneLite update popup while the plugin refreshes to show the new colors.",
+		position = 1,
+		section = OVERLAY_ADJUSTMENTS_SECTION
+	)
+	default CustomColorStartingPoint customColorStartingPoint()
+	{
+		return CustomColorStartingPoint.Default;
+	}
+
 	@Alpha
 	@ConfigItem(
 		keyName = "overlayBackgroundColor",
 		name = "Background",
 		description = "Overlay background color",
-		position = 0,
+		position = 2,
 		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color overlayBackgroundColor()
@@ -722,7 +814,7 @@ public interface AreaLootConfig extends Config
 		keyName = "overlayBorderColor",
 		name = "Border",
 		description = "Overlay border color",
-		position = 1,
+		position = 3,
 		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color overlayBorderColor()
@@ -734,7 +826,7 @@ public interface AreaLootConfig extends Config
 		keyName = "overlayHeaderColor",
 		name = "Header text",
 		description = "Overlay header text color",
-		position = 2,
+		position = 4,
 		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color overlayHeaderColor()
@@ -746,7 +838,7 @@ public interface AreaLootConfig extends Config
 		keyName = "overlayTextColor",
 		name = "Item text",
 		description = "Overlay item text color",
-		position = 3,
+		position = 5,
 		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color overlayTextColor()
@@ -758,7 +850,7 @@ public interface AreaLootConfig extends Config
 		keyName = "overlaySecondaryTextColor",
 		name = "Status text",
 		description = "Overlay status and empty message text color, such as No nearby loot and auto mode messages",
-		position = 4,
+		position = 6,
 		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color overlaySecondaryTextColor()
@@ -770,7 +862,7 @@ public interface AreaLootConfig extends Config
 		keyName = "geValueTextColor",
 		name = "GE value text",
 		description = "GE value text color in the overlay list and side panel",
-		position = 5,
+		position = 7,
 		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color geValueTextColor()
@@ -782,7 +874,7 @@ public interface AreaLootConfig extends Config
 		keyName = "tileDistanceTextColor",
 		name = "Tile distance text",
 		description = "Tile distance text color in the overlay list and side panel",
-		position = 6,
+		position = 8,
 		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color tileDistanceTextColor()
@@ -794,7 +886,7 @@ public interface AreaLootConfig extends Config
 		keyName = "lootCountTextColor",
 		name = "Loot count text",
 		description = "Loot count footer text color",
-		position = 7,
+		position = 9,
 		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color lootCountTextColor()
@@ -806,7 +898,7 @@ public interface AreaLootConfig extends Config
 		keyName = "totalGeValueLabelTextColor",
 		name = "Total GE label",
 		description = "Total GE label footer text color",
-		position = 8,
+		position = 10,
 		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color totalGeValueLabelTextColor()
@@ -818,7 +910,7 @@ public interface AreaLootConfig extends Config
 		keyName = "totalGeValueTextColor",
 		name = "Total GE text",
 		description = "Total GE value footer text color",
-		position = 9,
+		position = 11,
 		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color totalGeValueTextColor()
@@ -830,7 +922,7 @@ public interface AreaLootConfig extends Config
 		keyName = "selectedItemNameLabelTextColor",
 		name = "Selected item label",
 		description = "Selected item label text color in the overlay footer",
-		position = 10,
+		position = 12,
 		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color selectedItemNameLabelTextColor()
@@ -842,7 +934,7 @@ public interface AreaLootConfig extends Config
 		keyName = "selectedItemNameTextColor",
 		name = "Selected item name",
 		description = "Selected loot item name text color",
-		position = 11,
+		position = 13,
 		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color selectedItemNameTextColor()
@@ -855,7 +947,7 @@ public interface AreaLootConfig extends Config
 		keyName = "overlaySelectedRowColor",
 		name = "Selected item",
 		description = "Selected item color in the list or grid overlay",
-		position = 12,
+		position = 14,
 		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color overlaySelectedRowColor()
@@ -885,6 +977,18 @@ public interface AreaLootConfig extends Config
 	default Keybind sidePanelHotkey()
 	{
 		return Keybind.NOT_SET;
+	}
+
+	@ConfigItem(
+		keyName = "themeSharingPanelEnabled",
+		name = "Theme side panel",
+		description = "Show the Area Loot side panel for creating, importing, exporting, and applying named color themes",
+		position = 0,
+		section = THEME_SHARING_SECTION
+	)
+	default boolean themeSharingPanelEnabled()
+	{
+		return false;
 	}
 
 	@Range(
@@ -1212,5 +1316,17 @@ public interface AreaLootConfig extends Config
 	default Color highlightMenuTextColor()
 	{
 		return new Color(0, 200, 255);
+	}
+
+	@ConfigItem(
+		keyName = "themeNotificationTextColor",
+		name = "Theme notification text",
+		description = "Chatbox text color for Area Loot theme import, export, and apply messages",
+		position = 1,
+		section = THEME_SHARING_SECTION
+	)
+	default Color themeNotificationTextColor()
+	{
+		return new Color(235, 235, 235);
 	}
 }

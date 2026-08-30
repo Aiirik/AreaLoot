@@ -70,7 +70,7 @@ class AreaLootMinimapOverlay extends Overlay
 
 		if (drawDot)
 		{
-			OverlayUtil.renderMinimapLocation(graphics, itemMinimapPoint, config.highlightMinimapDotColor());
+			OverlayUtil.renderMinimapLocation(graphics, itemMinimapPoint, plugin.getThemeColor("highlightMinimapDotColor"));
 		}
 		return null;
 	}
@@ -90,7 +90,7 @@ class AreaLootMinimapOverlay extends Overlay
 
 		Stroke originalStroke = graphics.getStroke();
 		graphics.setStroke(new BasicStroke(1f));
-		graphics.setColor(config.highlightMinimapLineColor());
+		graphics.setColor(plugin.getThemeColor("highlightMinimapLineColor"));
 		Point lineEnd = moveToward(itemMinimapPoint, playerMinimapPoint, MINIMAP_DOT_EDGE_OFFSET);
 		graphics.drawLine(playerMinimapPoint.getX(), playerMinimapPoint.getY(), lineEnd.getX(), lineEnd.getY());
 		graphics.setStroke(originalStroke);

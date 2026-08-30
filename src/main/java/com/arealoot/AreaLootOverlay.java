@@ -274,9 +274,9 @@ class AreaLootOverlay extends Overlay
 			graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
 		}
 
-		graphics.setColor(config.overlayBackgroundColor());
+		graphics.setColor(plugin.getThemeColor("overlayBackgroundColor"));
 		graphics.fillRoundRect(listX, listY, listWidth, height, 6, 6);
-		graphics.setColor(config.overlayBorderColor());
+		graphics.setColor(plugin.getThemeColor("overlayBorderColor"));
 		graphics.drawRoundRect(listX, listY, listWidth, height, 6, 6);
 
 		if (showHeader)
@@ -287,7 +287,7 @@ class AreaLootOverlay extends Overlay
 		int rowStartY = listY + headerHeight;
 		if (items.isEmpty())
 		{
-			graphics.setColor(config.overlaySecondaryTextColor());
+			graphics.setColor(plugin.getThemeColor("overlaySecondaryTextColor"));
 			graphics.drawString(emptyText, listX + PADDING, rowStartY + 15);
 			plugin.setOverlayRows(fading ? new ArrayList<>() : rowBounds);
 			graphics.setComposite(originalComposite);
@@ -329,7 +329,7 @@ class AreaLootOverlay extends Overlay
 			int textBaseline = textTop + metrics.getAscent();
 			if (showItemNames)
 			{
-				graphics.setColor(config.overlayTextColor());
+				graphics.setColor(plugin.getThemeColor("overlayTextColor"));
 				graphics.drawString(layout.getFirstLine(), textX, textBaseline);
 				if (layout.hasSecondLine())
 				{
@@ -345,12 +345,12 @@ class AreaLootOverlay extends Overlay
 				if (config.showGeValue())
 				{
 					String valueText = formatGeValue(item);
-					graphics.setColor(config.geValueTextColor());
+					graphics.setColor(plugin.getThemeColor("geValueTextColor"));
 					graphics.drawString(valueText, metadataRight - metrics.stringWidth(valueText), metadataBaseline);
 				}
 				if (!distanceText.isEmpty())
 				{
-					graphics.setColor(config.tileDistanceTextColor());
+					graphics.setColor(plugin.getThemeColor("tileDistanceTextColor"));
 					graphics.drawString(distanceText, listX + listWidth - PADDING - metrics.stringWidth(distanceText), metadataBaseline);
 				}
 			}
@@ -361,7 +361,7 @@ class AreaLootOverlay extends Overlay
 				if (config.showGeValue())
 				{
 					String valueText = formatGeValue(item);
-					graphics.setColor(config.geValueTextColor());
+					graphics.setColor(plugin.getThemeColor("geValueTextColor"));
 					int valueWidth = metrics.stringWidth(valueText);
 					int distanceGap = !distanceText.isEmpty() ? METADATA_GAP : 0;
 					graphics.drawString(valueText, metadataX, metadataBaseline);
@@ -369,7 +369,7 @@ class AreaLootOverlay extends Overlay
 				}
 				if (!distanceText.isEmpty())
 				{
-					graphics.setColor(config.tileDistanceTextColor());
+					graphics.setColor(plugin.getThemeColor("tileDistanceTextColor"));
 					graphics.drawString(distanceText, listX + listWidth - PADDING - metrics.stringWidth(distanceText), metadataBaseline);
 				}
 			}
@@ -453,9 +453,9 @@ class AreaLootOverlay extends Overlay
 			graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
 		}
 
-		graphics.setColor(config.overlayBackgroundColor());
+		graphics.setColor(plugin.getThemeColor("overlayBackgroundColor"));
 		graphics.fillRoundRect(gridX, gridY, overlayWidth, height, 6, 6);
-		graphics.setColor(config.overlayBorderColor());
+		graphics.setColor(plugin.getThemeColor("overlayBorderColor"));
 		graphics.drawRoundRect(gridX, gridY, overlayWidth, height, 6, 6);
 
 		if (showHeader)
@@ -467,7 +467,7 @@ class AreaLootOverlay extends Overlay
 		int gridStartY = gridY + headerHeight;
 		if (items.isEmpty())
 		{
-			graphics.setColor(config.overlaySecondaryTextColor());
+			graphics.setColor(plugin.getThemeColor("overlaySecondaryTextColor"));
 			graphics.drawString(emptyText, gridStartX, gridStartY + 15);
 			plugin.setOverlayRows(fading ? new ArrayList<>() : cellBounds);
 			graphics.setComposite(originalComposite);
@@ -503,14 +503,14 @@ class AreaLootOverlay extends Overlay
 			int textY = y + GRID_CELL_VERTICAL_PADDING + gridIconSize + 10;
 			if (item.getQuantity() > 1)
 			{
-				graphics.setColor(config.overlayTextColor());
+				graphics.setColor(plugin.getThemeColor("overlayTextColor"));
 				drawCenteredGridText(graphics, metrics, "x" + item.getQuantity(), x, textY, cellWidth);
 				textY += GRID_TEXT_LINE_HEIGHT;
 			}
 			if (config.showGeValue())
 			{
 				String valueText = formatGeValue(item);
-				graphics.setColor(config.geValueTextColor());
+				graphics.setColor(plugin.getThemeColor("geValueTextColor"));
 				drawCenteredGridText(graphics, metrics, valueText, x, textY, cellWidth);
 				textY += GRID_TEXT_LINE_HEIGHT;
 			}
@@ -518,7 +518,7 @@ class AreaLootOverlay extends Overlay
 			String distanceText = formatDistance(item);
 			if (!distanceText.isEmpty())
 			{
-				graphics.setColor(config.tileDistanceTextColor());
+				graphics.setColor(plugin.getThemeColor("tileDistanceTextColor"));
 				drawCenteredGridText(graphics, metrics, distanceText, x, textY, cellWidth);
 			}
 		}
@@ -626,7 +626,7 @@ class AreaLootOverlay extends Overlay
 
 	private void renderSelectedOverlayEntry(Graphics2D graphics, Rectangle bounds, boolean rounded)
 	{
-		graphics.setColor(config.overlaySelectedRowColor());
+		graphics.setColor(plugin.getThemeColor("overlaySelectedRowColor"));
 		if (config.overlaySelectionStyle() == AreaLootConfig.OverlaySelectionStyle.OUTLINE)
 		{
 			Stroke originalStroke = graphics.getStroke();
@@ -671,7 +671,7 @@ class AreaLootOverlay extends Overlay
 	private void drawHeaderText(Graphics2D graphics, FontMetrics metrics, String headerText, int x, int y)
 	{
 		String baseText = "Area Loot";
-		graphics.setColor(config.overlayHeaderColor());
+		graphics.setColor(plugin.getThemeColor("overlayHeaderColor"));
 		if (isExpiredEnabledStatusHeader(headerText))
 		{
 			if (config.showOverlayTitle())
@@ -735,8 +735,8 @@ class AreaLootOverlay extends Overlay
 			return;
 		}
 
-		Color fill = config.highlightColor();
-		Color outlineColor = config.highlightOutlineColor();
+		Color fill = plugin.getThemeColor("highlightColor");
+		Color outlineColor = plugin.getThemeColor("highlightOutlineColor");
 		Color lineColor = getHighlightLineColor();
 		AreaLootItem selectedItem = selectedItems.get(0);
 		Set<WorldPoint> renderedLocations = new HashSet<>();
@@ -779,7 +779,7 @@ class AreaLootOverlay extends Overlay
 				Point textLocation = Perspective.getCanvasTextLocation(client, graphics, localPoint, selectedItem.getName(), 0);
 				if (textLocation != null)
 				{
-					graphics.setColor(config.selectedItemNameTextColor());
+					graphics.setColor(plugin.getThemeColor("selectedItemNameTextColor"));
 					graphics.drawString(selectedItem.getName(), textLocation.getX(), textLocation.getY());
 				}
 			}
@@ -835,7 +835,7 @@ class AreaLootOverlay extends Overlay
 
 	private Color getHighlightLineColor()
 	{
-		return config.highlightLineColor();
+		return plugin.getThemeColor("highlightLineColor");
 	}
 
 	private int getListWidth(
@@ -1017,7 +1017,7 @@ class AreaLootOverlay extends Overlay
 		}
 		if (shouldShowMoreItemsLine(items, displayedCount))
 		{
-			graphics.setColor(config.overlaySecondaryTextColor());
+			graphics.setColor(plugin.getThemeColor("overlaySecondaryTextColor"));
 			graphics.drawString(fitTextToWidth(metrics, getMoreItemsText(items, displayedCount), maxWidth), x, y);
 		}
 	}
@@ -1041,7 +1041,7 @@ class AreaLootOverlay extends Overlay
 			String firstLine = footerLayout.getFirstLine();
 			if (labelText.isEmpty())
 			{
-				graphics.setColor(config.selectedItemNameTextColor());
+				graphics.setColor(plugin.getThemeColor("selectedItemNameTextColor"));
 				graphics.drawString(fitTextToWidth(metrics, firstLine, maxWidth), x, y);
 			}
 			else
@@ -1051,19 +1051,19 @@ class AreaLootOverlay extends Overlay
 				int fittedLabelWidth = metrics.stringWidth(fittedLabelText);
 				String firstValueLine = firstLine.length() > labelText.length() ? firstLine.substring(labelText.length()) : "";
 				String fittedFirstValueLine = fitTextToWidth(metrics, firstValueLine, Math.max(0, maxWidth - labelWidth));
-				graphics.setColor(config.selectedItemNameLabelTextColor());
+				graphics.setColor(plugin.getThemeColor("selectedItemNameLabelTextColor"));
 				graphics.drawString(fittedLabelText, x, y);
-				graphics.setColor(config.selectedItemNameTextColor());
+				graphics.setColor(plugin.getThemeColor("selectedItemNameTextColor"));
 				graphics.drawString(fittedFirstValueLine, x + fittedLabelWidth, y);
 			}
-			graphics.setColor(config.selectedItemNameTextColor());
+			graphics.setColor(plugin.getThemeColor("selectedItemNameTextColor"));
 			graphics.drawString(fitTextToWidth(metrics, footerLayout.getSecondLine(), maxWidth), x, y + FOOTER_LINE_HEIGHT);
 			return;
 		}
 
 		if (footerLayout.getLabelText().isEmpty())
 		{
-			graphics.setColor(config.selectedItemNameTextColor());
+			graphics.setColor(plugin.getThemeColor("selectedItemNameTextColor"));
 			graphics.drawString(fitTextToWidth(metrics, footerLayout.getFirstLine(), maxWidth), x, y);
 			return;
 		}
@@ -1074,16 +1074,16 @@ class AreaLootOverlay extends Overlay
 		String fittedLabelText = fitTextToWidth(metrics, labelText, maxWidth);
 		if (fittedLabelText.isEmpty())
 		{
-			graphics.setColor(config.selectedItemNameTextColor());
+			graphics.setColor(plugin.getThemeColor("selectedItemNameTextColor"));
 			graphics.drawString(fitTextToWidth(metrics, footerLayout.getFirstLine(), maxWidth), x, y);
 			return;
 		}
 
 		int fittedLabelWidth = metrics.stringWidth(fittedLabelText);
 		String fittedValueText = fitTextToWidth(metrics, footerLayout.getFirstLine().substring(labelText.length()), valueWidth);
-		graphics.setColor(config.selectedItemNameLabelTextColor());
+		graphics.setColor(plugin.getThemeColor("selectedItemNameLabelTextColor"));
 		graphics.drawString(fittedLabelText, x, y);
-		graphics.setColor(config.selectedItemNameTextColor());
+		graphics.setColor(plugin.getThemeColor("selectedItemNameTextColor"));
 		graphics.drawString(fittedValueText, x + fittedLabelWidth, y);
 	}
 
@@ -1203,7 +1203,7 @@ class AreaLootOverlay extends Overlay
 		if (!lootCountText.isEmpty())
 		{
 			lootCountText = fitTextToWidth(metrics, lootCountText, maxWidth);
-			graphics.setColor(config.lootCountTextColor());
+			graphics.setColor(plugin.getThemeColor("lootCountTextColor"));
 			graphics.drawString(lootCountText, drawX, y);
 			drawX += metrics.stringWidth(lootCountText);
 		}
@@ -1214,7 +1214,7 @@ class AreaLootOverlay extends Overlay
 				return;
 			}
 
-			graphics.setColor(config.overlaySecondaryTextColor());
+			graphics.setColor(plugin.getThemeColor("overlaySecondaryTextColor"));
 			graphics.drawString(" | ", drawX, y);
 			drawX += metrics.stringWidth(" | ");
 		}
@@ -1224,16 +1224,16 @@ class AreaLootOverlay extends Overlay
 			String fittedLabelText = fitTextToWidth(metrics, totalGeValueLabelText, remainingWidth);
 			if (fittedLabelText.isEmpty())
 			{
-				graphics.setColor(config.totalGeValueTextColor());
+				graphics.setColor(plugin.getThemeColor("totalGeValueTextColor"));
 				graphics.drawString(fitTextToWidth(metrics, totalGeValueText, remainingWidth), drawX, y);
 				return;
 			}
 
 			int labelWidth = metrics.stringWidth(fittedLabelText);
 			String fittedValueText = fitTextToWidth(metrics, totalGeValueText, Math.max(0, remainingWidth - labelWidth));
-			graphics.setColor(config.totalGeValueLabelTextColor());
+			graphics.setColor(plugin.getThemeColor("totalGeValueLabelTextColor"));
 			graphics.drawString(fittedLabelText, drawX, y);
-			graphics.setColor(config.totalGeValueTextColor());
+			graphics.setColor(plugin.getThemeColor("totalGeValueTextColor"));
 			graphics.drawString(fittedValueText, drawX + labelWidth, y);
 		}
 	}
@@ -1245,7 +1245,7 @@ class AreaLootOverlay extends Overlay
 		String totalGeValueText = getTotalGeValueValueText(items);
 		if (!lootCountText.isEmpty())
 		{
-			graphics.setColor(config.lootCountTextColor());
+			graphics.setColor(plugin.getThemeColor("lootCountTextColor"));
 			graphics.drawString(fitTextToWidth(metrics, lootCountText, maxWidth), x, y);
 			y += FOOTER_LINE_HEIGHT;
 		}
@@ -1254,16 +1254,16 @@ class AreaLootOverlay extends Overlay
 			String fittedLabelText = fitTextToWidth(metrics, totalGeValueLabelText, maxWidth);
 			if (fittedLabelText.isEmpty())
 			{
-				graphics.setColor(config.totalGeValueTextColor());
+				graphics.setColor(plugin.getThemeColor("totalGeValueTextColor"));
 				graphics.drawString(fitTextToWidth(metrics, totalGeValueText, maxWidth), x, y);
 				return;
 			}
 
 			int labelWidth = metrics.stringWidth(fittedLabelText);
 			String fittedValueText = fitTextToWidth(metrics, totalGeValueText, Math.max(0, maxWidth - labelWidth));
-			graphics.setColor(config.totalGeValueLabelTextColor());
+			graphics.setColor(plugin.getThemeColor("totalGeValueLabelTextColor"));
 			graphics.drawString(fittedLabelText, x, y);
-			graphics.setColor(config.totalGeValueTextColor());
+			graphics.setColor(plugin.getThemeColor("totalGeValueTextColor"));
 			graphics.drawString(fittedValueText, x + labelWidth, y);
 		}
 	}

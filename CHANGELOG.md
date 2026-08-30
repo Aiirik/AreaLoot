@@ -2,6 +2,13 @@
 
 All notable user-facing changes to Area Loot are documented here.
 
+## 1.6.0 - 30-Aug-2026
+
+### Added
+
+- Added overlay theme presets and editable color theme bases, including Default, Classic, god-themed presets, custom slots, and imported side-panel themes.
+- Added an optional theme sharing side panel for creating, importing, exporting, applying, overwriting, and deleting named color themes.
+
 ## 1.5.5 - 24-Jul-2026
 
 ### Added

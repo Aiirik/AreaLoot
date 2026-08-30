@@ -69,12 +69,12 @@ class AreaLootPanel extends PluginPanel
 	{
 		String quantity = item.getQuantity() > 1 ? " x" + item.getQuantity() : "";
 		String geValueText = config.showGeValue()
-			? "&nbsp;&nbsp;<font color='" + toHtmlColor(config.geValueTextColor()) + "'>" + formatGeValue(item) + "</font>"
+			? "&nbsp;&nbsp;<font color='" + toHtmlColor(plugin.getThemeColor("geValueTextColor")) + "'>" + formatGeValue(item) + "</font>"
 			: "";
 		String formattedDistance = formatDistance(item);
 		String distanceText = formattedDistance.isEmpty()
 			? ""
-			: "<br><font color='" + toHtmlColor(config.tileDistanceTextColor()) + "'>" + formattedDistance + "</font>";
+			: "<br><font color='" + toHtmlColor(plugin.getThemeColor("tileDistanceTextColor")) + "'>" + formattedDistance + "</font>";
 		JButton row = new JButton("<html><b>" + escapeHtml(item.getName()) + "</b>" + quantity + geValueText + distanceText + "</html>");
 		row.setHorizontalAlignment(SwingConstants.LEFT);
 		row.setPreferredSize(ROW_SIZE);
@@ -86,7 +86,7 @@ class AreaLootPanel extends PluginPanel
 		row.setIconTextGap(6);
 		boolean selected = plugin.isSelectedLoot(item);
 		row.setBorder(BorderFactory.createCompoundBorder(
-			BorderFactory.createLineBorder(selected ? config.highlightOutlineColor() : ColorScheme.BORDER_COLOR, selected ? 2 : 1),
+			BorderFactory.createLineBorder(selected ? plugin.getThemeColor("highlightOutlineColor") : ColorScheme.BORDER_COLOR, selected ? 2 : 1),
 			BorderFactory.createEmptyBorder(3, 6, 3, 6)
 		));
 		if (config.listIconSize() != AreaLootConfig.ListIconSize.NONE)
@@ -129,7 +129,7 @@ class AreaLootPanel extends PluginPanel
 		}
 
 		String lootCountText = config.showLootCount()
-			? "<font color='" + toHtmlColor(config.lootCountTextColor()) + "'>" + items.size() + (items.size() == 1 ? " item" : " items") + "</font>"
+			? "<font color='" + toHtmlColor(plugin.getThemeColor("lootCountTextColor")) + "'>" + items.size() + (items.size() == 1 ? " item" : " items") + "</font>"
 			: "";
 		String totalGeValueText = getTotalGeValueText(items);
 		if (lootCountText.isEmpty() && totalGeValueText.isEmpty())
@@ -153,9 +153,9 @@ class AreaLootPanel extends PluginPanel
 		switch (config.totalGeValueMode())
 		{
 			case LONG:
-				return "<font color='" + toHtmlColor(config.totalGeValueTextColor()) + "'>Total: " + formatGeValue(getTotalGeValue(items)) + "</font>";
+				return "<font color='" + toHtmlColor(plugin.getThemeColor("totalGeValueTextColor")) + "'>Total: " + formatGeValue(getTotalGeValue(items)) + "</font>";
 			case SHORT:
-				return "<font color='" + toHtmlColor(config.totalGeValueTextColor()) + "'>" + formatGeValue(getTotalGeValue(items)) + "</font>";
+				return "<font color='" + toHtmlColor(plugin.getThemeColor("totalGeValueTextColor")) + "'>" + formatGeValue(getTotalGeValue(items)) + "</font>";
 			case NONE:
 			default:
 				return "";

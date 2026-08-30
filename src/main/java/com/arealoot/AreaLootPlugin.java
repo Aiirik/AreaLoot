@@ -1,12 +1,19 @@
 package com.arealoot;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.inject.Provides;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.Window;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
@@ -17,6 +24,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -55,8 +63,10 @@ import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.config.Keybind;
+import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
+import net.runelite.client.events.ProfileChanged;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.input.KeyManager;
 import net.runelite.client.input.MouseManager;
@@ -86,6 +96,9 @@ public class AreaLootPlugin extends Plugin
 	private static final String WHITELISTED_ITEMS_KEY = "whitelistedItems";
 	private static final String REMEMBERED_MANUAL_OVERLAY_KEY = "rememberedManualOverlayEnabled";
 	private static final String REMEMBERED_AUTO_OVERLAY_KEY = "rememberedAutoOverlayEnabled";
+	private static final String CUSTOM_THEMES_KEY = "customColorThemes";
+	private static final String ACTIVE_THEME_KEY = "activeTheme";
+	private static final String CUSTOM_PRESET_PREFIX = "customPreset.";
 
 	private final Map<WorldPoint, List<TrackedGroundItem>> groundItems = new HashMap<>();
 	private final Map<Integer, String> itemNameCache = new HashMap<>();
@@ -102,6 +115,12 @@ public class AreaLootPlugin extends Plugin
 
 	@Inject
 	private ConfigManager configManager;
+
+	@Inject
+	private EventBus eventBus;
+
+	@Inject
+	private Gson gson;
 
 	@Inject
 	private ChatMessageManager chatMessageManager;
@@ -132,10 +151,14 @@ public class AreaLootPlugin extends Plugin
 
 	private AreaLootPanel panel;
 	private NavigationButton navButton;
+	private AreaLootThemePanel themePanel;
+	private NavigationButton themeNavButton;
 	private volatile List<AreaLootItem> nearbyLoot = Collections.emptyList();
 	private final List<SimpleEntry<Rectangle, AreaLootItem>> overlayRows = new ArrayList<>();
 	private boolean sidePanelRegistered;
 	private boolean sidePanelActive;
+	private boolean applyingNamedTheme;
+	private boolean applyingCustomColorStartingPoint;
 	private boolean lootDirty;
 	private long nextDelayedLootRefreshMillis;
 
@@ -183,6 +206,7 @@ public class AreaLootPlugin extends Plugin
 	protected void startUp()
 	{
 		log.debug("Area Loot started");
+		migrateLegacyThemePresetName();
 		panel = new AreaLootPanel(this, config, itemManager);
 		navButton = NavigationButton.builder()
 			.tooltip("Area Loot")
@@ -202,6 +226,7 @@ public class AreaLootPlugin extends Plugin
 		keyManager.registerKeyListener(autoShowHotkeyListener);
 		mouseManager.registerMouseListener(mouseListener);
 		updateSidePanelRegistration();
+		updateThemePanelNavigation();
 		clientThread.invoke(this::restoreOverlayMode);
 	}
 
@@ -215,7 +240,15 @@ public class AreaLootPlugin extends Plugin
 			clientToolbar.removeNavigation(navButton);
 			sidePanelRegistered = false;
 		}
+		if (themeNavButton != null)
+		{
+			clientToolbar.removeNavigation(themeNavButton);
+			themeNavButton = null;
+			themePanel = null;
+		}
 		sidePanelActive = false;
+		applyingNamedTheme = false;
+		applyingCustomColorStartingPoint = false;
 		mouseManager.unregisterMouseListener(mouseListener);
 		keyManager.unregisterKeyListener(autoShowHotkeyListener);
 		keyManager.unregisterKeyListener(overlayHotkeyListener);
@@ -329,6 +362,32 @@ public class AreaLootPlugin extends Plugin
 		{
 			updateSidePanelRegistration();
 		}
+		else if ("themeSharingPanelEnabled".equals(key))
+		{
+			updateThemePanelNavigation();
+		}
+		else if ("themePreset".equals(key))
+		{
+			if (!applyingNamedTheme && config.themePreset() != AreaLootConfig.ThemePreset.Custom)
+			{
+				clearActiveTheme();
+			}
+			rebuildPanel(nearbyLoot);
+		}
+		else if ("customColorStartingPoint".equals(key))
+		{
+			AreaLootConfig.CustomColorStartingPoint startingPoint = parseCustomColorStartingPoint(event.getNewValue());
+			if (startingPoint != null)
+			{
+				copyThemeColorsToCustom(startingPoint);
+				if (startingPoint != AreaLootConfig.CustomColorStartingPoint.SidePanelTheme)
+				{
+					clearActiveTheme();
+				}
+				rebuildPanel(nearbyLoot);
+				eventBus.post(new ProfileChanged());
+			}
+		}
 		else if ("keepOverlayAboveGame".equals(key))
 		{
 			if (overlay.applyConfiguredLayer())
@@ -339,6 +398,15 @@ public class AreaLootPlugin extends Plugin
 		}
 		else if (isDisplayConfigKey(key))
 		{
+			if (!applyingNamedTheme && !applyingCustomColorStartingPoint && isThemeColorConfigKey(key))
+			{
+				configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Custom.name());
+				if (config.customColorStartingPoint() == AreaLootConfig.CustomColorStartingPoint.SidePanelTheme)
+				{
+					clearActiveTheme();
+				}
+				saveCustomPresetColor(key);
+			}
 			rebuildPanel(nearbyLoot);
 		}
 		else if ("rememberOverlayMode".equals(key))
@@ -369,6 +437,11 @@ public class AreaLootPlugin extends Plugin
 
 	private boolean isDisplayConfigKey(String key)
 	{
+		if (isThemeColorConfigKey(key))
+		{
+			return true;
+		}
+
 		switch (key)
 		{
 			case "sidePanelMaxItems":
@@ -773,6 +846,636 @@ public class AreaLootPlugin extends Plugin
 		}
 	}
 
+	private void updateThemePanelNavigation()
+	{
+		if (!config.themeSharingPanelEnabled())
+		{
+			if (themeNavButton != null)
+			{
+				clientToolbar.removeNavigation(themeNavButton);
+				themeNavButton = null;
+				themePanel = null;
+			}
+			return;
+		}
+
+		if (themeNavButton != null)
+		{
+			return;
+		}
+
+		themePanel = new AreaLootThemePanel(this);
+		themeNavButton = NavigationButton.builder()
+			.tooltip("Area Loot Themes")
+			.icon(createIcon())
+			.panel(themePanel)
+			.priority(6)
+			.build();
+		clientToolbar.addNavigation(themeNavButton);
+	}
+
+	private void migrateLegacyThemePresetName()
+	{
+		String savedPreset = configManager.getConfiguration(CONFIG_GROUP, "themePreset");
+		if (savedPreset == null)
+		{
+			return;
+		}
+
+		switch (savedPreset)
+		{
+			case "CUSTOM":
+				configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Custom.name());
+				break;
+			case "DEFAULT":
+				configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Default.name());
+				break;
+			case "CLASSIC":
+				configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Classic.name());
+				break;
+			case "LIGHT_CLASSIC":
+				configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.LightClassic.name());
+				break;
+			case "LIGHT":
+				configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Light.name());
+				break;
+			case "DARK":
+				configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Dark.name());
+				break;
+			case "GOLD":
+				configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Gold.name());
+				break;
+			case "ZAROS":
+				configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Zaros.name());
+				break;
+			case "GUTHIX":
+				configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Guthix.name());
+				break;
+			case "SARADOMIN":
+				configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Saradomin.name());
+				break;
+			case "BLOOD":
+				configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Blood.name());
+				break;
+			default:
+				break;
+		}
+	}
+
+	Map<String, String> getNamedColorThemes()
+	{
+		Map<String, String> themes = new LinkedHashMap<>();
+		String json = configManager.getConfiguration(CONFIG_GROUP, CUSTOM_THEMES_KEY);
+		if (json == null || json.isEmpty())
+		{
+			return themes;
+		}
+
+		try
+		{
+			JsonObject root = new JsonParser().parse(json).getAsJsonObject();
+			for (String name : root.keySet())
+			{
+				JsonElement value = root.get(name);
+				if (value != null && !value.isJsonNull())
+				{
+					themes.put(name, value.getAsString());
+				}
+			}
+		}
+		catch (RuntimeException ex)
+		{
+			log.debug("Unable to read Area Loot custom themes", ex);
+		}
+
+		return themes;
+	}
+
+	String getActiveThemeName()
+	{
+		return configManager.getConfiguration(CONFIG_GROUP, ACTIVE_THEME_KEY);
+	}
+
+	String createThemeFromCurrentColors(String name)
+	{
+		String normalizedName = normalizeThemeName(name);
+		String themeJson = exportCurrentColorTheme(normalizedName);
+		saveNamedColorTheme(normalizedName, themeJson);
+		queueThemeMessage("Saved Area Loot theme: " + normalizedName);
+		return themeJson;
+	}
+
+	String importNamedColorTheme(String name, String json)
+	{
+		String normalizedName = normalizeThemeName(name);
+		Map<String, String> colors = AreaLootColorSettings.importFromJson(json);
+		String themeJson = AreaLootColorSettings.exportToJson(normalizedName, colors, gson);
+		saveNamedColorTheme(normalizedName, themeJson);
+		queueThemeMessage("Imported Area Loot theme: " + normalizedName);
+		return themeJson;
+	}
+
+	void updateNamedColorThemeFromCurrent(String name)
+	{
+		String normalizedName = normalizeThemeName(name);
+		saveNamedColorTheme(normalizedName, exportCurrentColorTheme(normalizedName));
+		queueThemeMessage("Updated Area Loot theme: " + normalizedName);
+	}
+
+	int applyNamedColorTheme(String name)
+	{
+		String themeJson = getNamedColorThemes().get(name);
+		if (themeJson == null)
+		{
+			throw new IllegalArgumentException("Unknown Area Loot theme: " + name);
+		}
+
+		int imported;
+		applyingNamedTheme = true;
+		try
+		{
+			imported = applyColorTheme(themeJson);
+			configManager.setConfiguration(CONFIG_GROUP, ACTIVE_THEME_KEY, name);
+			eventBus.post(new ProfileChanged());
+		}
+		finally
+		{
+			applyingNamedTheme = false;
+		}
+
+		rebuildPanel(nearbyLoot);
+		if (themePanel != null)
+		{
+			themePanel.rebuild();
+		}
+		queueThemeMessage("Applied Area Loot theme: " + name);
+		return imported;
+	}
+
+	String exportNamedColorTheme(String name)
+	{
+		String themeJson = getNamedColorThemes().get(name);
+		if (themeJson == null)
+		{
+			throw new IllegalArgumentException("Unknown Area Loot theme: " + name);
+		}
+
+		return themeJson;
+	}
+
+	void copyNamedColorThemeToClipboard(String name)
+	{
+		String themeJson = exportNamedColorTheme(name);
+		Toolkit.getDefaultToolkit()
+			.getSystemClipboard()
+			.setContents(new StringSelection(themeJson), null);
+		queueThemeMessage("Copied Area Loot theme: " + name);
+	}
+
+	void deleteNamedColorTheme(String name)
+	{
+		Map<String, String> themes = getNamedColorThemes();
+		if (themes.remove(name) != null)
+		{
+			saveNamedColorThemes(themes);
+			if (name.equals(getActiveThemeName()))
+			{
+				clearActiveTheme();
+			}
+			queueThemeMessage("Deleted Area Loot theme: " + name);
+		}
+	}
+
+	private String exportCurrentColorTheme(String themeName)
+	{
+		return AreaLootColorSettings.exportToJson(themeName, activeColorTheme(), gson);
+	}
+
+	private int applyColorTheme(String json)
+	{
+		Map<String, String> colors = AreaLootColorSettings.importFromJson(json);
+		for (Map.Entry<String, String> entry : colors.entrySet())
+		{
+			configManager.setConfiguration(
+				CONFIG_GROUP,
+				customPresetKey(AreaLootConfig.CustomColorStartingPoint.SidePanelTheme, entry.getKey()),
+				entry.getValue());
+			setThemeColorConfig(entry.getKey(), entry.getValue());
+		}
+		configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Custom.name());
+		configManager.setConfiguration(CONFIG_GROUP, "customColorStartingPoint", AreaLootConfig.CustomColorStartingPoint.SidePanelTheme.name());
+		return colors.size();
+	}
+
+	private void copyThemeColorsToCustom(AreaLootConfig.CustomColorStartingPoint startingPoint)
+	{
+		Map<String, String> defaultColors = defaultThemeColors(startingPoint);
+		if (defaultColors.isEmpty())
+		{
+			return;
+		}
+
+		applyingCustomColorStartingPoint = true;
+		try
+		{
+			if (isBuiltInStartingPoint(startingPoint))
+			{
+				setThemeColors(defaultColors);
+				saveThemeColorsToPreset(startingPoint, defaultColors);
+			}
+			else if (!customPresetExists(startingPoint))
+			{
+				setThemeColors(defaultColors);
+				saveThemeColorsToPreset(startingPoint, defaultColors);
+			}
+			else
+			{
+				for (String keyName : AreaLootColorSettings.THEME_COLOR_KEYS)
+				{
+					String color = configManager.getConfiguration(CONFIG_GROUP, customPresetKey(startingPoint, keyName));
+					if (color != null)
+					{
+						setThemeColorConfig(keyName, color);
+					}
+				}
+			}
+			configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Custom.name());
+		}
+		finally
+		{
+			applyingCustomColorStartingPoint = false;
+		}
+	}
+
+	private void saveCustomPresetColor(String keyName)
+	{
+		AreaLootConfig.CustomColorStartingPoint startingPoint = config.customColorStartingPoint();
+		if (startingPoint == null || !isCustomColorKey(keyName))
+		{
+			return;
+		}
+
+		if (!customPresetExists(startingPoint))
+		{
+			saveThemeColorsToPreset(startingPoint, defaultThemeColors(startingPoint));
+		}
+
+		String value = configManager.getConfiguration(CONFIG_GROUP, keyName);
+		if (value != null)
+		{
+			configManager.setConfiguration(CONFIG_GROUP, customPresetKey(startingPoint, keyName), value);
+		}
+	}
+
+	private Map<String, String> presetColorTheme(AreaLootConfig.ThemePreset preset)
+	{
+		Map<String, String> colors = new LinkedHashMap<>();
+		if (preset == null || preset == AreaLootConfig.ThemePreset.Custom)
+		{
+			return colors;
+		}
+
+		switch (preset)
+		{
+			case Default:
+				putThemeColors(colors,
+					new Color(30, 30, 30, 190), new Color(23, 23, 23),
+					new Color(220, 138, 0), new Color(198, 198, 198), new Color(165, 165, 165),
+					new Color(210, 190, 35), new Color(0, 200, 255));
+				break;
+			case Classic:
+				putThemeColors(colors,
+					new Color(31, 24, 17, 230), new Color(118, 94, 60, 255),
+					new Color(235, 226, 193), new Color(235, 226, 193), new Color(200, 186, 140),
+					new Color(235, 226, 193), new Color(255, 190, 64));
+				break;
+			case LightClassic:
+				putThemeColors(colors,
+					new Color(226, 214, 188, 235), new Color(116, 95, 60, 255),
+					new Color(50, 38, 24), new Color(78, 62, 39), new Color(92, 74, 48),
+					new Color(135, 111, 70), new Color(202, 139, 50));
+				break;
+			case Light:
+				putThemeColors(colors,
+					new Color(238, 241, 244, 210), new Color(136, 146, 156, 255),
+					new Color(32, 38, 44), new Color(80, 88, 96), new Color(104, 112, 120),
+					new Color(116, 131, 145), new Color(92, 166, 210));
+				break;
+			case Dark:
+				putThemeColors(colors,
+					new Color(13, 15, 18, 235), new Color(86, 96, 106, 255),
+					new Color(222, 229, 235), new Color(185, 196, 205), new Color(146, 156, 166),
+					new Color(128, 190, 220), new Color(92, 166, 210));
+				break;
+			case Gold:
+				putThemeColors(colors,
+					new Color(28, 22, 10, 235), new Color(172, 130, 38, 255),
+					new Color(255, 232, 154), new Color(232, 201, 104), new Color(184, 146, 66),
+					new Color(255, 218, 96), new Color(255, 190, 64));
+				break;
+			case Zaros:
+				putThemeColors(colors,
+					new Color(19, 17, 31, 235), new Color(101, 76, 160, 255),
+					new Color(230, 219, 255), new Color(190, 176, 230), new Color(148, 128, 196),
+					new Color(186, 134, 255), new Color(162, 105, 232));
+				break;
+			case Guthix:
+				putThemeColors(colors,
+					new Color(14, 27, 20, 235), new Color(70, 126, 81, 255),
+					new Color(219, 239, 207), new Color(180, 218, 160), new Color(122, 174, 116),
+					new Color(142, 226, 108), new Color(116, 210, 92));
+				break;
+			case Saradomin:
+				putThemeColors(colors,
+					new Color(13, 22, 36, 235), new Color(64, 111, 178, 255),
+					new Color(222, 238, 255), new Color(170, 207, 245), new Color(112, 160, 212),
+					new Color(116, 190, 255), new Color(92, 166, 245));
+				break;
+			case Blood:
+				putThemeColors(colors,
+					new Color(31, 12, 13, 235), new Color(151, 48, 48, 255),
+					new Color(247, 220, 205), new Color(226, 153, 137), new Color(176, 86, 78),
+					new Color(255, 92, 76), new Color(230, 72, 72));
+				break;
+			default:
+				break;
+		}
+
+		return colors;
+	}
+
+	private static void putThemeColors(
+		Map<String, String> colors,
+		Color background,
+		Color border,
+		Color header,
+		Color text,
+		Color secondary,
+		Color value,
+		Color accent)
+	{
+		colors.put("overlayBackgroundColor", Integer.toString(background.getRGB()));
+		colors.put("overlayBorderColor", Integer.toString(border.getRGB()));
+		colors.put("overlayHeaderColor", Integer.toString(header.getRGB()));
+		colors.put("overlayTextColor", Integer.toString(text.getRGB()));
+		colors.put("overlaySecondaryTextColor", Integer.toString(secondary.getRGB()));
+		colors.put("geValueTextColor", Integer.toString(value.getRGB()));
+		colors.put("tileDistanceTextColor", Integer.toString(secondary.getRGB()));
+		colors.put("lootCountTextColor", Integer.toString(secondary.getRGB()));
+		colors.put("totalGeValueLabelTextColor", Integer.toString(secondary.getRGB()));
+		colors.put("totalGeValueTextColor", Integer.toString(value.getRGB()));
+		colors.put("selectedItemNameLabelTextColor", Integer.toString(secondary.getRGB()));
+		colors.put("selectedItemNameTextColor", Integer.toString(header.getRGB()));
+		colors.put("overlaySelectedRowColor", Integer.toString(withAlpha(accent, 65).getRGB()));
+		colors.put("highlightColor", Integer.toString(withAlpha(accent, 15).getRGB()));
+		colors.put("highlightOutlineColor", Integer.toString(withAlpha(accent, 220).getRGB()));
+		colors.put("highlightLineColor", Integer.toString(withAlpha(accent, 220).getRGB()));
+		colors.put("highlightMinimapDotColor", Integer.toString(withAlpha(accent, 220).getRGB()));
+		colors.put("highlightMinimapLineColor", Integer.toString(withAlpha(accent, 220).getRGB()));
+		colors.put("highlightMenuTextColor", Integer.toString(accent.getRGB()));
+	}
+
+	private static Color withAlpha(Color color, int alpha)
+	{
+		return new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha);
+	}
+
+	private Map<String, String> defaultThemeColors(AreaLootConfig.CustomColorStartingPoint startingPoint)
+	{
+		if (startingPoint == null)
+		{
+			return Collections.emptyMap();
+		}
+
+		if (isCustomStartingPoint(startingPoint))
+		{
+			return presetColorTheme(AreaLootConfig.ThemePreset.Default);
+		}
+
+		return presetColorTheme(themePresetFromStartingPoint(startingPoint));
+	}
+
+	private void setThemeColors(Map<String, String> colors)
+	{
+		for (Map.Entry<String, String> entry : colors.entrySet())
+		{
+			setThemeColorConfig(entry.getKey(), entry.getValue());
+		}
+	}
+
+	private void setThemeColorConfig(String keyName, String value)
+	{
+		configManager.setConfiguration(CONFIG_GROUP, keyName, value);
+	}
+
+	private void saveThemeColorsToPreset(AreaLootConfig.CustomColorStartingPoint startingPoint, Map<String, String> colors)
+	{
+		for (Map.Entry<String, String> entry : colors.entrySet())
+		{
+			configManager.setConfiguration(CONFIG_GROUP, customPresetKey(startingPoint, entry.getKey()), entry.getValue());
+		}
+	}
+
+	private boolean customPresetExists(AreaLootConfig.CustomColorStartingPoint startingPoint)
+	{
+		return configManager.getConfiguration(CONFIG_GROUP, customPresetKey(startingPoint, "overlayBackgroundColor")) != null;
+	}
+
+	private static boolean isCustomStartingPoint(AreaLootConfig.CustomColorStartingPoint startingPoint)
+	{
+		return startingPoint == AreaLootConfig.CustomColorStartingPoint.Custom1
+			|| startingPoint == AreaLootConfig.CustomColorStartingPoint.Custom2
+			|| startingPoint == AreaLootConfig.CustomColorStartingPoint.Custom3
+			|| startingPoint == AreaLootConfig.CustomColorStartingPoint.SidePanelTheme;
+	}
+
+	private static boolean isBuiltInStartingPoint(AreaLootConfig.CustomColorStartingPoint startingPoint)
+	{
+		return startingPoint != null && !isCustomStartingPoint(startingPoint);
+	}
+
+	private static boolean isCustomColorKey(String keyName)
+	{
+		return AreaLootColorSettings.isThemeColorKey(keyName);
+	}
+
+	private static String customPresetKey(AreaLootConfig.CustomColorStartingPoint startingPoint, String keyName)
+	{
+		return CUSTOM_PRESET_PREFIX + startingPoint.name() + "." + keyName;
+	}
+
+	private static AreaLootConfig.ThemePreset themePresetFromStartingPoint(AreaLootConfig.CustomColorStartingPoint startingPoint)
+	{
+		if (startingPoint == null)
+		{
+			return AreaLootConfig.ThemePreset.Custom;
+		}
+
+		return AreaLootConfig.ThemePreset.valueOf(startingPoint.name());
+	}
+
+	private static AreaLootConfig.CustomColorStartingPoint parseCustomColorStartingPoint(String value)
+	{
+		if (value == null)
+		{
+			return null;
+		}
+
+		try
+		{
+			return AreaLootConfig.CustomColorStartingPoint.valueOf(value);
+		}
+		catch (IllegalArgumentException ex)
+		{
+			return null;
+		}
+	}
+
+	private Map<String, String> currentColorTheme()
+	{
+		Map<String, String> colors = new LinkedHashMap<>();
+		for (String key : AreaLootColorSettings.THEME_COLOR_KEYS)
+		{
+			Color color = colorForThemeKey(key);
+			if (color != null)
+			{
+				colors.put(key, Integer.toString(color.getRGB()));
+			}
+		}
+		return colors;
+	}
+
+	private Map<String, String> activeColorTheme()
+	{
+		Map<String, String> presetColors = presetColorTheme(config.themePreset());
+		return presetColors.isEmpty() ? currentColorTheme() : presetColors;
+	}
+
+	Color getThemeColor(String key)
+	{
+		Map<String, String> presetColors = presetColorTheme(config.themePreset());
+		String color = presetColors.get(key);
+		if (color != null)
+		{
+			try
+			{
+				return new Color(Integer.parseInt(color), true);
+			}
+			catch (NumberFormatException ex)
+			{
+				log.debug("Invalid Area Loot theme color for {}: {}", key, color);
+			}
+		}
+
+		return colorForThemeKey(key);
+	}
+
+	private Color colorForThemeKey(String key)
+	{
+		switch (key)
+		{
+			case "overlayBackgroundColor":
+				return config.overlayBackgroundColor();
+			case "overlayBorderColor":
+				return config.overlayBorderColor();
+			case "overlayHeaderColor":
+				return config.overlayHeaderColor();
+			case "overlayTextColor":
+				return config.overlayTextColor();
+			case "overlaySecondaryTextColor":
+				return config.overlaySecondaryTextColor();
+			case "geValueTextColor":
+				return config.geValueTextColor();
+			case "tileDistanceTextColor":
+				return config.tileDistanceTextColor();
+			case "lootCountTextColor":
+				return config.lootCountTextColor();
+			case "totalGeValueLabelTextColor":
+				return config.totalGeValueLabelTextColor();
+			case "totalGeValueTextColor":
+				return config.totalGeValueTextColor();
+			case "selectedItemNameLabelTextColor":
+				return config.selectedItemNameLabelTextColor();
+			case "selectedItemNameTextColor":
+				return config.selectedItemNameTextColor();
+			case "overlaySelectedRowColor":
+				return config.overlaySelectedRowColor();
+			case "highlightColor":
+				return config.highlightColor();
+			case "highlightOutlineColor":
+				return config.highlightOutlineColor();
+			case "highlightLineColor":
+				return config.highlightLineColor();
+			case "highlightMinimapDotColor":
+				return config.highlightMinimapDotColor();
+			case "highlightMinimapLineColor":
+				return config.highlightMinimapLineColor();
+			case "highlightMenuTextColor":
+				return config.highlightMenuTextColor();
+			default:
+				return null;
+		}
+	}
+
+	private void clearActiveTheme()
+	{
+		configManager.unsetConfiguration(CONFIG_GROUP, ACTIVE_THEME_KEY);
+		if (themePanel != null)
+		{
+			themePanel.rebuild();
+		}
+	}
+
+	private void saveNamedColorTheme(String name, String themeJson)
+	{
+		Map<String, String> themes = getNamedColorThemes();
+		themes.put(name, themeJson);
+		saveNamedColorThemes(themes);
+		if (themePanel != null)
+		{
+			themePanel.rebuild();
+		}
+	}
+
+	private void saveNamedColorThemes(Map<String, String> themes)
+	{
+		JsonObject root = new JsonObject();
+		for (Map.Entry<String, String> entry : themes.entrySet())
+		{
+			root.addProperty(entry.getKey(), entry.getValue());
+		}
+
+		configManager.setConfiguration(CONFIG_GROUP, CUSTOM_THEMES_KEY, gson.toJson(root));
+	}
+
+	private static String normalizeThemeName(String name)
+	{
+		String normalizedName = name == null ? "" : name.trim();
+		if (normalizedName.isEmpty())
+		{
+			throw new IllegalArgumentException("Theme name is required.");
+		}
+		if (normalizedName.length() > 40)
+		{
+			throw new IllegalArgumentException("Theme name must be 40 characters or less.");
+		}
+
+		return normalizedName;
+	}
+
+	private static boolean isThemeColorConfigKey(String key)
+	{
+		return AreaLootColorSettings.isThemeColorKey(key);
+	}
+
+	private void queueThemeMessage(String message)
+	{
+		chatMessageManager.queue(QueuedMessage.builder()
+			.type(ChatMessageType.CONSOLE)
+			.runeLiteFormattedMessage(ColorUtil.wrapWithColorTag(message, config.themeNotificationTextColor()))
+			.build());
+	}
+
 	private void refreshLootSnapshot()
 	{
 		lastPlayerLocation = getPlayerLocation();
@@ -886,7 +1589,7 @@ public class AreaLootPlugin extends Plugin
 			return;
 		}
 
-		entry.setTarget(ColorUtil.prependColorTag(Text.removeTags(entry.getTarget()), config.highlightMenuTextColor()));
+		entry.setTarget(ColorUtil.prependColorTag(Text.removeTags(entry.getTarget()), getThemeColor("highlightMenuTextColor")));
 	}
 
 	private boolean isSelectedMenuHighlightEntry(MenuEntry entry, int selectedSceneX, int selectedSceneY)
