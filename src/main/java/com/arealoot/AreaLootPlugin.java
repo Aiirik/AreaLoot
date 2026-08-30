@@ -210,7 +210,7 @@ public class AreaLootPlugin extends Plugin
 		panel = new AreaLootPanel(this, config, itemManager);
 		navButton = NavigationButton.builder()
 			.tooltip("Area Loot")
-			.icon(createIcon())
+			.icon(createLootIcon())
 			.onClick(() -> clientThread.invoke(() ->
 			{
 				sidePanelActive = true;
@@ -867,7 +867,7 @@ public class AreaLootPlugin extends Plugin
 		themePanel = new AreaLootThemePanel(this);
 		themeNavButton = NavigationButton.builder()
 			.tooltip("Area Loot Themes")
-			.icon(createIcon())
+			.icon(createThemeIcon())
 			.panel(themePanel)
 			.priority(6)
 			.build();
@@ -2275,7 +2275,7 @@ public class AreaLootPlugin extends Plugin
 		return spawnedAtMillis;
 	}
 
-	private BufferedImage createIcon()
+	private BufferedImage createLootIcon()
 	{
 		BufferedImage icon = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D graphics = icon.createGraphics();
@@ -2290,6 +2290,24 @@ public class AreaLootPlugin extends Plugin
 		graphics.setColor(new java.awt.Color(0, 200, 255));
 		graphics.drawRect(10, 2, 4, 4);
 		graphics.drawLine(12, 6, 12, 9);
+		graphics.dispose();
+		return icon;
+	}
+
+	private BufferedImage createThemeIcon()
+	{
+		BufferedImage icon = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D graphics = icon.createGraphics();
+		graphics.setColor(new java.awt.Color(42, 42, 42));
+		graphics.fillOval(2, 2, 12, 12);
+		graphics.setColor(new java.awt.Color(210, 190, 35));
+		graphics.fillOval(4, 4, 3, 3);
+		graphics.setColor(new java.awt.Color(0, 200, 255));
+		graphics.fillOval(9, 4, 3, 3);
+		graphics.setColor(new java.awt.Color(220, 96, 96));
+		graphics.fillOval(6, 9, 3, 3);
+		graphics.setColor(new java.awt.Color(235, 235, 235));
+		graphics.drawOval(2, 2, 12, 12);
 		graphics.dispose();
 		return icon;
 	}
