@@ -444,6 +444,8 @@ public class AreaLootPlugin extends Plugin
 
 		switch (key)
 		{
+			case "overlayTransparency":
+			case "overlayTextTransparency":
 			case "sidePanelMaxItems":
 			case "listIconSize":
 			case "showItemNamesInListMode":
@@ -877,48 +879,61 @@ public class AreaLootPlugin extends Plugin
 	private void migrateLegacyThemePresetName()
 	{
 		String savedPreset = configManager.getConfiguration(CONFIG_GROUP, "themePreset");
-		if (savedPreset == null)
+		if (savedPreset != null)
 		{
-			return;
+			switch (savedPreset)
+			{
+				case "CUSTOM":
+					configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Custom.name());
+					break;
+				case "DEFAULT":
+				case "Default":
+					configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Slate.name());
+					break;
+				case "CLASSIC":
+					configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Classic.name());
+					break;
+				case "LIGHT_CLASSIC":
+					configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.LightClassic.name());
+					break;
+				case "LIGHT":
+					configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Light.name());
+					break;
+				case "DARK":
+					configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Dark.name());
+					break;
+				case "GOLD":
+					configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Gold.name());
+					break;
+				case "ZAROS":
+					configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Zaros.name());
+					break;
+				case "GUTHIX":
+					configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Guthix.name());
+					break;
+				case "SARADOMIN":
+					configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Saradomin.name());
+					break;
+				case "BLOOD":
+					configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Blood.name());
+					break;
+				default:
+					break;
+			}
 		}
 
-		switch (savedPreset)
+		String savedStartingPoint = configManager.getConfiguration(CONFIG_GROUP, "customColorStartingPoint");
+		if (savedStartingPoint != null)
 		{
-			case "CUSTOM":
-				configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Custom.name());
-				break;
-			case "DEFAULT":
-				configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Default.name());
-				break;
-			case "CLASSIC":
-				configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Classic.name());
-				break;
-			case "LIGHT_CLASSIC":
-				configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.LightClassic.name());
-				break;
-			case "LIGHT":
-				configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Light.name());
-				break;
-			case "DARK":
-				configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Dark.name());
-				break;
-			case "GOLD":
-				configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Gold.name());
-				break;
-			case "ZAROS":
-				configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Zaros.name());
-				break;
-			case "GUTHIX":
-				configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Guthix.name());
-				break;
-			case "SARADOMIN":
-				configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Saradomin.name());
-				break;
-			case "BLOOD":
-				configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Blood.name());
-				break;
-			default:
-				break;
+			switch (savedStartingPoint)
+			{
+				case "DEFAULT":
+				case "Default":
+					configManager.setConfiguration(CONFIG_GROUP, "customColorStartingPoint", AreaLootConfig.CustomColorStartingPoint.Slate.name());
+					break;
+				default:
+					break;
+			}
 		}
 	}
 
@@ -1137,7 +1152,7 @@ public class AreaLootPlugin extends Plugin
 
 		switch (preset)
 		{
-			case Default:
+			case Slate:
 				putThemeColors(colors,
 					new Color(30, 30, 30, 190), new Color(23, 23, 23),
 					new Color(220, 138, 0), new Color(198, 198, 198), new Color(165, 165, 165),
@@ -1227,12 +1242,6 @@ public class AreaLootPlugin extends Plugin
 		colors.put("selectedItemNameLabelTextColor", Integer.toString(secondary.getRGB()));
 		colors.put("selectedItemNameTextColor", Integer.toString(header.getRGB()));
 		colors.put("overlaySelectedRowColor", Integer.toString(withAlpha(accent, 65).getRGB()));
-		colors.put("highlightColor", Integer.toString(withAlpha(accent, 15).getRGB()));
-		colors.put("highlightOutlineColor", Integer.toString(withAlpha(accent, 220).getRGB()));
-		colors.put("highlightLineColor", Integer.toString(withAlpha(accent, 220).getRGB()));
-		colors.put("highlightMinimapDotColor", Integer.toString(withAlpha(accent, 220).getRGB()));
-		colors.put("highlightMinimapLineColor", Integer.toString(withAlpha(accent, 220).getRGB()));
-		colors.put("highlightMenuTextColor", Integer.toString(accent.getRGB()));
 	}
 
 	private static Color withAlpha(Color color, int alpha)
@@ -1249,7 +1258,7 @@ public class AreaLootPlugin extends Plugin
 
 		if (isCustomStartingPoint(startingPoint))
 		{
-			return presetColorTheme(AreaLootConfig.ThemePreset.Default);
+			return presetColorTheme(AreaLootConfig.ThemePreset.Classic);
 		}
 
 		return presetColorTheme(themePresetFromStartingPoint(startingPoint));
@@ -1359,7 +1368,7 @@ public class AreaLootPlugin extends Plugin
 		{
 			try
 			{
-				return new Color(Integer.parseInt(color), true);
+				return applyThemeTransparency(key, new Color(Integer.parseInt(color), true));
 			}
 			catch (NumberFormatException ex)
 			{
@@ -1367,7 +1376,90 @@ public class AreaLootPlugin extends Plugin
 			}
 		}
 
-		return colorForThemeKey(key);
+		return applyThemeTransparency(key, colorForThemeKey(key));
+	}
+
+	private Color applyThemeTransparency(String key, Color color)
+	{
+		if (isOverlayTransparencyColorKey(key))
+		{
+			return applyOverlayTransparency(color);
+		}
+		if (isOverlayTextTransparencyColorKey(key))
+		{
+			return applyTextTransparency(color);
+		}
+
+		return color;
+	}
+
+	private Color applyOverlayTransparency(Color color)
+	{
+		if (color == null)
+		{
+			return null;
+		}
+
+		int extraTransparency = config.overlayTransparency();
+		if (extraTransparency <= 0)
+		{
+			return color;
+		}
+
+		int alpha = color.getAlpha();
+		int adjustedAlpha = (alpha * Math.max(0, 100 - extraTransparency)) / 100;
+		return new Color(color.getRed(), color.getGreen(), color.getBlue(), adjustedAlpha);
+	}
+
+	private Color applyTextTransparency(Color color)
+	{
+		if (color == null)
+		{
+			return null;
+		}
+
+		int extraTransparency = config.overlayTextTransparency();
+		if (extraTransparency <= 0)
+		{
+			return color;
+		}
+
+		int alpha = color.getAlpha();
+		int adjustedAlpha = (alpha * Math.max(0, 100 - extraTransparency)) / 100;
+		return new Color(color.getRed(), color.getGreen(), color.getBlue(), adjustedAlpha);
+	}
+
+	private static boolean isOverlayTransparencyColorKey(String key)
+	{
+		switch (key)
+		{
+			case "overlayBackgroundColor":
+			case "overlayBorderColor":
+			case "overlaySelectedRowColor":
+				return true;
+			default:
+				return false;
+		}
+	}
+
+	private static boolean isOverlayTextTransparencyColorKey(String key)
+	{
+		switch (key)
+		{
+			case "overlayHeaderColor":
+			case "overlayTextColor":
+			case "overlaySecondaryTextColor":
+			case "geValueTextColor":
+			case "tileDistanceTextColor":
+			case "lootCountTextColor":
+			case "totalGeValueLabelTextColor":
+			case "totalGeValueTextColor":
+			case "selectedItemNameLabelTextColor":
+			case "selectedItemNameTextColor":
+				return true;
+			default:
+				return false;
+		}
 	}
 
 	private Color colorForThemeKey(String key)
@@ -2298,16 +2390,22 @@ public class AreaLootPlugin extends Plugin
 	{
 		BufferedImage icon = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D graphics = icon.createGraphics();
-		graphics.setColor(new java.awt.Color(42, 42, 42));
-		graphics.fillOval(2, 2, 12, 12);
-		graphics.setColor(new java.awt.Color(210, 190, 35));
-		graphics.fillOval(4, 4, 3, 3);
+		graphics.setColor(new java.awt.Color(32, 32, 32));
+		graphics.fillRect(3, 2, 10, 12);
+		graphics.setColor(new java.awt.Color(18, 18, 18));
+		graphics.drawRect(3, 2, 10, 12);
+
+		graphics.setColor(new java.awt.Color(220, 138, 0));
+		graphics.fillRect(5, 4, 6, 2);
 		graphics.setColor(new java.awt.Color(0, 200, 255));
-		graphics.fillOval(9, 4, 3, 3);
-		graphics.setColor(new java.awt.Color(220, 96, 96));
-		graphics.fillOval(6, 9, 3, 3);
+		graphics.fillRect(5, 7, 6, 2);
+		graphics.setColor(new java.awt.Color(210, 190, 35));
+		graphics.fillRect(5, 10, 6, 2);
+
 		graphics.setColor(new java.awt.Color(235, 235, 235));
-		graphics.drawOval(2, 2, 12, 12);
+		graphics.drawLine(12, 3, 14, 3);
+		graphics.drawLine(13, 4, 13, 12);
+		graphics.drawLine(12, 13, 14, 13);
 		graphics.dispose();
 		return icon;
 	}

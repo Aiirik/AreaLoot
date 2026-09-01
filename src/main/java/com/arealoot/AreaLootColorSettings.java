@@ -22,13 +22,7 @@ final class AreaLootColorSettings
 		"totalGeValueTextColor",
 		"selectedItemNameLabelTextColor",
 		"selectedItemNameTextColor",
-		"overlaySelectedRowColor",
-		"highlightColor",
-		"highlightOutlineColor",
-		"highlightLineColor",
-		"highlightMinimapDotColor",
-		"highlightMinimapLineColor",
-		"highlightMenuTextColor"
+		"overlaySelectedRowColor"
 	};
 
 	private static final String EXPORT_PLUGIN = "area-loot";
@@ -175,12 +169,6 @@ final class AreaLootColorSettings
 		putTranslatedColor(importedColors, colors, "overlaySubTextColor", "selectedItemNameLabelTextColor");
 		putTranslatedColor(importedColors, colors, "overlayHeaderTextColor", "selectedItemNameTextColor");
 		putTranslatedColor(importedColors, colors, "valueHighlightColor", "overlaySelectedRowColor");
-		putTranslatedColor(importedColors, colors, "valueHighlightColor", "highlightColor");
-		putTranslatedColor(importedColors, colors, "valueHighlightColor", "highlightOutlineColor");
-		putTranslatedColor(importedColors, colors, "valueHighlightColor", "highlightLineColor");
-		putTranslatedColor(importedColors, colors, "valueHighlightColor", "highlightMinimapDotColor");
-		putTranslatedColor(importedColors, colors, "valueHighlightColor", "highlightMinimapLineColor");
-		putTranslatedColor(importedColors, colors, "valueHighlightColor", "highlightMenuTextColor");
 		return importedColors;
 	}
 

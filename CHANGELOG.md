@@ -2,12 +2,25 @@
 
 All notable user-facing changes to Area Loot are documented here.
 
-## 1.6.0 - 30-Aug-2026
+## 2.0.0 - 31-Aug-2026
 
 ### Added
 
-- Added overlay theme presets and editable color theme bases, including Default, Classic, god-themed presets, custom slots, and imported side-panel themes.
+- Added overlay theme presets and editable custom theme bases, including Classic, Slate, god-themed presets, custom slots, and imported side-panel themes.
 - Added an optional theme sharing side panel for creating, importing, exporting, applying, overwriting, and deleting named color themes.
+- Added overlay and text transparency sliders at the bottom of Overlay Colors.
+
+### Changed
+
+- Changed the default theme preset to Classic.
+- Renamed the previous Default theme preset to Slate and moved it above Dark.
+- Removed the Highlight Colors `Match theme` option; overlay themes no longer change highlight, line, minimap, or selected-menu colors.
+- Renamed the Side Panel config section to Arealoot Side Panel for clarity.
+- Changed selected-item minimap dot and line settings to be enabled by default.
+
+### Fixed
+
+- Removed the packaged root `icon.png` resource to avoid side-panel icon collisions with other development plugins.
 
 ## 1.5.5 - 24-Jul-2026
 

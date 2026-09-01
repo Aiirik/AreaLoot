@@ -19,9 +19,9 @@ public class AreaLootColorSettingsTest
 		String json = AreaLootColorSettings.exportToJson("Test", colors, new Gson());
 		Map<String, String> imported = AreaLootColorSettings.importFromJson(json);
 
-		Assert.assertEquals(2, imported.size());
+		Assert.assertEquals(1, imported.size());
 		Assert.assertEquals("-11053225", imported.get("overlayBackgroundColor"));
-		Assert.assertEquals("-16724737", imported.get("highlightMenuTextColor"));
+		Assert.assertFalse(imported.containsKey("highlightMenuTextColor"));
 		Assert.assertFalse(imported.containsKey("unknownColor"));
 	}
 
@@ -33,7 +33,8 @@ public class AreaLootColorSettingsTest
 
 		Assert.assertEquals("-1", imported.get("overlayHeaderColor"));
 		Assert.assertEquals("-2", imported.get("geValueTextColor"));
-		Assert.assertEquals("-3", imported.get("highlightMenuTextColor"));
+		Assert.assertEquals("-3", imported.get("overlaySelectedRowColor"));
+		Assert.assertFalse(imported.containsKey("highlightMenuTextColor"));
 	}
 
 	@Test

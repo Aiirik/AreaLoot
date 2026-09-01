@@ -50,10 +50,10 @@ public interface AreaLootConfig extends Config
 	enum ThemePreset
 	{
 		Custom("Custom"),
-		Default("Default"),
 		Classic("Classic"),
 		LightClassic("Light classic"),
 		Light("Light"),
+		Slate("Slate"),
 		Dark("Dark"),
 		Gold("Gold"),
 		Zaros("Zaros"),
@@ -77,10 +77,10 @@ public interface AreaLootConfig extends Config
 
 	enum CustomColorStartingPoint
 	{
-		Default("Default"),
 		Classic("Classic"),
 		LightClassic("Light classic"),
 		Light("Light"),
+		Slate("Slate"),
 		Dark("Dark"),
 		Gold("Gold"),
 		Zaros("Zaros"),
@@ -388,7 +388,7 @@ public interface AreaLootConfig extends Config
 	String minimapSection = MINIMAP_SECTION;
 
 	@ConfigSection(
-		name = "Side Panel",
+		name = "Arealoot Side Panel",
 		description = "RuneLite side panel controls",
 		position = 6,
 		closedByDefault = true
@@ -781,7 +781,7 @@ public interface AreaLootConfig extends Config
 	)
 	default ThemePreset themePreset()
 	{
-		return ThemePreset.Default;
+		return ThemePreset.Classic;
 	}
 
 	@ConfigItem(
@@ -793,7 +793,7 @@ public interface AreaLootConfig extends Config
 	)
 	default CustomColorStartingPoint customColorStartingPoint()
 	{
-		return CustomColorStartingPoint.Default;
+		return CustomColorStartingPoint.Classic;
 	}
 
 	@Alpha
@@ -953,6 +953,38 @@ public interface AreaLootConfig extends Config
 	default Color overlaySelectedRowColor()
 	{
 		return new Color(0, 200, 255, 65);
+	}
+
+	@ConfigItem(
+		keyName = "overlayTransparency",
+		name = "Overlay transparency",
+		description = "Apply additional transparency to overlay backgrounds, borders, and selected items",
+		position = 90,
+		section = OVERLAY_ADJUSTMENTS_SECTION
+	)
+	@Range(
+		min = 0,
+		max = 100
+	)
+	default int overlayTransparency()
+	{
+		return 0;
+	}
+
+	@ConfigItem(
+		keyName = "overlayTextTransparency",
+		name = "Text transparency",
+		description = "Apply additional transparency to overlay text",
+		position = 91,
+		section = OVERLAY_ADJUSTMENTS_SECTION
+	)
+	@Range(
+		min = 0,
+		max = 100
+	)
+	default int overlayTextTransparency()
+	{
+		return 0;
 	}
 
 	@ConfigItem(
@@ -1174,7 +1206,7 @@ public interface AreaLootConfig extends Config
 	)
 	default boolean drawMinimapDot()
 	{
-		return false;
+		return true;
 	}
 
 	@ConfigItem(
@@ -1186,7 +1218,7 @@ public interface AreaLootConfig extends Config
 	)
 	default boolean drawMinimapLine()
 	{
-		return false;
+		return true;
 	}
 
 	@ConfigItem(

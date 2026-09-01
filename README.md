@@ -23,6 +23,7 @@ Area Loot is a RuneLite plugin for quickly finding ground items near your player
 
 - Nearby ground-loot shown in a movable list or icon-grid overlay.
 - Optional RuneLite side panel with the same nearby loot list.
+- Optional theme side panel for saving, importing, exporting, applying, overwriting, and deleting named Area Loot themes.
 - Configurable hotkeys for the overlay, auto show/hide overlay, and side panel.
 - Optional overlay mode persistence across logout/login.
 - Auto show/hide mode that displays the overlay only when nearby loot is available.
@@ -35,6 +36,9 @@ Area Loot is a RuneLite plugin for quickly finding ground items near your player
 - Configurable tile distance display: none, short form, or long form.
 - Optional footer indicators for visible loot count and total visible GE value.
 - Configurable overlay style, size, position, colors, fade animation, and side-panel visibility.
+- Configurable theme presets, including Classic, Slate, Light, Dark, Gold, Zaros, Guthix, Saradomin, and Blood.
+- Custom theme slots start from Classic colors and can be adjusted through Overlay Colors.
+- Overlay and text transparency sliders for fading backgrounds, borders, selected-item fill, and overlay text.
 - Configurable grid size, icon size, and optional auto-adjust for the icon-grid overlay.
 
 ### Filtering and sorting
@@ -54,6 +58,7 @@ Area Loot is a RuneLite plugin for quickly finding ground items near your player
 - Configurable selected-item overlay style: fill or outline.
 - Optional selected-item right-click menu text highlighting with configurable scope and color.
 - Optional line from your player to the highlighted item.
+- Highlight, line, minimap, and selected-menu colors stay independent from overlay themes.
 
 <br>
 
