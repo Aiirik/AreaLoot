@@ -63,6 +63,7 @@ import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.config.Keybind;
+import net.runelite.client.config.RuneLiteConfig;
 import net.runelite.client.eventbus.EventBus;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
@@ -112,6 +113,9 @@ public class AreaLootPlugin extends Plugin
 
 	@Inject
 	private AreaLootConfig config;
+
+	@Inject
+	private RuneLiteConfig runeLiteConfig;
 
 	@Inject
 	private ConfigManager configManager;
@@ -886,6 +890,9 @@ public class AreaLootPlugin extends Plugin
 				case "CUSTOM":
 					configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Custom.name());
 					break;
+				case "RUNELITE":
+					configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Runelite.name());
+					break;
 				case "DEFAULT":
 				case "Default":
 					configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Slate.name());
@@ -927,6 +934,9 @@ public class AreaLootPlugin extends Plugin
 		{
 			switch (savedStartingPoint)
 			{
+				case "RUNELITE":
+					configManager.setConfiguration(CONFIG_GROUP, "customColorStartingPoint", AreaLootConfig.CustomColorStartingPoint.Classic.name());
+					break;
 				case "DEFAULT":
 				case "Default":
 					configManager.setConfiguration(CONFIG_GROUP, "customColorStartingPoint", AreaLootConfig.CustomColorStartingPoint.Slate.name());
@@ -1155,6 +1165,12 @@ public class AreaLootPlugin extends Plugin
 
 		switch (preset)
 		{
+			case Runelite:
+				putThemeColors(colors,
+					runeLiteOverlayBackgroundColor(), runeLiteOverlayBorderColor(),
+					Color.WHITE, Color.WHITE, Color.LIGHT_GRAY,
+					ColorScheme.GRAND_EXCHANGE_PRICE, Color.WHITE);
+				break;
 			case Slate:
 				putThemeColors(colors,
 					new Color(30, 30, 30, 190), new Color(23, 23, 23),
@@ -1250,6 +1266,22 @@ public class AreaLootPlugin extends Plugin
 	private static Color withAlpha(Color color, int alpha)
 	{
 		return new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha);
+	}
+
+	private Color runeLiteOverlayBackgroundColor()
+	{
+		return runeLiteConfig.overlayBackgroundColor();
+	}
+
+	private Color runeLiteOverlayBorderColor()
+	{
+		Color backgroundColor = runeLiteOverlayBackgroundColor();
+		return new Color(
+			(int) (backgroundColor.getRed() * 0.8f),
+			(int) (backgroundColor.getGreen() * 0.8f),
+			(int) (backgroundColor.getBlue() * 0.8f),
+			Math.min(255, (int) (backgroundColor.getAlpha() * 1.4f))
+		);
 	}
 
 	private Map<String, String> defaultThemeColors(AreaLootConfig.CustomColorStartingPoint startingPoint)

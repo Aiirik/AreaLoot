@@ -7,6 +7,7 @@ All notable user-facing changes to Area Loot are documented here.
 ### Fixed
 
 - Fixed editable custom theme bases so changes are saved when switching away and back, while Custom 1, Custom 2, and Custom 3 reset to Classic colors.
+- Added a RuneLite theme preset that follows RuneLite's configured overlay background color.
 
 ## 2.0.0 - 31-Aug-2026
 

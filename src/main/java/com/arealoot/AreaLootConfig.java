@@ -50,6 +50,7 @@ public interface AreaLootConfig extends Config
 	enum ThemePreset
 	{
 		Custom("Custom"),
+		Runelite("RuneLite"),
 		Classic("Classic"),
 		LightClassic("Light classic"),
 		Light("Light"),
