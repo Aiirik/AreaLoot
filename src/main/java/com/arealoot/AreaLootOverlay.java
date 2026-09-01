@@ -273,11 +273,11 @@ class AreaLootOverlay extends Overlay
 			graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
 		}
 
-		int cornerRadius = getOverlayCornerRadius();
+		int cornerArc = overlayCornerRadius() * 2;
 		graphics.setColor(plugin.getThemeColor("overlayBackgroundColor"));
-		graphics.fillRoundRect(listX, listY, listWidth, height, cornerRadius, cornerRadius);
+		graphics.fillRoundRect(listX, listY, listWidth, height, cornerArc, cornerArc);
 		graphics.setColor(plugin.getThemeColor("overlayBorderColor"));
-		graphics.drawRoundRect(listX, listY, listWidth, height, cornerRadius, cornerRadius);
+		graphics.drawRoundRect(listX, listY, listWidth, height, cornerArc, cornerArc);
 
 		if (showHeader)
 		{
@@ -453,11 +453,11 @@ class AreaLootOverlay extends Overlay
 			graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
 		}
 
-		int cornerRadius = getOverlayCornerRadius();
+		int cornerArc = overlayCornerRadius() * 2;
 		graphics.setColor(plugin.getThemeColor("overlayBackgroundColor"));
-		graphics.fillRoundRect(gridX, gridY, overlayWidth, height, cornerRadius, cornerRadius);
+		graphics.fillRoundRect(gridX, gridY, overlayWidth, height, cornerArc, cornerArc);
 		graphics.setColor(plugin.getThemeColor("overlayBorderColor"));
-		graphics.drawRoundRect(gridX, gridY, overlayWidth, height, cornerRadius, cornerRadius);
+		graphics.drawRoundRect(gridX, gridY, overlayWidth, height, cornerArc, cornerArc);
 
 		if (showHeader)
 		{
@@ -567,7 +567,7 @@ class AreaLootOverlay extends Overlay
 		return width;
 	}
 
-	private int getOverlayCornerRadius()
+	private int overlayCornerRadius()
 	{
 		return Math.max(0, Math.min(6, config.overlayCornerRadius()));
 	}
@@ -627,13 +627,14 @@ class AreaLootOverlay extends Overlay
 	private void renderSelectedOverlayEntry(Graphics2D graphics, Rectangle bounds, boolean rounded)
 	{
 		graphics.setColor(plugin.getThemeColor("overlaySelectedRowColor"));
+		int selectedCornerArc = overlayCornerRadius();
 		if (config.overlaySelectionStyle() == AreaLootConfig.OverlaySelectionStyle.OUTLINE)
 		{
 			Stroke originalStroke = graphics.getStroke();
 			graphics.setStroke(new BasicStroke(2));
-			if (rounded)
+			if (rounded && selectedCornerArc > 0)
 			{
-				graphics.drawRoundRect(bounds.x + 1, bounds.y + 1, bounds.width - 3, bounds.height - 3, 4, 4);
+				graphics.drawRoundRect(bounds.x + 1, bounds.y + 1, bounds.width - 3, bounds.height - 3, selectedCornerArc, selectedCornerArc);
 			}
 			else
 			{
@@ -643,9 +644,9 @@ class AreaLootOverlay extends Overlay
 			return;
 		}
 
-		if (rounded)
+		if (rounded && selectedCornerArc > 0)
 		{
-			graphics.fillRoundRect(bounds.x + 1, bounds.y + 1, bounds.width - 2, bounds.height - 2, 4, 4);
+			graphics.fillRoundRect(bounds.x + 1, bounds.y + 1, bounds.width - 2, bounds.height - 2, selectedCornerArc, selectedCornerArc);
 		}
 		else
 		{

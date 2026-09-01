@@ -496,7 +496,7 @@ public interface AreaLootConfig extends Config
 		keyName = "overlayItemDelay",
 		name = "Show item delay",
 		description = "<html>Select a delay to show newly dropped items in Area Loot <br> This helps when drops are constantly picked up instantly and prevents overlay spam</html>",
-		position = 3,
+		position = 4,
 		section = OVERLAY_SECTION
 	)
 	default OverlayItemDelay overlayItemDelay()
@@ -729,7 +729,7 @@ public interface AreaLootConfig extends Config
 		keyName = "overlaySelectionStyle",
 		name = "Selected item style",
 		description = "Choose how the selected item is shown in the overlay",
-		position = 14,
+		position = 2,
 		section = OVERLAY_SECTION
 	)
 	default OverlaySelectionStyle overlaySelectionStyle()
@@ -765,7 +765,7 @@ public interface AreaLootConfig extends Config
 		keyName = "showSelectedItemNameInOverlay",
 		name = "Selected item name",
 		description = "Choose how the selected loot item is shown in the overlay footer",
-		position = 6,
+		position = 7,
 		section = OVERLAY_SECTION
 	)
 	default SelectedItemFooterMode showSelectedItemNameInOverlay()
@@ -1044,7 +1044,7 @@ public interface AreaLootConfig extends Config
 		keyName = "showOverlayTitle",
 		name = "Show overlay title",
 		description = "Show Area Loot or Area Loot (auto) at the top of the overlay",
-		position = 5,
+		position = 6,
 		section = OVERLAY_SECTION
 	)
 	default boolean showOverlayTitle()
@@ -1056,7 +1056,7 @@ public interface AreaLootConfig extends Config
 		keyName = "tileDistanceMode",
 		name = "Show tile distance",
 		description = "Choose whether and how each loot item's distance is shown",
-		position = 8,
+		position = 9,
 		section = OVERLAY_SECTION
 	)
 	default DistanceMode tileDistanceMode()
@@ -1068,7 +1068,7 @@ public interface AreaLootConfig extends Config
 		keyName = "showLootCount",
 		name = "Show total loot count",
 		description = "Show the number of visible loot items below the overlay",
-		position = 9,
+		position = 10,
 		section = OVERLAY_SECTION
 	)
 	default boolean showLootCount()
@@ -1080,7 +1080,7 @@ public interface AreaLootConfig extends Config
 		keyName = "totalGeValueMode",
 		name = "Show total GE value",
 		description = "Choose how the total GE value of visible loot items is shown below the overlay",
-		position = 10,
+		position = 11,
 		section = OVERLAY_SECTION
 	)
 	default TotalGeValueMode totalGeValueMode()
@@ -1092,7 +1092,7 @@ public interface AreaLootConfig extends Config
 		keyName = "showGeValue",
 		name = "Show item GE value",
 		description = "Show each loot item's total Grand Exchange value",
-		position = 7,
+		position = 8,
 		section = OVERLAY_SECTION
 	)
 	default boolean showGeValue()
@@ -1104,7 +1104,7 @@ public interface AreaLootConfig extends Config
 		keyName = "sortMode",
 		name = "Sort loot by",
 		description = "Choose how Area Loot sorts nearby ground items",
-		position = 2,
+		position = 3,
 		section = OVERLAY_SECTION
 	)
 	default SortMode sortMode()
@@ -1116,7 +1116,7 @@ public interface AreaLootConfig extends Config
 		keyName = "minimumGeValue",
 		name = "Minimum GE value",
 		description = "Only show drops worth at least this much GP. Supports values like 1000, 10k, or 1m",
-		position = 11,
+		position = 12,
 		section = OVERLAY_SECTION
 	)
 	default String minimumGeValue()
@@ -1128,17 +1128,16 @@ public interface AreaLootConfig extends Config
 		min = 0,
 		max = 6
 	)
-	@Units(Units.PIXELS)
 	@ConfigItem(
 		keyName = "overlayCornerRadius",
 		name = "Corner radius",
-		description = "Corner radius for the overlay background",
-		position = 12,
+		description = "Round the overlay frame corners in pixels",
+		position = 1,
 		section = OVERLAY_SECTION
 	)
 	default int overlayCornerRadius()
 	{
-		return 6;
+		return 4;
 	}
 
 	@ConfigItem(
@@ -1243,7 +1242,7 @@ public interface AreaLootConfig extends Config
 		keyName = "groupSameItemOverlay",
 		name = "Group same items on overlay",
 		description = "Group identical nearby drops into one overlay row and highlight them together when selected",
-		position = 4,
+		position = 5,
 		section = OVERLAY_SECTION
 	)
 	default boolean groupSameItemOverlay()
