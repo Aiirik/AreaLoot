@@ -48,7 +48,6 @@ class AreaLootOverlay extends Overlay
 	private static final int CONDENSED_NAME_LINE_GAP = 1;
 	private static final int CONDENSED_NAME_EXTRA_PADDING = 2;
 	private static final int CONDENSED_ROW_GAP = 3;
-	private static final String GRID_STABLE_QUANTITY_TEXT = "x999";
 	private static final String[] GRID_STABLE_GE_TEXTS = {"999gp", "999k", "999m"};
 	private static final String GRID_STABLE_DISTANCE_SHORT_TEXT = "30t";
 	private static final String GRID_STABLE_DISTANCE_LONG_TEXT = "30 Tiles";
@@ -494,19 +493,18 @@ class AreaLootOverlay extends Overlay
 			}
 
 			AsyncBufferedImage image = itemManager.getImage(item.getId(), item.getQuantity(), false);
+			int iconX = x + ((cellWidth - gridIconSize) / 2);
+			int iconY = y + GRID_CELL_VERTICAL_PADDING;
 			if (image != null)
 			{
-				int iconX = x + ((cellWidth - gridIconSize) / 2);
-				graphics.drawImage(image, iconX, y + GRID_CELL_VERTICAL_PADDING, gridIconSize, gridIconSize, null);
+				graphics.drawImage(image, iconX, iconY, gridIconSize, gridIconSize, null);
+			}
+			if (item.getQuantity() > 1)
+			{
+				drawGridQuantityOverlay(graphics, metrics, "x" + item.getQuantity(), x, iconX, iconY, gridIconSize, cellWidth);
 			}
 
 			int textY = y + GRID_CELL_VERTICAL_PADDING + gridIconSize + 10;
-			if (item.getQuantity() > 1)
-			{
-				graphics.setColor(plugin.getThemeColor("overlayTextColor"));
-				drawCenteredGridText(graphics, metrics, "x" + item.getQuantity(), x, textY, cellWidth);
-				textY += GRID_TEXT_LINE_HEIGHT;
-			}
 			if (config.showGeValue())
 			{
 				String valueText = formatGeValue(item);
@@ -535,10 +533,6 @@ class AreaLootOverlay extends Overlay
 	private int getGridMetadataLineCount(List<AreaLootItem> items)
 	{
 		int lines = 0;
-		if (shouldShowGridQuantityLine(items))
-		{
-			lines++;
-		}
 		if (config.showGeValue())
 		{
 			lines++;
@@ -553,10 +547,6 @@ class AreaLootOverlay extends Overlay
 	private int getStableGridCellWidth(FontMetrics metrics, int gridIconSize, List<AreaLootItem> items)
 	{
 		int width = gridIconSize + (GRID_CELL_HORIZONTAL_PADDING * 2);
-		if (shouldShowGridQuantityLine(items))
-		{
-			width = Math.max(width, metrics.stringWidth(GRID_STABLE_QUANTITY_TEXT) + (GRID_CELL_HORIZONTAL_PADDING * 2));
-		}
 		if (config.showGeValue())
 		{
 			for (String geText : GRID_STABLE_GE_TEXTS)
@@ -575,21 +565,24 @@ class AreaLootOverlay extends Overlay
 		return width;
 	}
 
-	private boolean shouldShowGridQuantityLine(List<AreaLootItem> items)
+	private void drawGridQuantityOverlay(
+		Graphics2D graphics,
+		FontMetrics metrics,
+		String text,
+		int cellX,
+		int iconX,
+		int iconY,
+		int gridIconSize,
+		int cellWidth)
 	{
-		if (!config.groupSameItemOverlay())
-		{
-			return false;
-		}
-
-		for (AreaLootItem item : items)
-		{
-			if (item.getQuantity() > 1)
-			{
-				return true;
-			}
-		}
-		return false;
+		String visibleText = fitTextToWidth(metrics, text, cellWidth - (GRID_CELL_HORIZONTAL_PADDING * 2));
+		int textWidth = metrics.stringWidth(visibleText);
+		int textX = Math.max(cellX + GRID_CELL_HORIZONTAL_PADDING, cellX + cellWidth - textWidth - 1);
+		int textY = iconY + metrics.getAscent();
+		graphics.setColor(new Color(0, 0, 0, 160));
+		graphics.drawString(visibleText, textX + 1, textY + 1);
+		graphics.setColor(plugin.getThemeColor("overlayTextColor"));
+		graphics.drawString(visibleText, textX, textY);
 	}
 
 	private void drawCenteredGridText(Graphics2D graphics, FontMetrics metrics, String text, int x, int y, int cellWidth)
