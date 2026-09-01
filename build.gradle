@@ -15,7 +15,7 @@ repositories {
 
 def runeLiteVersion = 'latest.release'
 def pluginMainClass = 'com.arealoot.AreaLootPluginTest'
-version = '2.0.0'
+version = '2.0.1'
 
 java {
 	toolchain {

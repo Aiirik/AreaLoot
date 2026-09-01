@@ -2,6 +2,12 @@
 
 All notable user-facing changes to Area Loot are documented here.
 
+## 2.0.1 - 01-Sep-2026
+
+### Fixed
+
+- Fixed editable custom theme bases so changes are saved when switching away and back, while Custom 1, Custom 2, and Custom 3 reset to Classic colors.
+
 ## 2.0.0 - 31-Aug-2026
 
 ### Added

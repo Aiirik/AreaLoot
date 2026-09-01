@@ -1093,25 +1093,20 @@ public class AreaLootPlugin extends Plugin
 		applyingCustomColorStartingPoint = true;
 		try
 		{
-			if (isBuiltInStartingPoint(startingPoint))
+			if (!customPresetExists(startingPoint))
 			{
 				setThemeColors(defaultColors);
 				saveThemeColorsToPreset(startingPoint, defaultColors);
+				configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Custom.name());
+				return;
 			}
-			else if (!customPresetExists(startingPoint))
+
+			for (String keyName : AreaLootColorSettings.THEME_COLOR_KEYS)
 			{
-				setThemeColors(defaultColors);
-				saveThemeColorsToPreset(startingPoint, defaultColors);
-			}
-			else
-			{
-				for (String keyName : AreaLootColorSettings.THEME_COLOR_KEYS)
+				String color = configManager.getConfiguration(CONFIG_GROUP, customPresetKey(startingPoint, keyName));
+				if (color != null)
 				{
-					String color = configManager.getConfiguration(CONFIG_GROUP, customPresetKey(startingPoint, keyName));
-					if (color != null)
-					{
-						setThemeColorConfig(keyName, color);
-					}
+					setThemeColorConfig(keyName, color);
 				}
 			}
 			configManager.setConfiguration(CONFIG_GROUP, "themePreset", AreaLootConfig.ThemePreset.Custom.name());
@@ -1139,6 +1134,14 @@ public class AreaLootPlugin extends Plugin
 		if (value != null)
 		{
 			configManager.setConfiguration(CONFIG_GROUP, customPresetKey(startingPoint, keyName), value);
+			return;
+		}
+
+		String defaultColor = defaultThemeColors(startingPoint).get(keyName);
+		if (defaultColor != null)
+		{
+			setThemeColorConfig(keyName, defaultColor);
+			configManager.setConfiguration(CONFIG_GROUP, customPresetKey(startingPoint, keyName), defaultColor);
 		}
 	}
 
@@ -1296,11 +1299,6 @@ public class AreaLootPlugin extends Plugin
 			|| startingPoint == AreaLootConfig.CustomColorStartingPoint.Custom2
 			|| startingPoint == AreaLootConfig.CustomColorStartingPoint.Custom3
 			|| startingPoint == AreaLootConfig.CustomColorStartingPoint.SidePanelTheme;
-	}
-
-	private static boolean isBuiltInStartingPoint(AreaLootConfig.CustomColorStartingPoint startingPoint)
-	{
-		return startingPoint != null && !isCustomStartingPoint(startingPoint);
 	}
 
 	private static boolean isCustomColorKey(String keyName)
