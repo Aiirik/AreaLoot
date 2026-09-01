@@ -1124,6 +1124,23 @@ public interface AreaLootConfig extends Config
 		return "0";
 	}
 
+	@Range(
+		min = 0,
+		max = 6
+	)
+	@Units(Units.PIXELS)
+	@ConfigItem(
+		keyName = "overlayCornerRadius",
+		name = "Corner radius",
+		description = "Corner radius for the overlay background",
+		position = 12,
+		section = OVERLAY_SECTION
+	)
+	default int overlayCornerRadius()
+	{
+		return 6;
+	}
+
 	@ConfigItem(
 		keyName = "whitelistedItems",
 		name = "Whitelisted items",

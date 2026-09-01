@@ -273,10 +273,11 @@ class AreaLootOverlay extends Overlay
 			graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
 		}
 
+		int cornerRadius = getOverlayCornerRadius();
 		graphics.setColor(plugin.getThemeColor("overlayBackgroundColor"));
-		graphics.fillRoundRect(listX, listY, listWidth, height, 6, 6);
+		graphics.fillRoundRect(listX, listY, listWidth, height, cornerRadius, cornerRadius);
 		graphics.setColor(plugin.getThemeColor("overlayBorderColor"));
-		graphics.drawRoundRect(listX, listY, listWidth, height, 6, 6);
+		graphics.drawRoundRect(listX, listY, listWidth, height, cornerRadius, cornerRadius);
 
 		if (showHeader)
 		{
@@ -452,10 +453,11 @@ class AreaLootOverlay extends Overlay
 			graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
 		}
 
+		int cornerRadius = getOverlayCornerRadius();
 		graphics.setColor(plugin.getThemeColor("overlayBackgroundColor"));
-		graphics.fillRoundRect(gridX, gridY, overlayWidth, height, 6, 6);
+		graphics.fillRoundRect(gridX, gridY, overlayWidth, height, cornerRadius, cornerRadius);
 		graphics.setColor(plugin.getThemeColor("overlayBorderColor"));
-		graphics.drawRoundRect(gridX, gridY, overlayWidth, height, 6, 6);
+		graphics.drawRoundRect(gridX, gridY, overlayWidth, height, cornerRadius, cornerRadius);
 
 		if (showHeader)
 		{
@@ -563,6 +565,11 @@ class AreaLootOverlay extends Overlay
 			width = Math.max(width, metrics.stringWidth(GRID_STABLE_DISTANCE_LONG_TEXT) + (GRID_CELL_HORIZONTAL_PADDING * 2));
 		}
 		return width;
+	}
+
+	private int getOverlayCornerRadius()
+	{
+		return Math.max(0, Math.min(6, config.overlayCornerRadius()));
 	}
 
 	private void drawGridQuantityOverlay(
