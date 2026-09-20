@@ -69,7 +69,7 @@ class AreaLootPanel extends PluginPanel
 	{
 		String quantity = item.getQuantity() > 1 ? " x" + item.getQuantity() : "";
 		String geValueText = config.showGeValue()
-			? "&nbsp;&nbsp;<font color='" + toHtmlColor(plugin.getThemeColor("geValueTextColor")) + "'>" + formatGeValue(item) + "</font>"
+			? "&nbsp;&nbsp;<font color='" + toHtmlColor(plugin.getGeValueTextColor(item)) + "'>" + formatGeValue(item) + "</font>"
 			: "";
 		String formattedDistance = formatDistance(item);
 		String distanceText = formattedDistance.isEmpty()

@@ -54,6 +54,7 @@ import net.runelite.api.events.ItemQuantityChanged;
 import net.runelite.api.events.ItemSpawned;
 import net.runelite.api.events.MenuEntryAdded;
 import net.runelite.api.events.MenuOpened;
+import net.runelite.api.gameval.ItemID;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.gameval.VarClientID;
 import net.runelite.api.vars.InputType;
@@ -73,6 +74,8 @@ import net.runelite.client.input.KeyManager;
 import net.runelite.client.input.MouseManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.plugins.grounditems.GroundItemsConfig;
+import net.runelite.client.plugins.grounditems.config.ValueCalculationMode;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.NavigationButton;
@@ -211,6 +214,7 @@ public class AreaLootPlugin extends Plugin
 	{
 		log.debug("Area Loot started");
 		migrateLegacyThemePresetName();
+		migrateLegacyGeValueColorMode();
 		panel = new AreaLootPanel(this, config, itemManager);
 		navButton = NavigationButton.builder()
 			.tooltip("Area Loot")
@@ -358,6 +362,10 @@ public class AreaLootPlugin extends Plugin
 	{
 		if (!CONFIG_GROUP.equals(event.getGroup()))
 		{
+			if (GroundItemsConfig.GROUP.equals(event.getGroup()) && config.geValueColorMode() == AreaLootConfig.GeValueColorMode.SYNC_GROUND_ITEMS)
+			{
+				rebuildPanel(nearbyLoot);
+			}
 			return;
 		}
 
@@ -457,7 +465,16 @@ public class AreaLootPlugin extends Plugin
 			case "showLootCount":
 			case "totalGeValueMode":
 			case "showGeValue":
+			case "geValueColorMode":
 			case "geValueTextColor":
+			case "customGeLowValueColor":
+			case "customGeLowValuePrice":
+			case "customGeMediumValueColor":
+			case "customGeMediumValuePrice":
+			case "customGeHighValueColor":
+			case "customGeHighValuePrice":
+			case "customGeInsaneValueColor":
+			case "customGeInsaneValuePrice":
 			case "tileDistanceTextColor":
 			case "lootCountTextColor":
 			case "totalGeValueTextColor":
@@ -1155,6 +1172,16 @@ public class AreaLootPlugin extends Plugin
 		}
 	}
 
+	private void migrateLegacyGeValueColorMode()
+	{
+		String savedMode = configManager.getConfiguration(CONFIG_GROUP, "geValueColorMode");
+		String savedSync = configManager.getConfiguration(CONFIG_GROUP, "syncGeValueColorsWithGroundItems");
+		if (savedMode == null && Boolean.parseBoolean(savedSync))
+		{
+			configManager.setConfiguration(CONFIG_GROUP, "geValueColorMode", AreaLootConfig.GeValueColorMode.SYNC_GROUND_ITEMS.name());
+		}
+	}
+
 	private Map<String, String> presetColorTheme(AreaLootConfig.ThemePreset preset)
 	{
 		Map<String, String> colors = new LinkedHashMap<>();
@@ -1457,6 +1484,79 @@ public class AreaLootPlugin extends Plugin
 		int alpha = color.getAlpha();
 		int adjustedAlpha = (alpha * Math.max(0, 100 - extraTransparency)) / 100;
 		return new Color(color.getRed(), color.getGreen(), color.getBlue(), adjustedAlpha);
+	}
+
+	Color getGeValueTextColor(AreaLootItem item)
+	{
+		switch (config.geValueColorMode())
+		{
+			case SYNC_GROUND_ITEMS:
+				return getGroundItemsGeValueTextColor(item);
+			case CUSTOM:
+				return getCustomGeValueTextColor(item);
+			case SINGLE:
+			default:
+				return getThemeColor("geValueTextColor");
+		}
+	}
+
+	private Color getGroundItemsGeValueTextColor(AreaLootItem item)
+	{
+		GroundItemsConfig groundItemsConfig = configManager.getConfig(GroundItemsConfig.class);
+		long tierValue = getGroundItemsTierValue(item, groundItemsConfig.valueCalculationMode());
+		if (groundItemsConfig.insaneValuePrice() > 0 && tierValue > groundItemsConfig.insaneValuePrice())
+		{
+			return applyTextTransparency(groundItemsConfig.insaneValueColor());
+		}
+		if (groundItemsConfig.highValuePrice() > 0 && tierValue > groundItemsConfig.highValuePrice())
+		{
+			return applyTextTransparency(groundItemsConfig.highValueColor());
+		}
+		if (groundItemsConfig.mediumValuePrice() > 0 && tierValue > groundItemsConfig.mediumValuePrice())
+		{
+			return applyTextTransparency(groundItemsConfig.mediumValueColor());
+		}
+		if (groundItemsConfig.lowValuePrice() > 0 && tierValue > groundItemsConfig.lowValuePrice())
+		{
+			return applyTextTransparency(groundItemsConfig.lowValueColor());
+		}
+		return getThemeColor("geValueTextColor");
+	}
+
+	private Color getCustomGeValueTextColor(AreaLootItem item)
+	{
+		long geValue = item.getGeValue();
+		if (config.customGeInsaneValuePrice() > 0 && geValue > config.customGeInsaneValuePrice())
+		{
+			return applyTextTransparency(config.customGeInsaneValueColor());
+		}
+		if (config.customGeHighValuePrice() > 0 && geValue > config.customGeHighValuePrice())
+		{
+			return applyTextTransparency(config.customGeHighValueColor());
+		}
+		if (config.customGeMediumValuePrice() > 0 && geValue > config.customGeMediumValuePrice())
+		{
+			return applyTextTransparency(config.customGeMediumValueColor());
+		}
+		if (config.customGeLowValuePrice() > 0 && geValue > config.customGeLowValuePrice())
+		{
+			return applyTextTransparency(config.customGeLowValueColor());
+		}
+		return getThemeColor("geValueTextColor");
+	}
+
+	private long getGroundItemsTierValue(AreaLootItem item, ValueCalculationMode mode)
+	{
+		switch (mode)
+		{
+			case GE:
+				return item.getGeValue();
+			case HA:
+				return item.getHaValue();
+			case HIGHEST:
+			default:
+				return Math.max(item.getGeValue(), item.getHaValue());
+		}
 	}
 
 	private static boolean isOverlayTransparencyColorKey(String key)
@@ -1898,7 +1998,10 @@ public class AreaLootPlugin extends Plugin
 				}
 
 				boolean whitelisted = isConfiguredItem(itemName, whitelistedItems);
-				long geValue = (long) getItemPrice(tileItem.getId()) * tileItem.getQuantity();
+				ItemComposition itemComposition = itemManager.getItemComposition(tileItem.getId());
+				int realItemId = itemComposition.getNote() != -1 ? itemComposition.getLinkedNoteId() : tileItem.getId();
+				long geValue = (long) getItemPrice(realItemId) * tileItem.getQuantity();
+				long haValue = (long) getHaPrice(realItemId, itemComposition) * tileItem.getQuantity();
 				if (!whitelisted && geValue < minimumGeValue)
 				{
 					continue;
@@ -1911,7 +2014,8 @@ public class AreaLootPlugin extends Plugin
 					itemName,
 					location,
 					distance,
-					geValue
+					geValue,
+					haValue
 				));
 			}
 		}
@@ -2001,6 +2105,11 @@ public class AreaLootPlugin extends Plugin
 			itemPriceCache.put(itemId, price);
 		}
 		return price;
+	}
+
+	private int getHaPrice(int itemId, ItemComposition itemComposition)
+	{
+		return itemId == ItemID.COINS ? 1 : itemComposition.getHaPrice();
 	}
 
 	private Set<String> parseBlockedItems()

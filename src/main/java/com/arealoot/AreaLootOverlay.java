@@ -345,7 +345,7 @@ class AreaLootOverlay extends Overlay
 				if (config.showGeValue())
 				{
 					String valueText = formatGeValue(item);
-					graphics.setColor(plugin.getThemeColor("geValueTextColor"));
+					graphics.setColor(plugin.getGeValueTextColor(item));
 					graphics.drawString(valueText, metadataRight - metrics.stringWidth(valueText), metadataBaseline);
 				}
 				if (!distanceText.isEmpty())
@@ -361,7 +361,7 @@ class AreaLootOverlay extends Overlay
 				if (config.showGeValue())
 				{
 					String valueText = formatGeValue(item);
-					graphics.setColor(plugin.getThemeColor("geValueTextColor"));
+					graphics.setColor(plugin.getGeValueTextColor(item));
 					int valueWidth = metrics.stringWidth(valueText);
 					int distanceGap = !distanceText.isEmpty() ? METADATA_GAP : 0;
 					graphics.drawString(valueText, metadataX, metadataBaseline);
@@ -510,7 +510,7 @@ class AreaLootOverlay extends Overlay
 			if (config.showGeValue())
 			{
 				String valueText = formatGeValue(item);
-				graphics.setColor(plugin.getThemeColor("geValueTextColor"));
+				graphics.setColor(plugin.getGeValueTextColor(item));
 				drawCenteredGridText(graphics, metrics, valueText, x, textY, cellWidth);
 				textY += GRID_TEXT_LINE_HEIGHT;
 			}
@@ -1856,18 +1856,21 @@ class AreaLootOverlay extends Overlay
 		private AreaLootItem representative;
 		private int totalQuantity;
 		private long totalGeValue;
+		private long totalHaValue;
 
 		private LootGroup(AreaLootItem item)
 		{
 			representative = item;
 			totalQuantity = item.getQuantity();
 			totalGeValue = item.getGeValue();
+			totalHaValue = item.getHaValue();
 		}
 
 		private void add(AreaLootItem item)
 		{
 			totalQuantity += item.getQuantity();
 			totalGeValue += item.getGeValue();
+			totalHaValue += item.getHaValue();
 			if (item.getDistance() < representative.getDistance())
 			{
 				representative = item;
@@ -1883,7 +1886,8 @@ class AreaLootOverlay extends Overlay
 				representative.getName(),
 				representative.getLocation(),
 				representative.getDistance(),
-				totalGeValue
+				totalGeValue,
+				totalHaValue
 			);
 		}
 	}

@@ -2,7 +2,11 @@
 
 All notable user-facing changes to Area Loot are documented here.
 
-## 2.0.2 - 20-Sep-2026
+## 2.1.0 - 20-Sep-2026
+
+### Added
+
+- Added GE value color modes for individual item values: single theme color, synced Ground Items value tiers, or custom Area Loot tiers. Synced and custom modes fall back to the theme GE value color below the low tier.
 
 ### Fixed
 

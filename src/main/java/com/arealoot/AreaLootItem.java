@@ -13,4 +13,5 @@ class AreaLootItem
 	private final WorldPoint location;
 	private final int distance;
 	private final long geValue;
+	private final long haValue;
 }

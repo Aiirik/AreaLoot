@@ -313,6 +313,26 @@ public interface AreaLootConfig extends Config
 		}
 	}
 
+	enum GeValueColorMode
+	{
+		SINGLE("GE value text"),
+		SYNC_GROUND_ITEMS("Sync Ground Items"),
+		CUSTOM("Custom tiers");
+
+		private final String name;
+
+		GeValueColorMode(String name)
+		{
+			this.name = name;
+		}
+
+		@Override
+		public String toString()
+		{
+			return name;
+		}
+	}
+
 	enum SelectedItemFooterMode
 	{
 		OFF("Off"),
@@ -863,7 +883,7 @@ public interface AreaLootConfig extends Config
 		keyName = "geValueTextColor",
 		name = "GE value text",
 		description = "GE value text color in the overlay list and side panel",
-		position = 7,
+		position = 8,
 		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color geValueTextColor()
@@ -872,10 +892,122 @@ public interface AreaLootConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "geValueColorMode",
+		name = "GE value mode",
+		description = "Choose how individual item GE value text is colored",
+		position = 7,
+		section = OVERLAY_ADJUSTMENTS_SECTION
+	)
+	default GeValueColorMode geValueColorMode()
+	{
+		return GeValueColorMode.SINGLE;
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "customGeLowValueColor",
+		name = "Custom GE low",
+		description = "Custom tier color for low value item GE text",
+		position = 9,
+		section = OVERLAY_ADJUSTMENTS_SECTION
+	)
+	default Color customGeLowValueColor()
+	{
+		return Color.decode("#66B2FF");
+	}
+
+	@ConfigItem(
+		keyName = "customGeLowValuePrice",
+		name = "Custom GE low price",
+		description = "Start price for low value custom GE text color",
+		position = 10,
+		section = OVERLAY_ADJUSTMENTS_SECTION
+	)
+	default int customGeLowValuePrice()
+	{
+		return 20_000;
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "customGeMediumValueColor",
+		name = "Custom GE medium",
+		description = "Custom tier color for medium value item GE text",
+		position = 11,
+		section = OVERLAY_ADJUSTMENTS_SECTION
+	)
+	default Color customGeMediumValueColor()
+	{
+		return Color.decode("#99FF99");
+	}
+
+	@ConfigItem(
+		keyName = "customGeMediumValuePrice",
+		name = "Custom GE medium price",
+		description = "Start price for medium value custom GE text color",
+		position = 12,
+		section = OVERLAY_ADJUSTMENTS_SECTION
+	)
+	default int customGeMediumValuePrice()
+	{
+		return 100_000;
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "customGeHighValueColor",
+		name = "Custom GE high",
+		description = "Custom tier color for high value item GE text",
+		position = 13,
+		section = OVERLAY_ADJUSTMENTS_SECTION
+	)
+	default Color customGeHighValueColor()
+	{
+		return Color.decode("#FF9600");
+	}
+
+	@ConfigItem(
+		keyName = "customGeHighValuePrice",
+		name = "Custom GE high price",
+		description = "Start price for high value custom GE text color",
+		position = 14,
+		section = OVERLAY_ADJUSTMENTS_SECTION
+	)
+	default int customGeHighValuePrice()
+	{
+		return 1_000_000;
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "customGeInsaneValueColor",
+		name = "Custom GE insane",
+		description = "Custom tier color for insane value item GE text",
+		position = 15,
+		section = OVERLAY_ADJUSTMENTS_SECTION
+	)
+	default Color customGeInsaneValueColor()
+	{
+		return Color.decode("#FF66B2");
+	}
+
+	@ConfigItem(
+		keyName = "customGeInsaneValuePrice",
+		name = "Custom GE insane price",
+		description = "Start price for insane value custom GE text color",
+		position = 16,
+		section = OVERLAY_ADJUSTMENTS_SECTION
+	)
+	default int customGeInsaneValuePrice()
+	{
+		return 10_000_000;
+	}
+
+	@ConfigItem(
 		keyName = "tileDistanceTextColor",
 		name = "Tile distance text",
 		description = "Tile distance text color in the overlay list and side panel",
-		position = 8,
+		position = 17,
 		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color tileDistanceTextColor()
@@ -887,7 +1019,7 @@ public interface AreaLootConfig extends Config
 		keyName = "lootCountTextColor",
 		name = "Loot count text",
 		description = "Loot count footer text color",
-		position = 9,
+		position = 18,
 		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color lootCountTextColor()
@@ -899,7 +1031,7 @@ public interface AreaLootConfig extends Config
 		keyName = "totalGeValueLabelTextColor",
 		name = "Total GE label",
 		description = "Total GE label footer text color",
-		position = 10,
+		position = 19,
 		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color totalGeValueLabelTextColor()
@@ -911,7 +1043,7 @@ public interface AreaLootConfig extends Config
 		keyName = "totalGeValueTextColor",
 		name = "Total GE text",
 		description = "Total GE value footer text color",
-		position = 11,
+		position = 20,
 		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color totalGeValueTextColor()
@@ -923,7 +1055,7 @@ public interface AreaLootConfig extends Config
 		keyName = "selectedItemNameLabelTextColor",
 		name = "Selected item label",
 		description = "Selected item label text color in the overlay footer",
-		position = 12,
+		position = 21,
 		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color selectedItemNameLabelTextColor()
@@ -935,7 +1067,7 @@ public interface AreaLootConfig extends Config
 		keyName = "selectedItemNameTextColor",
 		name = "Selected item name",
 		description = "Selected loot item name text color",
-		position = 13,
+		position = 22,
 		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color selectedItemNameTextColor()
@@ -948,7 +1080,7 @@ public interface AreaLootConfig extends Config
 		keyName = "overlaySelectedRowColor",
 		name = "Selected item",
 		description = "Selected item color in the list or grid overlay",
-		position = 14,
+		position = 23,
 		section = OVERLAY_ADJUSTMENTS_SECTION
 	)
 	default Color overlaySelectedRowColor()
