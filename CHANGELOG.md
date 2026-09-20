@@ -2,6 +2,12 @@
 
 All notable user-facing changes to Area Loot are documented here.
 
+## 2.2.0 - 20-Sep-2026
+
+### Added
+
+- Added optional distance highlight colors for smoothly changing selected item outline, line, and low-opacity tile fill colors by distance within the configured loot radius.
+
 ## 2.1.0 - 20-Sep-2026
 
 ### Added

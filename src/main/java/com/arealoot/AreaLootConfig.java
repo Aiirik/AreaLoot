@@ -1410,6 +1410,18 @@ public interface AreaLootConfig extends Config
 		return 12;
 	}
 
+	@ConfigItem(
+		keyName = "distanceHighlightColors",
+		name = "Distance highlight colors",
+		description = "Override tile outline and line colors with a smooth near-to-far gradient based on item distance",
+		position = 4,
+		section = HIGHLIGHT_SECTION
+	)
+	default boolean distanceHighlightColors()
+	{
+		return false;
+	}
+
 	@Alpha
 	@ConfigItem(
 		keyName = "highlightColor",
@@ -1451,10 +1463,49 @@ public interface AreaLootConfig extends Config
 
 	@Alpha
 	@ConfigItem(
+		keyName = "nearHighlightColor",
+		name = "Near distance color",
+		description = "Outline and line color for nearby selected loot when distance highlight colors are enabled",
+		position = 5,
+		section = HIGHLIGHT_SECTION
+	)
+	default Color nearHighlightColor()
+	{
+		return new Color(0, 200, 255, 220);
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "midHighlightColor",
+		name = "Mid distance color",
+		description = "Outline and line color near half of the loot radius when distance highlight colors are enabled",
+		position = 6,
+		section = HIGHLIGHT_SECTION
+	)
+	default Color midHighlightColor()
+	{
+		return new Color(255, 210, 0, 220);
+	}
+
+	@Alpha
+	@ConfigItem(
+		keyName = "farHighlightColor",
+		name = "Far distance color",
+		description = "Outline and line color near the edge of the loot radius when distance highlight colors are enabled",
+		position = 7,
+		section = HIGHLIGHT_SECTION
+	)
+	default Color farHighlightColor()
+	{
+		return new Color(255, 80, 80, 220);
+	}
+
+	@Alpha
+	@ConfigItem(
 		keyName = "highlightMinimapDotColor",
 		name = "Minimap dot color",
 		description = "Dot color for the selected loot item's minimap marker",
-		position = 3,
+		position = 8,
 		section = HIGHLIGHT_SECTION
 	)
 	default Color highlightMinimapDotColor()
@@ -1467,7 +1518,7 @@ public interface AreaLootConfig extends Config
 		keyName = "highlightMinimapLineColor",
 		name = "Minimap line color",
 		description = "Line color for the selected loot item's minimap marker",
-		position = 4,
+		position = 9,
 		section = HIGHLIGHT_SECTION
 	)
 	default Color highlightMinimapLineColor()
@@ -1491,7 +1542,7 @@ public interface AreaLootConfig extends Config
 		keyName = "highlightMenuTextColor",
 		name = "Menu text color",
 		description = "Right-click menu text color for the selected loot item",
-		position = 5,
+		position = 10,
 		section = HIGHLIGHT_SECTION
 	)
 	default Color highlightMenuTextColor()

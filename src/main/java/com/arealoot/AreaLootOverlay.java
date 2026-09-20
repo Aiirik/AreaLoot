@@ -736,9 +736,6 @@ class AreaLootOverlay extends Overlay
 			return;
 		}
 
-		Color fill = plugin.getThemeColor("highlightColor");
-		Color outlineColor = plugin.getThemeColor("highlightOutlineColor");
-		Color lineColor = getHighlightLineColor();
 		AreaLootItem selectedItem = selectedItems.get(0);
 		Set<WorldPoint> renderedLocations = new HashSet<>();
 		for (AreaLootItem item : selectedItems)
@@ -760,6 +757,9 @@ class AreaLootOverlay extends Overlay
 				continue;
 			}
 
+			Color fill = getHighlightFillColor(item);
+			Color outlineColor = getHighlightOutlineColor(item);
+			Color lineColor = getHighlightLineColor(item);
 			if (config.drawHighlightLine())
 			{
 				renderHighlightLine(graphics, localPoint, lineColor);
@@ -834,9 +834,58 @@ class AreaLootOverlay extends Overlay
 			.thenComparing(AreaLootItem::getName, String.CASE_INSENSITIVE_ORDER));
 	}
 
-	private Color getHighlightLineColor()
+	private Color getHighlightFillColor(AreaLootItem item)
 	{
+		if (config.distanceHighlightColors())
+		{
+			Color color = getDistanceHighlightColor(item);
+			return new Color(color.getRed(), color.getGreen(), color.getBlue(), 38);
+		}
+		return plugin.getThemeColor("highlightColor");
+	}
+
+	private Color getHighlightOutlineColor(AreaLootItem item)
+	{
+		if (config.distanceHighlightColors())
+		{
+			return getDistanceHighlightColor(item);
+		}
+		return plugin.getThemeColor("highlightOutlineColor");
+	}
+
+	private Color getHighlightLineColor(AreaLootItem item)
+	{
+		if (config.distanceHighlightColors())
+		{
+			return getDistanceHighlightColor(item);
+		}
 		return plugin.getThemeColor("highlightLineColor");
+	}
+
+	private Color getDistanceHighlightColor(AreaLootItem item)
+	{
+		double ratio = Math.max(0.0, Math.min(1.0, item.getDistance() / (double) Math.max(1, config.lootRadius())));
+		if (ratio <= 0.5)
+		{
+			return interpolateColor(config.nearHighlightColor(), config.midHighlightColor(), ratio / 0.5);
+		}
+		return interpolateColor(config.midHighlightColor(), config.farHighlightColor(), (ratio - 0.5) / 0.5);
+	}
+
+	private static Color interpolateColor(Color start, Color end, double ratio)
+	{
+		double clampedRatio = Math.max(0.0, Math.min(1.0, ratio));
+		return new Color(
+			interpolateChannel(start.getRed(), end.getRed(), clampedRatio),
+			interpolateChannel(start.getGreen(), end.getGreen(), clampedRatio),
+			interpolateChannel(start.getBlue(), end.getBlue(), clampedRatio),
+			interpolateChannel(start.getAlpha(), end.getAlpha(), clampedRatio)
+		);
+	}
+
+	private static int interpolateChannel(int start, int end, double ratio)
+	{
+		return (int) Math.round(start + ((end - start) * ratio));
 	}
 
 	private int getListWidth(
