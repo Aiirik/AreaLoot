@@ -26,4 +26,19 @@ final class AreaLootValueFormatter
 		}
 		return value + "gp";
 	}
+
+	static String formatLongGeValue(long value)
+	{
+		String digits = Long.toString(value);
+		StringBuilder formatted = new StringBuilder(digits.length() + (digits.length() - 1) / 3 + 2);
+		for (int i = 0; i < digits.length(); i++)
+		{
+			if (i > 0 && (digits.length() - i) % 3 == 0)
+			{
+				formatted.append(',');
+			}
+			formatted.append(digits.charAt(i));
+		}
+		return formatted.append("gp").toString();
+	}
 }

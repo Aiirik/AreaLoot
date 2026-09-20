@@ -1312,6 +1312,7 @@ class AreaLootOverlay extends Overlay
 		switch (config.totalGeValueMode())
 		{
 			case LONG:
+				return formatLongGeValue(getTotalGeValue(items));
 			case SHORT:
 				return formatGeValue(getTotalGeValue(items));
 			case NONE:
@@ -1370,6 +1371,11 @@ class AreaLootOverlay extends Overlay
 	private String formatGeValue(long value)
 	{
 		return AreaLootValueFormatter.formatGeValue(value);
+	}
+
+	private String formatLongGeValue(long value)
+	{
+		return AreaLootValueFormatter.formatLongGeValue(value);
 	}
 
 	private int getMetadataWidth(FontMetrics metrics, AreaLootItem item, int distanceWidth)

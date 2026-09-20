@@ -2,6 +2,12 @@
 
 All notable user-facing changes to Area Loot are documented here.
 
+## 2.0.2 - 20-Sep-2026
+
+### Fixed
+
+- Fixed `Show total GE value` so Long displays the full coin value while Short keeps the abbreviated value.
+
 ## 2.0.1 - 01-Sep-2026
 
 ### Added

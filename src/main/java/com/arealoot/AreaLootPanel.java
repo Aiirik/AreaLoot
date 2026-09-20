@@ -121,6 +121,11 @@ class AreaLootPanel extends PluginPanel
 		return AreaLootValueFormatter.formatGeValue(value);
 	}
 
+	private String formatLongGeValue(long value)
+	{
+		return AreaLootValueFormatter.formatLongGeValue(value);
+	}
+
 	private String getSummaryText(List<AreaLootItem> items)
 	{
 		if (items.isEmpty() || (!config.showLootCount() && config.totalGeValueMode() == AreaLootConfig.TotalGeValueMode.NONE))
@@ -153,7 +158,7 @@ class AreaLootPanel extends PluginPanel
 		switch (config.totalGeValueMode())
 		{
 			case LONG:
-				return "<font color='" + toHtmlColor(plugin.getThemeColor("totalGeValueTextColor")) + "'>Total: " + formatGeValue(getTotalGeValue(items)) + "</font>";
+				return "<font color='" + toHtmlColor(plugin.getThemeColor("totalGeValueTextColor")) + "'>Total: " + formatLongGeValue(getTotalGeValue(items)) + "</font>";
 			case SHORT:
 				return "<font color='" + toHtmlColor(plugin.getThemeColor("totalGeValueTextColor")) + "'>" + formatGeValue(getTotalGeValue(items)) + "</font>";
 			case NONE:
