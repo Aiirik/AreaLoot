@@ -4,6 +4,13 @@ All notable user-facing changes to Area Loot are documented here.
 
 ## Unreleased
 
+### Added
+
+- Added an `Auto show mode` setting for auto show/hide: `On kill` shows the overlay only after you kill a monster, `Always` keeps the existing behavior.
+- Added `On kill timeout` and `Always timeout` settings (in game ticks) that fade the overlay out after your last kill or after no new loot appears. `Always timeout` defaults to off.
+- Added a `Force show value` setting that forces the overlay open while an item worth at least that much is nearby, until the item is gone or the overlay toggle hotkey closes it, then returns to the normal mode.
+- Added a `Left-click selected item` menu setting that makes Take on the selected item the left-click option on its pile. It only replaces another item's Take or Walk here, never NPC or object actions.
+
 ### Fixed
 
 - Fixed the plugin failing to build after RuneLite changed item prices to `long` (needed for items worth more than 2,147,483,647 gp).
