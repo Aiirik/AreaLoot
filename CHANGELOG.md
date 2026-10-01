@@ -2,19 +2,23 @@
 
 All notable user-facing changes to Area Loot are documented here.
 
-## Unreleased
+## 2.3.0 - 01-Oct-2026
 
 ### Added
 
-- Added an `Auto show mode` setting for auto show/hide: `On kill` shows the overlay only after you kill a monster, `Always` keeps the existing behavior.
-- Added `On kill timeout` and `Always timeout` settings (in game ticks) that fade the overlay out after your last kill or after no new loot appears. `Always timeout` defaults to off.
-- Added a `Force show value` setting that forces the overlay open while an item worth at least that much is nearby, until the item is gone or the overlay toggle hotkey closes it, then returns to the normal mode.
-- Added a `Left-click selected item` menu setting that makes Take on the selected item the left-click option on its pile. It only replaces another item's Take or Walk here, never NPC or object actions.
+- Added an `Auto show mode` setting for auto show/hide: `On kill` shows the overlay only after you kill a monster, `Always` keeps the existing behavior. Thanks to `kdanfurtado-bit`.
+- Added an `On kill timeout` setting (in game ticks) that fades the overlay out after your last kill. Thanks to `kdanfurtado-bit`.
+- Added a `Force show value` setting that forces the overlay open while an item worth at least that much is nearby, until the item is gone or the overlay toggle hotkey closes it, then returns to the normal mode. Thanks to `kdanfurtado-bit`.
+- Added a `Left-click selected item` menu setting that makes Take on the selected item the left-click option on its pile. It only replaces another item's Take or Walk here, never NPC or object actions. Thanks to `kdanfurtado-bit`.
+- Added an `Only show my drops` setting to hide other players' ground items while still showing your own dropped items, Your NPC drops, and world item spawns.
+- Added a `Hide world items` setting to hide static ground item spawns and other unowned world items.
 
 ### Fixed
 
-- Fixed the plugin failing to build after RuneLite changed item prices to `long` (needed for items worth more than 2,147,483,647 gp).
-- Fixed Ctrl/Alt hotkeys (overlay toggle and auto show/hide) never firing when RuneLite's Key Remapping plugin is off.
+- Fixed `Force show value` so it can show high-value items from other players even when `Only show my drops` is enabled.
+- Fixed the overlay toggle hotkey so it always controls manual overlay on/off, even while a force-show item is active.
+- Fixed the plugin failing to build after RuneLite changed item prices to `long` (needed for items worth more than 2,147,483,647 gp). Thanks to `kdanfurtado-bit`.
+- Fixed Ctrl/Alt hotkeys (overlay toggle and auto show/hide) never firing when RuneLite's Key Remapping plugin is off. Thanks to `kdanfurtado-bit`.
 
 ## 2.2.0 - 20-Sep-2026
 

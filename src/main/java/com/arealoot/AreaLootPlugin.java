@@ -187,7 +187,6 @@ public class AreaLootPlugin extends Plugin
 	private volatile String overlayStatusText = "";
 	private volatile boolean overlayFadeOutActive;
 	private volatile int lastKillTick = -1;
-	private volatile int lastNewLootTick = -1;
 	private NPC lastTargetNpc;
 	private volatile boolean forceOverlayActive;
 	private Set<String> forcedItemKeys = new HashSet<>();
@@ -297,7 +296,6 @@ public class AreaLootPlugin extends Plugin
 	private void resetAutoShowTracking()
 	{
 		lastKillTick = -1;
-		lastNewLootTick = -1;
 		lastTargetNpc = null;
 		forceOverlayActive = false;
 		forcedItemKeys = new HashSet<>();
@@ -308,14 +306,8 @@ public class AreaLootPlugin extends Plugin
 	public void onItemSpawned(ItemSpawned event)
 	{
 		WorldPoint location = event.getTile().getWorldLocation();
-		addItem(location, event.getItem(), System.currentTimeMillis());
+		addItem(location, event.getItem(), System.currentTimeMillis(), isOwnedByPlayer(event.getItem()), isWorldItem(event.getItem()));
 		lootDirty = true;
-
-		Player player = client.getLocalPlayer();
-		if (player != null && player.getWorldLocation().distanceTo(location) <= config.lootRadius())
-		{
-			lastNewLootTick = client.getTickCount();
-		}
 	}
 
 	@Subscribe
@@ -353,11 +345,13 @@ public class AreaLootPlugin extends Plugin
 	@Subscribe
 	public void onItemQuantityChanged(ItemQuantityChanged event)
 	{
-		Long spawnedAtMillis = removeItem(event.getTile(), event.getItem());
+		TrackedGroundItem previousItem = removeItem(event.getTile(), event.getItem());
 		addItem(
 			event.getTile().getWorldLocation(),
 			event.getItem(),
-			spawnedAtMillis == null ? System.currentTimeMillis() : spawnedAtMillis
+			previousItem == null ? System.currentTimeMillis() : previousItem.getSpawnedAtMillis(),
+			previousItem == null ? isOwnedByPlayer(event.getItem()) : previousItem.isOwnedByPlayer(),
+			previousItem == null ? isWorldItem(event.getItem()) : previousItem.isWorldItem()
 		);
 		lootDirty = true;
 	}
@@ -498,7 +492,8 @@ public class AreaLootPlugin extends Plugin
 				clearSavedOverlayMode();
 			}
 		}
-		else if ("sortMode".equals(key) || "minimumGeValue".equals(key) || "overlayItemDelay".equals(key) || "groupSameItemOverlay".equals(key) || BLOCKED_ITEMS_KEY.equals(key)
+		else if ("sortMode".equals(key) || "minimumGeValue".equals(key) || "overlayItemDelay".equals(key) || "groupSameItemOverlay".equals(key)
+			|| "onlyShowOwnDrops".equals(key) || "hideWorldItems".equals(key) || BLOCKED_ITEMS_KEY.equals(key)
 			|| WHITELISTED_ITEMS_KEY.equals(key) || "lootRadius".equals(key) || "forceShowValue".equals(key))
 		{
 			lootDirty = true;
@@ -777,7 +772,6 @@ public class AreaLootPlugin extends Plugin
 
 	private boolean isAutoShowWindowOpen()
 	{
-		int now = client.getTickCount();
 		if (config.autoShowMode() == AreaLootConfig.AutoShowMode.ON_KILL)
 		{
 			if (lastKillTick < 0)
@@ -785,12 +779,12 @@ public class AreaLootPlugin extends Plugin
 				return false;
 			}
 
+			int now = client.getTickCount();
 			int timeoutTicks = config.onKillTimeoutTicks();
 			return timeoutTicks <= 0 || now - lastKillTick < timeoutTicks;
 		}
 
-		int timeoutTicks = config.alwaysTimeoutTicks();
-		return timeoutTicks <= 0 || (lastNewLootTick >= 0 && now - lastNewLootTick < timeoutTicks);
+		return true;
 	}
 
 	boolean isOverlayAutoModeActive()
@@ -870,17 +864,6 @@ public class AreaLootPlugin extends Plugin
 		{
 			refreshLootSnapshot();
 			long now = System.currentTimeMillis();
-			if (forceOverlayActive && !manualOverlayEnabled)
-			{
-				// Close the value-forced overlay and fall back to the normal mode without changing it
-				dismissForcedOverlay();
-				overlayStatusMode = "toggle";
-				overlayStatusText = "Closed";
-				overlayStatusUntilMillis = now + AUTO_STATUS_DISABLED_MILLIS;
-				overlayFadeOutActive = false;
-				return;
-			}
-
 			manualOverlayEnabled = !manualOverlayEnabled;
 			if (!manualOverlayEnabled)
 			{
@@ -889,15 +872,15 @@ public class AreaLootPlugin extends Plugin
 			if (manualOverlayEnabled)
 			{
 				autoOverlayEnabled = false;
-				overlayStatusMode = "toggle";
-				overlayStatusText = "Enabled";
+				overlayStatusMode = "";
+				overlayStatusText = "Overlay on";
 				overlayStatusUntilMillis = now + AUTO_STATUS_ENABLED_MILLIS;
 				overlayFadeOutActive = false;
 			}
 			else
 			{
-				overlayStatusMode = "toggle";
-				overlayStatusText = "Disabled";
+				overlayStatusMode = "";
+				overlayStatusText = "Overlay off";
 				overlayStatusUntilMillis = now + AUTO_STATUS_DISABLED_MILLIS;
 				overlayFadeOutActive = false;
 			}
@@ -914,7 +897,6 @@ public class AreaLootPlugin extends Plugin
 			long now = System.currentTimeMillis();
 			if (autoOverlayEnabled)
 			{
-				lastNewLootTick = client.getTickCount();
 				manualOverlayEnabled = false;
 				overlayStatusMode = "auto";
 				overlayStatusText = "Enabled";
@@ -2133,6 +2115,7 @@ public class AreaLootPlugin extends Plugin
 		WorldPoint playerLocation = player.getWorldLocation();
 		int radius = config.lootRadius();
 		long minimumGeValue = parseMinimumGeValue();
+		long forceShowValue = parseForceShowValue();
 		Set<String> blockedItems = parseBlockedItems();
 		Set<String> whitelistedItems = parseWhitelistedItems();
 		List<AreaLootItem> items = new ArrayList<>();
@@ -2156,6 +2139,11 @@ public class AreaLootPlugin extends Plugin
 
 			for (TrackedGroundItem trackedItem : entry.getValue())
 			{
+				if (config.hideWorldItems() && trackedItem.isWorldItem())
+				{
+					continue;
+				}
+
 				if (itemDelayMillis > 0)
 				{
 					long showAtMillis = trackedItem.getSpawnedAtMillis() + itemDelayMillis;
@@ -2180,6 +2168,12 @@ public class AreaLootPlugin extends Plugin
 				int realItemId = itemComposition.getNote() != -1 ? itemComposition.getLinkedNoteId() : tileItem.getId();
 				long geValue = getItemPrice(realItemId) * tileItem.getQuantity();
 				long haValue = (long) getHaPrice(realItemId, itemComposition) * tileItem.getQuantity();
+				if (config.onlyShowOwnDrops() && !trackedItem.isOwnedByPlayer() && !trackedItem.isWorldItem()
+					&& (forceShowValue <= 0 || geValue < forceShowValue))
+				{
+					continue;
+				}
+
 				if (!whitelisted && geValue < minimumGeValue)
 				{
 					continue;
@@ -2658,13 +2652,13 @@ public class AreaLootPlugin extends Plugin
 		}
 	}
 
-	private void addItem(WorldPoint location, TileItem item, long spawnedAtMillis)
+	private void addItem(WorldPoint location, TileItem item, long spawnedAtMillis, boolean ownedByPlayer, boolean worldItem)
 	{
 		groundItems.computeIfAbsent(location, ignored -> new ArrayList<>())
-			.add(new TrackedGroundItem(item, spawnedAtMillis));
+			.add(new TrackedGroundItem(item, spawnedAtMillis, ownedByPlayer, worldItem));
 	}
 
-	private Long removeItem(Tile tile, TileItem item)
+	private TrackedGroundItem removeItem(Tile tile, TileItem item)
 	{
 		WorldPoint location = tile.getWorldLocation();
 		List<TrackedGroundItem> items = groundItems.get(location);
@@ -2673,14 +2667,14 @@ public class AreaLootPlugin extends Plugin
 			return null;
 		}
 
-		Long spawnedAtMillis = null;
+		TrackedGroundItem removedItem = null;
 		for (Iterator<TrackedGroundItem> iterator = items.iterator(); iterator.hasNext(); )
 		{
 			TrackedGroundItem trackedItem = iterator.next();
 			TileItem current = trackedItem.getItem();
 			if (current == item || current.getId() == item.getId())
 			{
-				spawnedAtMillis = trackedItem.getSpawnedAtMillis();
+				removedItem = trackedItem;
 				iterator.remove();
 				break;
 			}
@@ -2699,7 +2693,17 @@ public class AreaLootPlugin extends Plugin
 			selectedStackId = -1;
 		}
 
-		return spawnedAtMillis;
+		return removedItem;
+	}
+
+	private boolean isOwnedByPlayer(TileItem item)
+	{
+		return item.getOwnership() == TileItem.OWNERSHIP_SELF;
+	}
+
+	private boolean isWorldItem(TileItem item)
+	{
+		return item.getOwnership() == TileItem.OWNERSHIP_NONE;
 	}
 
 	private BufferedImage createLootIcon()
@@ -2763,11 +2767,15 @@ public class AreaLootPlugin extends Plugin
 	{
 		private final TileItem item;
 		private final long spawnedAtMillis;
+		private final boolean ownedByPlayer;
+		private final boolean worldItem;
 
-		private TrackedGroundItem(TileItem item, long spawnedAtMillis)
+		private TrackedGroundItem(TileItem item, long spawnedAtMillis, boolean ownedByPlayer, boolean worldItem)
 		{
 			this.item = item;
 			this.spawnedAtMillis = spawnedAtMillis;
+			this.ownedByPlayer = ownedByPlayer;
+			this.worldItem = worldItem;
 		}
 
 		private TileItem getItem()
@@ -2778,6 +2786,16 @@ public class AreaLootPlugin extends Plugin
 		private long getSpawnedAtMillis()
 		{
 			return spawnedAtMillis;
+		}
+
+		private boolean isOwnedByPlayer()
+		{
+			return ownedByPlayer;
+		}
+
+		private boolean isWorldItem()
+		{
+			return worldItem;
 		}
 	}
 }

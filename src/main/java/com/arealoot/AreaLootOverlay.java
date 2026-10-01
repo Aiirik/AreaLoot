@@ -659,7 +659,15 @@ class AreaLootOverlay extends Overlay
 		String headerText = "Area Loot";
 		if (plugin.shouldShowOverlayStatus())
 		{
-			headerText += " (" + plugin.getOverlayStatusMode() + ") - " + plugin.getOverlayStatusText();
+			String statusMode = plugin.getOverlayStatusMode();
+			if (statusMode == null || statusMode.isEmpty())
+			{
+				headerText += " - " + plugin.getOverlayStatusText();
+			}
+			else
+			{
+				headerText += " (" + statusMode + ") - " + plugin.getOverlayStatusText();
+			}
 		}
 		return headerText;
 	}
@@ -689,7 +697,7 @@ class AreaLootOverlay extends Overlay
 		}
 
 		String statusText = headerText.substring(baseText.length());
-		if (!"Enabled".equals(plugin.getOverlayStatusText()))
+		if (!"Enabled".equals(plugin.getOverlayStatusText()) && !"Overlay on".equals(plugin.getOverlayStatusText()))
 		{
 			graphics.drawString(headerText, x, y);
 			return;
@@ -725,7 +733,8 @@ class AreaLootOverlay extends Overlay
 
 	private boolean isExpiredEnabledStatusHeader(String headerText)
 	{
-		return !plugin.shouldShowOverlayStatus() && headerText.endsWith(" - Enabled");
+		return !plugin.shouldShowOverlayStatus()
+			&& (headerText.endsWith(" - Enabled") || headerText.endsWith(" - Overlay on"));
 	}
 
 	private void renderSelectedTile(Graphics2D graphics)
