@@ -1418,7 +1418,7 @@ public interface AreaLootConfig extends Config
 	)
 	default boolean leftClickSelectedItem()
 	{
-		return true;
+		return false;
 	}
 
 	@ConfigItem(
