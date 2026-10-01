@@ -2,6 +2,13 @@
 
 All notable user-facing changes to Area Loot are documented here.
 
+## Unreleased
+
+### Fixed
+
+- Fixed the plugin failing to build after RuneLite changed item prices to `long` (needed for items worth more than 2,147,483,647 gp).
+- Fixed Ctrl/Alt hotkeys (overlay toggle and auto show/hide) never firing when RuneLite's Key Remapping plugin is off.
+
 ## 2.2.0 - 20-Sep-2026
 
 ### Added

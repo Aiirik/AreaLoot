@@ -106,7 +106,7 @@ public class AreaLootPlugin extends Plugin
 
 	private final Map<WorldPoint, List<TrackedGroundItem>> groundItems = new HashMap<>();
 	private final Map<Integer, String> itemNameCache = new HashMap<>();
-	private final Map<Integer, Integer> itemPriceCache = new HashMap<>();
+	private final Map<Integer, Long> itemPriceCache = new HashMap<>();
 
 	@Inject
 	private Client client;
@@ -2000,7 +2000,7 @@ public class AreaLootPlugin extends Plugin
 				boolean whitelisted = isConfiguredItem(itemName, whitelistedItems);
 				ItemComposition itemComposition = itemManager.getItemComposition(tileItem.getId());
 				int realItemId = itemComposition.getNote() != -1 ? itemComposition.getLinkedNoteId() : tileItem.getId();
-				long geValue = (long) getItemPrice(realItemId) * tileItem.getQuantity();
+				long geValue = getItemPrice(realItemId) * tileItem.getQuantity();
 				long haValue = (long) getHaPrice(realItemId, itemComposition) * tileItem.getQuantity();
 				if (!whitelisted && geValue < minimumGeValue)
 				{
@@ -2096,9 +2096,9 @@ public class AreaLootPlugin extends Plugin
 		return name;
 	}
 
-	private int getItemPrice(int itemId)
+	private long getItemPrice(int itemId)
 	{
-		Integer price = itemPriceCache.get(itemId);
+		Long price = itemPriceCache.get(itemId);
 		if (price == null)
 		{
 			price = itemManager.getItemPrice(itemId);
@@ -2403,7 +2403,7 @@ public class AreaLootPlugin extends Plugin
 			&& (lastPart.isEmpty() || itemName.endsWith(lastPart));
 	}
 
-	private boolean shouldIgnoreHotkeys()
+	private boolean shouldIgnoreHotkeys(Keybind keybind)
 	{
 		if (client.getFocusedInputFieldWidget() != null)
 		{
@@ -2414,6 +2414,12 @@ public class AreaLootPlugin extends Plugin
 			|| client.getVarcIntValue(VarClientID.WORLDMAP_SEARCHING) != 0)
 		{
 			return true;
+		}
+
+		// Ctrl/Alt combos can't type into the chatbox, so they are safe even when chat is always active
+		if (keybind != null && (keybind.getModifiers() & (KeyEvent.CTRL_DOWN_MASK | KeyEvent.ALT_DOWN_MASK)) != 0)
+		{
+			return false;
 		}
 
 		Widget chatboxParent = client.getWidget(InterfaceID.Chatbox.UNIVERSE);
@@ -2434,15 +2440,18 @@ public class AreaLootPlugin extends Plugin
 
 	private class NonTypingHotkeyListener extends HotkeyListener
 	{
+		private final java.util.function.Supplier<Keybind> keybind;
+
 		private NonTypingHotkeyListener(java.util.function.Supplier<Keybind> keybind)
 		{
 			super(keybind);
+			this.keybind = keybind;
 		}
 
 		@Override
 		public void keyPressed(KeyEvent event)
 		{
-			if (shouldIgnoreHotkeys())
+			if (shouldIgnoreHotkeys(keybind.get()))
 			{
 				return;
 			}
@@ -2453,7 +2462,7 @@ public class AreaLootPlugin extends Plugin
 		@Override
 		public void keyTyped(KeyEvent event)
 		{
-			if (shouldIgnoreHotkeys())
+			if (shouldIgnoreHotkeys(keybind.get()))
 			{
 				return;
 			}
