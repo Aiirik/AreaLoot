@@ -7,10 +7,10 @@ All notable user-facing changes to Area Loot are documented here.
 ### Added
 
 - Added an `Auto show mode` setting for auto show/hide: `On kill` shows the overlay only after you kill a monster, `Always` keeps the existing behavior. Thanks to `kdanfurtado-bit`.
-- Added an `On kill timeout` setting (in game ticks) that fades the overlay out after your last kill. Thanks to `kdanfurtado-bit`.
+- Added an `On kill overlay timeout` setting (in game ticks) that fades the overlay out after your last kill in `On kill` auto-show mode only. Defaults to about 25 seconds. Thanks to `kdanfurtado-bit`.
 - Added a `Force show value` setting that forces the overlay open while an item worth at least that much is nearby, until the item is gone or the overlay toggle hotkey closes it, then returns to the normal mode. Thanks to `kdanfurtado-bit`.
 - Added a `Left-click selected item` menu setting that makes Take on the selected item the left-click option on its pile. It only replaces another item's Take or Walk here, never NPC or object actions. Thanks to `kdanfurtado-bit`.
-- Added an `Only show my drops` setting to hide other players' ground items while still showing your own dropped items, Your NPC drops, and world item spawns.
+- Added an `Only show my drops` setting to hide other players' ground items while still showing your own dropped items, your NPC drops, and world item spawns.
 - Added a `Hide world items` setting to hide static ground item spawns and other unowned world items.
 
 ### Fixed

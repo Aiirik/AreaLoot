@@ -501,14 +501,14 @@ public interface AreaLootConfig extends Config
 	@Units(Units.TICKS)
 	@ConfigItem(
 		keyName = "onKillTimeoutTicks",
-		name = "On kill timeout",
-		description = "<html>On kill mode: fade the overlay out this many game ticks after your last kill<br>1 tick = 0.6 seconds. 0 = stay until the loot is gone</html>",
+		name = "On kill overlay timeout",
+		description = "<html>On kill mode only: fade the overlay out this many game ticks after your last kill<br>1 tick = 0.6 seconds. 42 ticks is about 25 seconds. 0 = stay until the loot is gone</html>",
 		position = 3,
 		section = GENERAL_SECTION
 	)
 	default int onKillTimeoutTicks()
 	{
-		return 50;
+		return 42;
 	}
 
 	@ConfigItem(
