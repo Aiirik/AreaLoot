@@ -42,18 +42,22 @@ import net.runelite.api.KeyCode;
 import net.runelite.api.MenuAction;
 import net.runelite.api.Menu;
 import net.runelite.api.MenuEntry;
+import net.runelite.api.NPC;
 import net.runelite.api.Player;
 import net.runelite.api.Tile;
 import net.runelite.api.TileItem;
 import net.runelite.api.WorldView;
 import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.events.ActorDeath;
 import net.runelite.api.events.GameTick;
+import net.runelite.api.events.InteractingChanged;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.ItemDespawned;
 import net.runelite.api.events.ItemQuantityChanged;
 import net.runelite.api.events.ItemSpawned;
 import net.runelite.api.events.MenuEntryAdded;
 import net.runelite.api.events.MenuOpened;
+import net.runelite.api.events.PostMenuSort;
 import net.runelite.api.gameval.ItemID;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.gameval.VarClientID;
@@ -95,6 +99,7 @@ public class AreaLootPlugin extends Plugin
 	private static final long AUTO_STATUS_ENABLED_MILLIS = 1200L;
 	private static final long AUTO_STATUS_DISABLED_MILLIS = 1000L;
 	private static final long OVERLAY_STATUS_FADE_MILLIS = 450L;
+	private static final int KILL_LOOT_GRACE_TICKS = 5;
 	private static final String CONFIG_GROUP = "area-loot";
 	private static final String BLOCKED_ITEMS_KEY = "blockedItems";
 	private static final String WHITELISTED_ITEMS_KEY = "whitelistedItems";
@@ -181,6 +186,12 @@ public class AreaLootPlugin extends Plugin
 	private volatile String overlayStatusMode = "";
 	private volatile String overlayStatusText = "";
 	private volatile boolean overlayFadeOutActive;
+	private volatile int lastKillTick = -1;
+	private volatile int lastNewLootTick = -1;
+	private NPC lastTargetNpc;
+	private volatile boolean forceOverlayActive;
+	private Set<String> forcedItemKeys = new HashSet<>();
+	private final Set<String> dismissedForcedItems = new HashSet<>();
 
 	private final HotkeyListener overlayHotkeyListener = new NonTypingHotkeyListener(() -> config.toggleHotkey())
 	{
@@ -280,6 +291,17 @@ public class AreaLootPlugin extends Plugin
 		overlayStatusMode = "";
 		overlayStatusText = "";
 		overlayFadeOutActive = false;
+		resetAutoShowTracking();
+	}
+
+	private void resetAutoShowTracking()
+	{
+		lastKillTick = -1;
+		lastNewLootTick = -1;
+		lastTargetNpc = null;
+		forceOverlayActive = false;
+		forcedItemKeys = new HashSet<>();
+		dismissedForcedItems.clear();
 	}
 
 	@Subscribe
@@ -288,6 +310,37 @@ public class AreaLootPlugin extends Plugin
 		WorldPoint location = event.getTile().getWorldLocation();
 		addItem(location, event.getItem(), System.currentTimeMillis());
 		lootDirty = true;
+
+		Player player = client.getLocalPlayer();
+		if (player != null && player.getWorldLocation().distanceTo(location) <= config.lootRadius())
+		{
+			lastNewLootTick = client.getTickCount();
+		}
+	}
+
+	@Subscribe
+	public void onInteractingChanged(InteractingChanged event)
+	{
+		if (event.getSource() == client.getLocalPlayer() && event.getTarget() instanceof NPC)
+		{
+			lastTargetNpc = (NPC) event.getTarget();
+		}
+	}
+
+	@Subscribe
+	public void onActorDeath(ActorDeath event)
+	{
+		if (!(event.getActor() instanceof NPC))
+		{
+			return;
+		}
+
+		NPC npc = (NPC) event.getActor();
+		Player player = client.getLocalPlayer();
+		if (npc == lastTargetNpc || (player != null && npc.getInteracting() == player))
+		{
+			lastKillTick = client.getTickCount();
+		}
 	}
 
 	@Subscribe
@@ -312,6 +365,13 @@ public class AreaLootPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(GameTick event)
 	{
+		// With no On kill timeout, end the kill window once that kill's loot is gone (after giving it time to drop)
+		if (lastKillTick >= 0 && config.onKillTimeoutTicks() <= 0 && nearbyLoot.isEmpty()
+			&& client.getTickCount() - lastKillTick > KILL_LOOT_GRACE_TICKS)
+		{
+			lastKillTick = -1;
+		}
+
 		if (!shouldMaintainLootSnapshot())
 		{
 			return;
@@ -348,6 +408,12 @@ public class AreaLootPlugin extends Plugin
 			overlayStatusMode = "";
 			overlayStatusText = "";
 			overlayFadeOutActive = false;
+			lastTargetNpc = null;
+			forceOverlayActive = false;
+			if (event.getGameState() == GameState.LOGIN_SCREEN)
+			{
+				resetAutoShowTracking();
+			}
 			rebuildPanel(Collections.emptyList());
 		}
 		else if (event.getGameState() == GameState.LOGGED_IN)
@@ -433,7 +499,7 @@ public class AreaLootPlugin extends Plugin
 			}
 		}
 		else if ("sortMode".equals(key) || "minimumGeValue".equals(key) || "overlayItemDelay".equals(key) || "groupSameItemOverlay".equals(key) || BLOCKED_ITEMS_KEY.equals(key)
-			|| WHITELISTED_ITEMS_KEY.equals(key) || "lootRadius".equals(key))
+			|| WHITELISTED_ITEMS_KEY.equals(key) || "lootRadius".equals(key) || "forceShowValue".equals(key))
 		{
 			lootDirty = true;
 			if (shouldMaintainLootSnapshot())
@@ -590,6 +656,49 @@ public class AreaLootPlugin extends Plugin
 		}
 	}
 
+	@Subscribe
+	public void onPostMenuSort(PostMenuSort event)
+	{
+		if (selectedLocation == null || !config.leftClickSelectedItem() || client.isMenuOpen())
+		{
+			return;
+		}
+
+		MenuEntry[] menuEntries = client.getMenu().getMenuEntries();
+		if (menuEntries.length < 2)
+		{
+			return;
+		}
+
+		// The last entry is the left-click action; only take it over from another ground item's Take or Walk here
+		MenuEntry leftClickEntry = menuEntries[menuEntries.length - 1];
+		if (!isTakeGroundItemMenuEntry(leftClickEntry) && leftClickEntry.getType() != MenuAction.WALK)
+		{
+			return;
+		}
+
+		WorldView worldView = client.getTopLevelWorldView();
+		int selectedSceneX = selectedLocation.getX() - worldView.getBaseX();
+		int selectedSceneY = selectedLocation.getY() - worldView.getBaseY();
+		if (isSelectedGroundItemMenuEntry(leftClickEntry, selectedSceneX, selectedSceneY))
+		{
+			return;
+		}
+
+		for (int i = menuEntries.length - 2; i >= 0; i--)
+		{
+			MenuEntry entry = menuEntries[i];
+			if (entry.getType() == MenuAction.GROUND_ITEM_THIRD_OPTION
+				&& isSelectedGroundItemMenuEntry(entry, selectedSceneX, selectedSceneY))
+			{
+				System.arraycopy(menuEntries, i + 1, menuEntries, i, menuEntries.length - 1 - i);
+				menuEntries[menuEntries.length - 1] = entry;
+				client.getMenu().setMenuEntries(menuEntries);
+				return;
+			}
+		}
+	}
+
 	void selectLoot(AreaLootItem item)
 	{
 		selectedLocation = item.getLocation();
@@ -663,7 +772,25 @@ public class AreaLootPlugin extends Plugin
 			return true;
 		}
 
-		return manualOverlayEnabled || (autoOverlayEnabled && !nearbyLoot.isEmpty()) || overlayFadeOutActive;
+		return manualOverlayEnabled || forceOverlayActive || (autoOverlayEnabled && !nearbyLoot.isEmpty() && isAutoShowWindowOpen()) || overlayFadeOutActive;
+	}
+
+	private boolean isAutoShowWindowOpen()
+	{
+		int now = client.getTickCount();
+		if (config.autoShowMode() == AreaLootConfig.AutoShowMode.ON_KILL)
+		{
+			if (lastKillTick < 0)
+			{
+				return false;
+			}
+
+			int timeoutTicks = config.onKillTimeoutTicks();
+			return timeoutTicks <= 0 || now - lastKillTick < timeoutTicks;
+		}
+
+		int timeoutTicks = config.alwaysTimeoutTicks();
+		return timeoutTicks <= 0 || (lastNewLootTick >= 0 && now - lastNewLootTick < timeoutTicks);
 	}
 
 	boolean isOverlayAutoModeActive()
@@ -742,8 +869,23 @@ public class AreaLootPlugin extends Plugin
 		clientThread.invoke(() ->
 		{
 			refreshLootSnapshot();
-			manualOverlayEnabled = !manualOverlayEnabled;
 			long now = System.currentTimeMillis();
+			if (forceOverlayActive && !manualOverlayEnabled)
+			{
+				// Close the value-forced overlay and fall back to the normal mode without changing it
+				dismissForcedOverlay();
+				overlayStatusMode = "toggle";
+				overlayStatusText = "Closed";
+				overlayStatusUntilMillis = now + AUTO_STATUS_DISABLED_MILLIS;
+				overlayFadeOutActive = false;
+				return;
+			}
+
+			manualOverlayEnabled = !manualOverlayEnabled;
+			if (!manualOverlayEnabled)
+			{
+				dismissForcedOverlay();
+			}
 			if (manualOverlayEnabled)
 			{
 				autoOverlayEnabled = false;
@@ -772,6 +914,7 @@ public class AreaLootPlugin extends Plugin
 			long now = System.currentTimeMillis();
 			if (autoOverlayEnabled)
 			{
+				lastNewLootTick = client.getTickCount();
 				manualOverlayEnabled = false;
 				overlayStatusMode = "auto";
 				overlayStatusText = "Enabled";
@@ -1705,7 +1848,42 @@ public class AreaLootPlugin extends Plugin
 		refreshSelectedLootItem(items);
 
 		nearbyLoot = Collections.unmodifiableList(items);
+		updateForcedOverlay(items);
 		rebuildPanel(nearbyLoot);
+	}
+
+	private void updateForcedOverlay(List<AreaLootItem> items)
+	{
+		long threshold = parseForceShowValue();
+		Set<String> presentKeys = new HashSet<>();
+		Set<String> forcingKeys = new HashSet<>();
+		for (AreaLootItem item : items)
+		{
+			String key = forcedItemKey(item);
+			presentKeys.add(key);
+			if (threshold > 0 && item.getGeValue() >= threshold && !dismissedForcedItems.contains(key))
+			{
+				forcingKeys.add(key);
+			}
+		}
+
+		// Forget dismissed items once they are gone so a new drop can force the overlay again
+		dismissedForcedItems.retainAll(presentKeys);
+		forcedItemKeys = forcingKeys;
+		forceOverlayActive = !forcingKeys.isEmpty();
+	}
+
+	private static String forcedItemKey(AreaLootItem item)
+	{
+		WorldPoint location = item.getLocation();
+		return location.getX() + "," + location.getY() + "," + location.getPlane() + ":" + item.getId() + ":" + item.getQuantity();
+	}
+
+	private void dismissForcedOverlay()
+	{
+		dismissedForcedItems.addAll(forcedItemKeys);
+		forcedItemKeys = new HashSet<>();
+		forceOverlayActive = false;
 	}
 
 	private void refreshSelectedLootItem(List<AreaLootItem> items)
@@ -1752,7 +1930,7 @@ public class AreaLootPlugin extends Plugin
 
 	private boolean shouldMaintainLootSnapshot()
 	{
-		return manualOverlayEnabled || autoOverlayEnabled || sidePanelActive || selectedItemId != -1;
+		return manualOverlayEnabled || autoOverlayEnabled || sidePanelActive || selectedItemId != -1 || forceOverlayActive || parseForceShowValue() > 0;
 	}
 
 	private boolean hasPlayerMoved()
@@ -2048,7 +2226,16 @@ public class AreaLootPlugin extends Plugin
 
 	private long parseMinimumGeValue()
 	{
-		String value = config.minimumGeValue();
+		return parseGpValue(config.minimumGeValue());
+	}
+
+	private long parseForceShowValue()
+	{
+		return parseGpValue(config.forceShowValue());
+	}
+
+	private static long parseGpValue(String value)
+	{
 		if (value == null)
 		{
 			return 0;
@@ -2079,7 +2266,7 @@ public class AreaLootPlugin extends Plugin
 		}
 		catch (NumberFormatException ex)
 		{
-			log.debug("Invalid Area Loot minimum GE value: {}", value);
+			log.debug("Invalid Area Loot GP value: {}", value);
 			return 0;
 		}
 	}

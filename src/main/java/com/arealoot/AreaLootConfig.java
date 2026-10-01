@@ -126,6 +126,25 @@ public interface AreaLootConfig extends Config
 		}
 	}
 
+	enum AutoShowMode
+	{
+		ON_KILL("On kill"),
+		ALWAYS("Always");
+
+		private final String name;
+
+		AutoShowMode(String name)
+		{
+			this.name = name;
+		}
+
+		@Override
+		public String toString()
+		{
+			return name;
+		}
+	}
+
 	enum OverlayItemDelay
 	{
 		NONE("0 seconds", 0),
@@ -465,10 +484,66 @@ public interface AreaLootConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "autoShowMode",
+		name = "Auto show mode",
+		description = "<html>When auto show/hide is on:<br>On kill - show the overlay after you kill a monster<br>Always - show the overlay whenever loot is nearby</html>",
+		position = 2,
+		section = GENERAL_SECTION
+	)
+	default AutoShowMode autoShowMode()
+	{
+		return AutoShowMode.ALWAYS;
+	}
+
+	@Range(
+		max = 500
+	)
+	@Units(Units.TICKS)
+	@ConfigItem(
+		keyName = "onKillTimeoutTicks",
+		name = "On kill timeout",
+		description = "<html>On kill mode: fade the overlay out this many game ticks after your last kill<br>1 tick = 0.6 seconds. 0 = stay until the loot is gone</html>",
+		position = 3,
+		section = GENERAL_SECTION
+	)
+	default int onKillTimeoutTicks()
+	{
+		return 50;
+	}
+
+	@Range(
+		max = 500
+	)
+	@Units(Units.TICKS)
+	@ConfigItem(
+		keyName = "alwaysTimeoutTicks",
+		name = "Always timeout",
+		description = "<html>Always mode: fade the overlay out after this many game ticks with no new loot<br>1 tick = 0.6 seconds. 0 = never time out</html>",
+		position = 4,
+		section = GENERAL_SECTION
+	)
+	default int alwaysTimeoutTicks()
+	{
+		return 0;
+	}
+
+	@ConfigItem(
+		keyName = "forceShowValue",
+		name = "Force show value",
+		description = "<html>Force the overlay open when an item worth at least this much GP is nearby<br>It stays open until the item is gone or you press the overlay toggle hotkey,<br>then returns to your normal mode. Supports 1000, 10k or 1m. 0 = off</html>",
+		position = 5,
+		section = GENERAL_SECTION
+	)
+	default String forceShowValue()
+	{
+		return "0";
+	}
+
+	@ConfigItem(
 		keyName = "rememberOverlayMode",
 		name = "Remember overlay mode",
 		description = "Restore the overlay mode after logging back in",
-		position = 2,
+		position = 6,
 		section = GENERAL_SECTION
 	)
 	default boolean rememberOverlayMode()
@@ -480,7 +555,7 @@ public interface AreaLootConfig extends Config
 		keyName = "animateOverlay",
 		name = "Fade in/out overlay",
 		description = "Fade the overlay list in and out when it appears or hides",
-		position = 4,
+		position = 8,
 		section = GENERAL_SECTION
 	)
 	default boolean animateOverlay()
@@ -504,7 +579,7 @@ public interface AreaLootConfig extends Config
 		keyName = "keepOverlayAboveGame",
 		name = "Keep overlay above game",
 		description = "Draw the Area Loot overlay above in-game actors and scene elements",
-		position = 3,
+		position = 7,
 		section = GENERAL_SECTION
 	)
 	default boolean keepOverlayAboveGame()
@@ -761,7 +836,7 @@ public interface AreaLootConfig extends Config
 		keyName = "showSelectedItemName",
 		name = "Selected item name on tile",
 		description = "Show the selected loot item's name over the highlighted tile",
-		position = 7,
+		position = 11,
 		section = GENERAL_SECTION
 	)
 	default boolean showSelectedItemName()
@@ -773,7 +848,7 @@ public interface AreaLootConfig extends Config
 		keyName = "disableUpdateNotifications",
 		name = "Disable update notifications",
 		description = "Hide the chatbox message shown when Area Loot updates",
-		position = 8,
+		position = 12,
 		section = GENERAL_SECTION
 	)
 	default boolean disableUpdateNotifications()
@@ -1335,10 +1410,22 @@ public interface AreaLootConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "leftClickSelectedItem",
+		name = "Left-click selected item",
+		description = "<html>Make Take on the selected loot item the left-click option on its pile<br>Only replaces another item's Take or Walk here, never NPCs or objects</html>",
+		position = 2,
+		section = MENU_SECTION
+	)
+	default boolean leftClickSelectedItem()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		keyName = "drawHighlightLine",
 		name = "Draw highlight line",
 		description = "Draw a line from your player to the highlighted loot item",
-		position = 6,
+		position = 10,
 		section = GENERAL_SECTION
 	)
 	default boolean drawHighlightLine()
@@ -1386,7 +1473,7 @@ public interface AreaLootConfig extends Config
 		keyName = "onlyShowHighlightedItemMenu",
 		name = "Only show highlighted item",
 		description = "When right-clicking the highlighted item's tile, hide other ground items from that menu",
-		position = 2,
+		position = 3,
 		section = MENU_SECTION
 	)
 	default boolean onlyShowHighlightedItemMenu()
@@ -1402,7 +1489,7 @@ public interface AreaLootConfig extends Config
 		keyName = "lootRadius",
 		name = "Loot radius",
 		description = "Maximum tile distance from your player to show in the Area Loot (1-30)",
-		position = 5,
+		position = 9,
 		section = GENERAL_SECTION
 	)
 	default int lootRadius()
@@ -1530,7 +1617,7 @@ public interface AreaLootConfig extends Config
 		keyName = "highlightMenuTextMode",
 		name = "Highlight menu text",
 		description = "Choose which right-click menu entries for the selected loot item use the menu text color",
-		position = 3,
+		position = 4,
 		section = MENU_SECTION
 	)
 	default MenuHighlightMode highlightMenuTextMode()
